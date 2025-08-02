@@ -3,347 +3,322 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aryaveer's Dashboard</title>
-    <!-- Tailwind CSS CDN for styling -->
+    <title>Aryaveer's Enhanced Dashboard</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Custom font import for a modern look */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        /* Style for the project completion checkbox */
+        body { font-family: 'Inter', sans-serif; }
         .project-checkbox:checked + span {
             text-decoration: line-through;
-            color: #9ca3af; /* Gray-400 */
+            color: #9ca3af;
         }
+        .toast {
+            animation: fadein 0.4s, fadeout 0.4s 2.5s;
+        }
+        @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeout { from { opacity: 1; } to { opacity: 0; } }
     </style>
-    <!-- Firebase SDK Imports -->
+    <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, addDoc, deleteDoc, query, where, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
-        // Global variables provided by the Canvas environment
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        // ---- Replace below with your Firebase config ----
+        const firebaseConfig = YOUR_FIREBASE_CONFIG;
+        // -----------------------------------------------
 
-        // Initialize Firebase app and services
+        const appId = 'redeagle-dashboard';
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        
+        const storage = getStorage(app);
+
+        // Toast notification helper
+        function showToast(msg, type = "success") {
+            const toast = document.createElement('div');
+            toast.className = `fixed bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 rounded shadow-md toast z-50
+                ${type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`;
+            toast.innerText = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // Theme Toggle
+        function setTheme(theme) {
+            document.documentElement.classList.toggle('dark', theme === 'dark');
+            localStorage.setItem('theme', theme);
+        }
+        function getTheme() {
+            return localStorage.getItem('theme') || 'dark';
+        }
+        window.addEventListener('DOMContentLoaded', () => setTheme(getTheme()));
+        document.getElementById('theme-toggle').addEventListener('click', () => {
+            setTheme(getTheme() === 'dark' ? 'light' : 'dark');
+        });
+
+        // Avatar Upload for Aryaveer profile
+        document.getElementById('avatar-upload').addEventListener('change', async e => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const avatarRef = storageRef(storage, `/avatars/aryaveer.jpg`);
+            await uploadBytes(avatarRef, file);
+            const url = await getDownloadURL(avatarRef);
+            document.getElementById('user-avatar').src = url;
+            await setDoc(doc(db, `/artifacts/${appId}/public/data/profile`), { avatar: url }, { merge: true });
+            showToast("Profile avatar updated!");
+        });
+
+        // Profile avatar load
+        async function loadProfileAvatar() {
+            const profileDoc = await getDoc(doc(db, `/artifacts/${appId}/public/data/profile`));
+            if (profileDoc.exists() && profileDoc.data().avatar) {
+                document.getElementById('user-avatar').src = profileDoc.data().avatar;
+            }
+        }
+
         // Modal logic
         const employeeModal = document.getElementById('add-employee-modal');
         const openModalBtn = document.getElementById('open-add-employee-modal');
         const closeModalBtn = document.getElementById('close-add-employee-modal');
-        const addEmployeeForm = document.getElementById('add-employee-form');
-
         openModalBtn.addEventListener('click', () => employeeModal.classList.remove('hidden'));
         closeModalBtn.addEventListener('click', () => employeeModal.classList.add('hidden'));
-        employeeModal.addEventListener('click', (e) => {
-            if (e.target === employeeModal) {
-                employeeModal.classList.add('hidden');
-            }
-        });
+        employeeModal.addEventListener('click', e => { if (e.target === employeeModal) employeeModal.classList.add('hidden'); });
 
-        // Main application logic
+        // Main logic
         document.addEventListener('DOMContentLoaded', async () => {
             let userId = null;
-            let employeesList = []; // Array to store employees for the dropdown
+            let employeesList = [];
+            let filterEmployeeId = '';
+            let filterStatus = 'all';
 
-            // --- USER AUTHENTICATION ---
-            // Sign in using the custom token or anonymously if it's not available
-            try {
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            } catch (error) {
-                console.error("Firebase auth error:", error);
-            }
+            await loadProfileAvatar();
 
-            // Listen for auth state changes and update UI accordingly
-            onAuthStateChanged(auth, async (user) => {
+            // Auth
+            try { await signInAnonymously(auth); }
+            catch (error) { showToast("Auth error", "error"); }
+            onAuthStateChanged(auth, async user => {
                 if (user) {
                     userId = user.uid;
-                    console.log("Authenticated with userId:", userId);
                     document.getElementById('user-id-display').textContent = `User ID: ${userId}`;
-
-                    // Once authenticated, set up all real-time listeners
                     setupRealtimeBalance();
-                    setupRealtimeEmployees(); // Must be called before projects to populate dropdown
+                    setupRealtimeEmployees();
                     setupRealtimeProjects();
-                } else {
-                    console.log("No user is signed in.");
-                    document.getElementById('user-id-display').textContent = 'User ID: N/A';
                 }
             });
 
-            // --- REAL-TIME ACCOUNT BALANCE LOGIC (Firestore) ---
-            const balanceIncrement = 5000; // in Rupees
-            const updateInterval = 12000; // in milliseconds (12 seconds)
+            // ---- Balance Logic ----
+            const balanceIncrement = 5000;
+            const updateInterval = 12000;
             const balanceDocRef = doc(db, `/artifacts/${appId}/public/data/company_balance/main_balance`);
-
             function setupRealtimeBalance() {
-                // Set up a real-time listener for the balance document
-                onSnapshot(balanceDocRef, (docSnap) => {
+                onSnapshot(balanceDocRef, docSnap => {
                     if (docSnap.exists()) {
-                        // Update the UI with the latest balance from the database
-                        const balanceData = docSnap.data();
-                        const currentBalance = balanceData.amount;
-                        document.getElementById('account-balance').textContent = `₹ ${currentBalance.toLocaleString('en-IN')}`;
+                        const { amount } = docSnap.data();
+                        document.getElementById('account-balance').textContent = `₹ ${amount.toLocaleString('en-IN')}`;
                     } else {
-                        // If the document doesn't exist, create it with an initial value
                         setDoc(balanceDocRef, { amount: 0, lastUpdated: new Date() });
-                        console.log("Balance document created.");
                     }
-                }, (error) => {
-                    console.error("Error fetching balance:", error);
                 });
-
-                // Start the interval to update the balance in the database
                 setInterval(async () => {
                     try {
                         const balanceDoc = await getDoc(balanceDocRef);
-                        const currentBalance = balanceDoc.exists() ? balanceDoc.data().amount : 0;
-                        await updateDoc(balanceDocRef, {
-                            amount: currentBalance + balanceIncrement,
-                            lastUpdated: new Date()
-                        });
-                    } catch (error) {
-                        console.error("Error updating balance:", error);
-                    }
+                        const current = balanceDoc.exists() ? balanceDoc.data().amount : 0;
+                        await updateDoc(balanceDocRef, { amount: current + balanceIncrement, lastUpdated: new Date() });
+                    } catch {}
                 }, updateInterval);
             }
 
-            // --- REAL-TIME PROJECT MANAGEMENT LOGIC (Firestore) ---
+            // ---- Employee Logic ----
+            const employeeList = document.getElementById('employee-list');
+            const employeesCollectionRef = collection(db, `/artifacts/${appId}/public/data/employees`);
+            function setupRealtimeEmployees() {
+                onSnapshot(employeesCollectionRef, querySnapshot => {
+                    employeesList = [];
+                    querySnapshot.forEach(doc => employeesList.push({ id: doc.id, ...doc.data() }));
+                    renderEmployees(employeesList);
+                    populateEmployeeSelect(employeesList);
+                });
+            }
+            function renderEmployees(employees) {
+                employeeList.innerHTML = employees.length === 0 ?
+                    `<p class="text-center text-gray-500 col-span-full">No employees added yet.</p>` :
+                    employees.map(employee => `
+                        <div class="bg-gray-700 p-5 rounded-2xl shadow-inner flex items-center space-x-4">
+                            <img src="${employee.avatar || 'https://ui-avatars.com/api/?name='+employee.name+'&size=128'}"
+                                 class="w-12 h-12 rounded-full object-cover" alt="${employee.name}" />
+                            <div>
+                                <p class="font-semibold">${employee.name}</p>
+                                <p class="text-sm text-gray-400">${employee.role}</p>
+                            </div>
+                        </div>
+                    `).join('');
+            }
+            function populateEmployeeSelect(employees) {
+                const select = document.getElementById('employee-select');
+                if (employees.length > 0) {
+                    document.getElementById('add-project-message').classList.add('hidden');
+                    document.getElementById('add-project-form').classList.remove('hidden');
+                    select.innerHTML = employees.map(emp =>
+                        `<option value="${emp.id}">${emp.name}</option>`
+                    ).join('');
+                } else {
+                    document.getElementById('add-project-message').classList.remove('hidden');
+                    document.getElementById('add-project-form').classList.add('hidden');
+                }
+            }
+            // Add employee
+            document.getElementById('add-employee-form').addEventListener('submit', async e => {
+                e.preventDefault();
+                const name = document.getElementById('employee-name-input').value.trim();
+                const role = document.getElementById('employee-role-input').value.trim();
+                const avatar = document.getElementById('employee-avatar-input').value.trim();
+                if (name && role) {
+                    await addDoc(employeesCollectionRef, {
+                        name, role, avatar, createdAt: new Date()
+                    });
+                    document.getElementById('employee-name-input').value = '';
+                    document.getElementById('employee-role-input').value = '';
+                    document.getElementById('employee-avatar-input').value = '';
+                    employeeModal.classList.add('hidden');
+                    showToast("Employee added!");
+                }
+            });
+
+            // ---- Project Logic ----
             const projectForm = document.getElementById('add-project-form');
             const projectInput = document.getElementById('project-input');
             const projectList = document.getElementById('project-list');
             const employeeSelect = document.getElementById('employee-select');
-            const addProjectBtn = document.getElementById('add-project-btn');
-            const addProjectMessage = document.getElementById('add-project-message');
             const projectsCollectionRef = collection(db, `/artifacts/${appId}/public/data/projects`);
+            const projectDeadlineInput = document.getElementById('project-deadline-input');
+
+            // Filtering
+            document.getElementById('project-filter-status').addEventListener('change', e => {
+                filterStatus = e.target.value;
+                setupRealtimeProjects();
+            });
+            document.getElementById('project-filter-employee').addEventListener('change', e => {
+                filterEmployeeId = e.target.value;
+                setupRealtimeProjects();
+            });
 
             function setupRealtimeProjects() {
-                // Set up a real-time listener for the projects collection
-                onSnapshot(projectsCollectionRef, (querySnapshot) => {
+                let q = projectsCollectionRef;
+                if (filterEmployeeId) q = query(q, where('assignedTo', '==', filterEmployeeId));
+                if (filterStatus !== 'all') q = query(q, where('completed', '==', filterStatus === 'completed'));
+                q = query(q, orderBy('createdAt'));
+                onSnapshot(q, snap => {
                     const projects = [];
-                    querySnapshot.forEach((doc) => {
-                        projects.push({ id: doc.id, ...doc.data() });
-                    });
+                    snap.forEach(doc => projects.push({ id: doc.id, ...doc.data() }));
                     renderProjects(projects);
-                }, (error) => {
-                    console.error("Error fetching projects:", error);
                 });
             }
-
             function renderProjects(projects) {
-                projectList.innerHTML = ''; // Clear the list
-                if (projects.length === 0) {
-                    projectList.innerHTML = `<p class="text-center text-gray-500">No projects yet. Add one above!</p>`;
-                    return;
-                }
-                projects.forEach(project => {
-                    const assignedEmployee = employeesList.find(emp => emp.id === project.assignedTo)?.name || 'Unassigned';
-                    const projectItem = document.createElement('li');
-                    projectItem.className = 'flex flex-col md:flex-row md:items-center justify-between p-4 bg-gray-700 rounded-xl shadow-inner';
-                    projectItem.innerHTML = `
-                        <div class="flex-grow flex items-center space-x-3 mb-2 md:mb-0">
-                            <label class="flex items-center space-x-3 cursor-pointer">
-                                <input type="checkbox" class="form-checkbox h-5 w-5 text-blue-600 bg-gray-600 rounded-md border-gray-500 focus:ring-blue-500 project-checkbox" ${project.completed ? 'checked' : ''} data-id="${project.id}">
-                                <span class="text-lg ${project.completed ? 'line-through text-gray-400' : ''}">${project.title}</span>
-                            </label>
-                            <span class="text-xs font-semibold px-2 py-1 rounded-full bg-gray-600 text-gray-300">
-                                Assigned to: ${assignedEmployee}
-                            </span>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <span class="text-xs font-semibold px-2 py-1 rounded-full ${project.completed ? 'bg-green-500' : 'bg-yellow-500'}">
-                                ${project.completed ? 'Completed' : 'Pending'}
-                            </span>
-                            <button class="bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-3 text-sm rounded-xl transition-colors duration-200 copy-whatsapp-btn" data-project-title="${project.title}" data-employee-name="${assignedEmployee}">
-                                Copy WhatsApp
-                            </button>
-                            <button class="text-red-400 hover:text-red-500 transition-colors duration-200 delete-project-btn" data-id="${project.id}">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                                </svg>
-                            </button>
-                        </div>
-                    `;
-                    projectList.appendChild(projectItem);
-                });
+                projectList.innerHTML = projects.length === 0 ?
+                    `<p class="text-center text-gray-500">No projects yet. Add one above!</p>` :
+                    projects.map(project => {
+                        const assignedEmployee = employeesList.find(emp => emp.id === project.assignedTo)?.name || 'Unassigned';
+                        return `
+                        <li class="flex flex-col md:flex-row md:items-center justify-between p-4 bg-gray-700 rounded-xl shadow-inner">
+                            <div class="flex-grow flex items-center space-x-3 mb-2 md:mb-0">
+                                <label class="flex items-center space-x-3 cursor-pointer">
+                                    <input type="checkbox" class="form-checkbox h-5 w-5 text-blue-600 bg-gray-600 rounded-md border-gray-500 focus:ring-blue-500 project-checkbox"
+                                        data-id="${project.id}" ${project.completed ? 'checked' : ''} aria-label="Complete project">
+                                    <span class="text-lg ${project.completed ? 'line-through text-gray-400' : ''}">${project.title}</span>
+                                </label>
+                                <span class="text-xs font-semibold px-2 py-1 rounded-full bg-gray-600 text-gray-300">
+                                    Assigned to: ${assignedEmployee}
+                                </span>
+                                <span class="text-xs px-2 py-1 rounded-full bg-gray-800 text-gray-400">
+                                    Deadline: ${project.deadline ? new Date(project.deadline).toLocaleDateString() : 'N/A'}
+                                </span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs font-semibold px-2 py-1 rounded-full ${project.completed ? 'bg-green-500' : 'bg-yellow-500'}">
+                                    ${project.completed ? 'Completed' : 'Pending'}
+                                </span>
+                                <button class="bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-3 text-sm rounded-xl transition-colors duration-200 copy-whatsapp-btn"
+                                    data-project-title="${project.title}" data-employee-name="${assignedEmployee}">
+                                    Copy WhatsApp
+                                </button>
+                                <button class="text-red-400 hover:text-red-500 transition-colors duration-200 delete-project-btn" data-id="${project.id}" aria-label="Delete project">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 011-1h4a1 1 0 011 1v8H7V8z" clip-rule="evenodd"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </li>`;
+                    }).join('');
             }
-
-            // Add new project to Firestore
-            projectForm.addEventListener('submit', async (e) => {
+            // Add project
+            projectForm.addEventListener('submit', async e => {
                 e.preventDefault();
-                const newProjectTitle = projectInput.value.trim();
-                const assignedToEmployeeId = employeeSelect.value;
-
-                if (newProjectTitle && userId && assignedToEmployeeId) {
-                    try {
-                        await addDoc(projectsCollectionRef, {
-                            title: newProjectTitle,
-                            completed: false,
-                            createdAt: new Date(),
-                            createdBy: userId,
-                            assignedTo: assignedToEmployeeId
-                        });
-                        projectInput.value = '';
-                    } catch (error) {
-                        console.error("Error adding project:", error);
-                    }
+                const title = projectInput.value.trim();
+                const assignedTo = employeeSelect.value;
+                const deadline = projectDeadlineInput.value;
+                if (title && userId && assignedTo) {
+                    await addDoc(projectsCollectionRef, {
+                        title, completed: false, createdAt: new Date(),
+                        createdBy: userId, assignedTo, deadline
+                    });
+                    projectInput.value = '';
+                    projectDeadlineInput.value = '';
+                    showToast("Project added!");
                 }
             });
-
-            // Toggle project completion status in Firestore
-            projectList.addEventListener('change', async (e) => {
-                const checkbox = e.target;
-                if (checkbox.matches('.project-checkbox')) {
-                    const projectId = checkbox.dataset.id;
-                    const projectRef = doc(db, `/artifacts/${appId}/public/data/projects/${projectId}`);
-                    try {
-                        await updateDoc(projectRef, {
-                            completed: checkbox.checked
-                        });
-                    } catch (error) {
-                        console.error("Error updating project status:", error);
-                    }
+            // Project completion + actions
+            projectList.addEventListener('change', async e => {
+                if (e.target.matches('.project-checkbox')) {
+                    const projectId = e.target.dataset.id;
+                    await updateDoc(doc(db, `/artifacts/${appId}/public/data/projects/${projectId}`), {
+                        completed: e.target.checked
+                    });
+                    showToast("Project updated!");
                 }
             });
-
-            // Delete project from Firestore
-            projectList.addEventListener('click', async (e) => {
+            projectList.addEventListener('click', async e => {
                 const deleteBtn = e.target.closest('.delete-project-btn');
                 const copyBtn = e.target.closest('.copy-whatsapp-btn');
-                
                 if (deleteBtn) {
                     const projectId = deleteBtn.dataset.id;
-                    const projectRef = doc(db, `/artifacts/${appId}/public/data/projects/${projectId}`);
-                    try {
-                        await deleteDoc(projectRef);
-                    } catch (error) {
-                        console.error("Error deleting project:", error);
-                    }
+                    await deleteDoc(doc(db, `/artifacts/${appId}/public/data/projects/${projectId}`));
+                    showToast("Project deleted!");
                 }
-
-                // Copy WhatsApp message to clipboard
                 if (copyBtn) {
                     const employeeName = copyBtn.dataset.employeeName;
                     const projectTitle = copyBtn.dataset.projectTitle;
-                    const message = `Hello ${employeeName}, a new project has been assigned to you: "${projectTitle}". Please review the details. Best regards, Aryaveer.`;
-                    
-                    try {
-                        const tempInput = document.createElement('textarea');
-                        tempInput.value = message;
-                        document.body.appendChild(tempInput);
-                        tempInput.select();
-                        document.execCommand('copy');
-                        document.body.removeChild(tempInput);
-                        // Optional: Add a visual confirmation
-                        copyBtn.textContent = 'Copied!';
-                        setTimeout(() => copyBtn.textContent = 'Copy WhatsApp', 2000);
-                    } catch (err) {
-                        console.error('Failed to copy text: ', err);
-                    }
-                }
-            });
-
-            // --- REAL-TIME EMPLOYEE MANAGEMENT LOGIC (Firestore) ---
-            const employeeList = document.getElementById('employee-list');
-            const employeesCollectionRef = collection(db, `/artifacts/${appId}/public/data/employees`);
-
-            function setupRealtimeEmployees() {
-                // Set up a real-time listener for the employees collection
-                onSnapshot(employeesCollectionRef, (querySnapshot) => {
-                    employeesList = [];
-                    querySnapshot.forEach((doc) => {
-                        employeesList.push({ id: doc.id, ...doc.data() });
-                    });
-                    renderEmployees(employeesList);
-                    populateEmployeeSelect(employeesList);
-                }, (error) => {
-                    console.error("Error fetching employees:", error);
-                });
-            }
-
-            function renderEmployees(employees) {
-                employeeList.innerHTML = ''; // Clear the list
-                if (employees.length === 0) {
-                    employeeList.innerHTML = `<p class="text-center text-gray-500 col-span-full">No employees added yet.</p>`;
-                    return;
-                }
-                employeeList.innerHTML = employees.map(employee => `
-                    <div class="bg-gray-700 p-5 rounded-2xl shadow-inner flex items-center space-x-4">
-                        <div class="w-12 h-12 bg-gray-600 rounded-full flex items-center justify-center text-xl font-bold text-gray-300">${employee.name.charAt(0)}</div>
-                        <div>
-                            <p class="font-semibold">${employee.name}</p>
-                            <p class="text-sm text-gray-400">${employee.role}</p>
-                        </div>
-                    </div>
-                `).join('');
-            }
-            
-            // Populates the employee dropdown and manages the Add Project UI
-            function populateEmployeeSelect(employees) {
-                if (employees.length > 0) {
-                    addProjectMessage.classList.add('hidden');
-                    projectForm.classList.remove('hidden');
-                    employeeSelect.innerHTML = employees.map(employee => `
-                        <option value="${employee.id}">${employee.name}</option>
-                    `).join('');
-                } else {
-                    addProjectMessage.classList.remove('hidden');
-                    projectForm.classList.add('hidden');
-                }
-            }
-
-            // Add new employee to Firestore via the modal form
-            addEmployeeForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const newEmployeeName = document.getElementById('employee-name-input').value.trim();
-                const newEmployeeRole = document.getElementById('employee-role-input').value.trim();
-                if (newEmployeeName && newEmployeeRole) {
-                    try {
-                        await addDoc(employeesCollectionRef, {
-                            name: newEmployeeName,
-                            role: newEmployeeRole,
-                            createdAt: new Date()
-                        });
-                        // Clear the form and close the modal
-                        document.getElementById('employee-name-input').value = '';
-                        document.getElementById('employee-role-input').value = '';
-                        employeeModal.classList.add('hidden');
-                    } catch (error) {
-                        console.error("Error adding employee:", error);
-                    }
+                    const msg = `Hello ${employeeName}, a new project has been assigned to you: "${projectTitle}". Please review the details. Best regards, Aryaveer.`;
+                    navigator.clipboard.writeText(msg);
+                    copyBtn.textContent = 'Copied!';
+                    setTimeout(() => copyBtn.textContent = 'Copy WhatsApp', 2000);
+                    showToast("WhatsApp message copied!");
                 }
             });
         });
     </script>
 </head>
-<body class="bg-gray-900 text-white min-h-screen p-4 md:p-8">
+<body class="bg-gray-900 text-white min-h-screen p-4 md:p-8 dark:bg-gray-900 bg-white transition-colors duration-300">
 
-    <!-- Main Container -->
+    <button id="theme-toggle" aria-label="Toggle theme" class="fixed top-5 right-5 bg-gray-700 text-white px-2 py-1 rounded shadow-md">Toggle Theme</button>
+
     <div class="max-w-7xl mx-auto space-y-8">
-
-        <!-- Header and User Profile Section -->
+        <!-- Header/Profile -->
         <header class="flex flex-col md:flex-row md:items-center justify-between bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-700">
             <div class="flex items-center space-x-4">
-                <!-- User Avatar/Icon -->
-                <div class="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center text-3xl font-bold">A</div>
+                <label for="avatar-upload" class="w-16 h-16 rounded-full overflow-hidden cursor-pointer relative group">
+                    <img id="user-avatar" src="https://ui-avatars.com/api/?name=Aryaveer&size=128" alt="Aryaveer" class="w-full h-full object-cover" />
+                    <input id="avatar-upload" type="file" accept="image/*" class="hidden" />
+                    <span class="absolute bottom-0 left-0 bg-black bg-opacity-60 text-xs text-white px-2 py-0.5 rounded opacity-0 group-hover:opacity-100">Edit</span>
+                </label>
                 <div>
                     <h1 class="text-3xl font-bold">Welcome, Aryaveer</h1>
                     <p class="text-gray-400 text-lg">CEO and Founder</p>
                     <p class="text-gray-500 text-xs mt-1" id="user-id-display">Authenticating...</p>
                 </div>
             </div>
-            <!-- Optional Quick Actions -->
             <div class="mt-4 md:mt-0">
                 <button class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-full transition-colors duration-300 shadow-md">
                     View Reports
@@ -351,10 +326,9 @@
             </div>
         </header>
 
-        <!-- Main Dashboard Content Grid -->
+        <!-- Dashboard Grid -->
         <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-            <!-- Financial Dashboard Card -->
+            <!-- Balance -->
             <div class="lg:col-span-1 bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-700">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-xl font-bold">Account Balance</h2>
@@ -363,38 +337,41 @@
                 <div class="flex items-center space-x-2">
                     <span class="text-5xl font-extrabold text-green-300" id="account-balance">Loading...</span>
                 </div>
-                <p class="text-sm text-gray-500 mt-2">Balance is updated automatically every 12 seconds.</p>
+                <p class="text-sm text-gray-500 mt-2">Balance updates every 12 seconds.</p>
             </div>
 
-            <!-- Projects Section -->
+            <!-- Projects -->
             <div class="lg:col-span-2 bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-700">
                 <h2 class="text-xl font-bold mb-4">Projects</h2>
-                
-                <!-- Message when no employees exist -->
+                <div class="flex flex-wrap gap-4 mb-4">
+                    <select id="project-filter-status" class="bg-gray-700 text-white p-2 rounded-xl">
+                        <option value="all">All</option>
+                        <option value="pending">Pending</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                    <select id="project-filter-employee" class="bg-gray-700 text-white p-2 rounded-xl">
+                        <option value="">All Employees</option>
+                        <!-- Options populated by JS -->
+                    </select>
+                </div>
                 <p id="add-project-message" class="text-center text-gray-400 mb-6 hidden">
                     Please add an employee before you can assign a project.
                 </p>
-
-                <!-- Add Project Form -->
                 <form id="add-project-form" class="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0 mb-6">
-                    <input type="text" id="project-input" placeholder="Enter new project title" class="flex-1 bg-gray-700 text-white p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400">
-                    <select id="employee-select" class="bg-gray-700 text-white p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <!-- Employee options will be populated by JS -->
-                    </select>
+                    <input type="text" id="project-input" placeholder="Enter new project title" class="flex-1 bg-gray-700 text-white p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="date" id="project-deadline-input" class="bg-gray-700 text-white p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <select id="employee-select" class="bg-gray-700 text-white p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"></select>
                     <button type="submit" id="add-project-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors duration-300">
                         Add Project
                     </button>
                 </form>
-
-                <!-- Project List -->
                 <ul id="project-list" class="space-y-4">
                     <p class="text-center text-gray-500">Loading projects...</p>
                 </ul>
             </div>
-            
         </main>
 
-        <!-- Employees Section -->
+        <!-- Employees -->
         <div class="bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-700">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-bold">Company Employees</h2>
@@ -406,7 +383,6 @@
                 <p class="text-center text-gray-500">Loading employees...</p>
             </div>
         </div>
-
     </div>
 
     <!-- Add Employee Modal -->
@@ -428,6 +404,10 @@
                 <div>
                     <label for="employee-role-input" class="block text-sm font-medium text-gray-300 mb-1">Role</label>
                     <input type="text" id="employee-role-input" placeholder="e.g., Lead Engineer" class="w-full p-3 bg-gray-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label for="employee-avatar-input" class="block text-sm font-medium text-gray-300 mb-1">Avatar URL (optional)</label>
+                    <input type="url" id="employee-avatar-input" placeholder="https://..." class="w-full p-3 bg-gray-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
                 <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-colors duration-300">
                     Add Employee
