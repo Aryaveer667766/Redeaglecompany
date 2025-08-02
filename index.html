@@ -124,6 +124,8 @@
             const projectInput = document.getElementById('project-input');
             const projectList = document.getElementById('project-list');
             const employeeSelect = document.getElementById('employee-select');
+            const addProjectBtn = document.getElementById('add-project-btn');
+            const addProjectMessage = document.getElementById('add-project-message');
             const projectsCollectionRef = collection(db, `/artifacts/${appId}/public/data/projects`);
 
             function setupRealtimeProjects() {
@@ -141,6 +143,10 @@
 
             function renderProjects(projects) {
                 projectList.innerHTML = ''; // Clear the list
+                if (projects.length === 0) {
+                    projectList.innerHTML = `<p class="text-center text-gray-500">No projects yet. Add one above!</p>`;
+                    return;
+                }
                 projects.forEach(project => {
                     const assignedEmployee = employeesList.find(emp => emp.id === project.assignedTo)?.name || 'Unassigned';
                     const projectItem = document.createElement('li');
@@ -267,6 +273,11 @@
             }
 
             function renderEmployees(employees) {
+                employeeList.innerHTML = ''; // Clear the list
+                if (employees.length === 0) {
+                    employeeList.innerHTML = `<p class="text-center text-gray-500 col-span-full">No employees added yet.</p>`;
+                    return;
+                }
                 employeeList.innerHTML = employees.map(employee => `
                     <div class="bg-gray-700 p-5 rounded-2xl shadow-inner flex items-center space-x-4">
                         <div class="w-12 h-12 bg-gray-600 rounded-full flex items-center justify-center text-xl font-bold text-gray-300">${employee.name.charAt(0)}</div>
@@ -278,11 +289,18 @@
                 `).join('');
             }
             
-            // Populates the employee dropdown
+            // Populates the employee dropdown and manages the Add Project UI
             function populateEmployeeSelect(employees) {
-                employeeSelect.innerHTML = employees.map(employee => `
-                    <option value="${employee.id}">${employee.name}</option>
-                `).join('');
+                if (employees.length > 0) {
+                    addProjectMessage.classList.add('hidden');
+                    projectForm.classList.remove('hidden');
+                    employeeSelect.innerHTML = employees.map(employee => `
+                        <option value="${employee.id}">${employee.name}</option>
+                    `).join('');
+                } else {
+                    addProjectMessage.classList.remove('hidden');
+                    projectForm.classList.add('hidden');
+                }
             }
 
             // Add new employee to Firestore via the modal form
@@ -351,6 +369,11 @@
             <!-- Projects Section -->
             <div class="lg:col-span-2 bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-700">
                 <h2 class="text-xl font-bold mb-4">Projects</h2>
+                
+                <!-- Message when no employees exist -->
+                <p id="add-project-message" class="text-center text-gray-400 mb-6 hidden">
+                    Please add an employee before you can assign a project.
+                </p>
 
                 <!-- Add Project Form -->
                 <form id="add-project-form" class="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0 mb-6">
@@ -358,7 +381,7 @@
                     <select id="employee-select" class="bg-gray-700 text-white p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <!-- Employee options will be populated by JS -->
                     </select>
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors duration-300">
+                    <button type="submit" id="add-project-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors duration-300">
                         Add Project
                     </button>
                 </form>
