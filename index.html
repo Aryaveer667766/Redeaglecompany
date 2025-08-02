@@ -51,6 +51,7 @@
         // Main application logic
         document.addEventListener('DOMContentLoaded', async () => {
             let userId = null;
+            let employeesList = []; // Array to store employees for the dropdown
 
             // --- USER AUTHENTICATION ---
             // Sign in using the custom token or anonymously if it's not available
@@ -73,8 +74,8 @@
 
                     // Once authenticated, set up all real-time listeners
                     setupRealtimeBalance();
+                    setupRealtimeEmployees(); // Must be called before projects to populate dropdown
                     setupRealtimeProjects();
-                    setupRealtimeEmployees();
                 } else {
                     console.log("No user is signed in.");
                     document.getElementById('user-id-display').textContent = 'User ID: N/A';
@@ -122,6 +123,7 @@
             const projectForm = document.getElementById('add-project-form');
             const projectInput = document.getElementById('project-input');
             const projectList = document.getElementById('project-list');
+            const employeeSelect = document.getElementById('employee-select');
             const projectsCollectionRef = collection(db, `/artifacts/${appId}/public/data/projects`);
 
             function setupRealtimeProjects() {
@@ -140,17 +142,26 @@
             function renderProjects(projects) {
                 projectList.innerHTML = ''; // Clear the list
                 projects.forEach(project => {
+                    const assignedEmployee = employeesList.find(emp => emp.id === project.assignedTo)?.name || 'Unassigned';
                     const projectItem = document.createElement('li');
-                    projectItem.className = 'flex items-center justify-between p-4 bg-gray-700 rounded-xl shadow-inner';
+                    projectItem.className = 'flex flex-col md:flex-row md:items-center justify-between p-4 bg-gray-700 rounded-xl shadow-inner';
                     projectItem.innerHTML = `
-                        <label class="flex items-center space-x-3 cursor-pointer flex-grow">
-                            <input type="checkbox" class="form-checkbox h-5 w-5 text-blue-600 bg-gray-600 rounded-md border-gray-500 focus:ring-blue-500 project-checkbox" ${project.completed ? 'checked' : ''} data-id="${project.id}">
-                            <span class="text-lg ${project.completed ? 'line-through text-gray-400' : ''}">${project.title}</span>
-                        </label>
+                        <div class="flex-grow flex items-center space-x-3 mb-2 md:mb-0">
+                            <label class="flex items-center space-x-3 cursor-pointer">
+                                <input type="checkbox" class="form-checkbox h-5 w-5 text-blue-600 bg-gray-600 rounded-md border-gray-500 focus:ring-blue-500 project-checkbox" ${project.completed ? 'checked' : ''} data-id="${project.id}">
+                                <span class="text-lg ${project.completed ? 'line-through text-gray-400' : ''}">${project.title}</span>
+                            </label>
+                            <span class="text-xs font-semibold px-2 py-1 rounded-full bg-gray-600 text-gray-300">
+                                Assigned to: ${assignedEmployee}
+                            </span>
+                        </div>
                         <div class="flex items-center space-x-2">
                             <span class="text-xs font-semibold px-2 py-1 rounded-full ${project.completed ? 'bg-green-500' : 'bg-yellow-500'}">
                                 ${project.completed ? 'Completed' : 'Pending'}
                             </span>
+                            <button class="bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-3 text-sm rounded-xl transition-colors duration-200 copy-whatsapp-btn" data-project-title="${project.title}" data-employee-name="${assignedEmployee}">
+                                Copy WhatsApp
+                            </button>
                             <button class="text-red-400 hover:text-red-500 transition-colors duration-200 delete-project-btn" data-id="${project.id}">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                                     <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
@@ -166,13 +177,16 @@
             projectForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const newProjectTitle = projectInput.value.trim();
-                if (newProjectTitle && userId) {
+                const assignedToEmployeeId = employeeSelect.value;
+
+                if (newProjectTitle && userId && assignedToEmployeeId) {
                     try {
                         await addDoc(projectsCollectionRef, {
                             title: newProjectTitle,
                             completed: false,
                             createdAt: new Date(),
-                            createdBy: userId
+                            createdBy: userId,
+                            assignedTo: assignedToEmployeeId
                         });
                         projectInput.value = '';
                     } catch (error) {
@@ -200,6 +214,8 @@
             // Delete project from Firestore
             projectList.addEventListener('click', async (e) => {
                 const deleteBtn = e.target.closest('.delete-project-btn');
+                const copyBtn = e.target.closest('.copy-whatsapp-btn');
+                
                 if (deleteBtn) {
                     const projectId = deleteBtn.dataset.id;
                     const projectRef = doc(db, `/artifacts/${appId}/public/data/projects/${projectId}`);
@@ -207,6 +223,27 @@
                         await deleteDoc(projectRef);
                     } catch (error) {
                         console.error("Error deleting project:", error);
+                    }
+                }
+
+                // Copy WhatsApp message to clipboard
+                if (copyBtn) {
+                    const employeeName = copyBtn.dataset.employeeName;
+                    const projectTitle = copyBtn.dataset.projectTitle;
+                    const message = `Hello ${employeeName}, a new project has been assigned to you: "${projectTitle}". Please review the details. Best regards, Aryaveer.`;
+                    
+                    try {
+                        const tempInput = document.createElement('textarea');
+                        tempInput.value = message;
+                        document.body.appendChild(tempInput);
+                        tempInput.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(tempInput);
+                        // Optional: Add a visual confirmation
+                        copyBtn.textContent = 'Copied!';
+                        setTimeout(() => copyBtn.textContent = 'Copy WhatsApp', 2000);
+                    } catch (err) {
+                        console.error('Failed to copy text: ', err);
                     }
                 }
             });
@@ -218,11 +255,12 @@
             function setupRealtimeEmployees() {
                 // Set up a real-time listener for the employees collection
                 onSnapshot(employeesCollectionRef, (querySnapshot) => {
-                    const employees = [];
+                    employeesList = [];
                     querySnapshot.forEach((doc) => {
-                        employees.push({ id: doc.id, ...doc.data() });
+                        employeesList.push({ id: doc.id, ...doc.data() });
                     });
-                    renderEmployees(employees);
+                    renderEmployees(employeesList);
+                    populateEmployeeSelect(employeesList);
                 }, (error) => {
                     console.error("Error fetching employees:", error);
                 });
@@ -240,6 +278,13 @@
                 `).join('');
             }
             
+            // Populates the employee dropdown
+            function populateEmployeeSelect(employees) {
+                employeeSelect.innerHTML = employees.map(employee => `
+                    <option value="${employee.id}">${employee.name}</option>
+                `).join('');
+            }
+
             // Add new employee to Firestore via the modal form
             addEmployeeForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -310,6 +355,9 @@
                 <!-- Add Project Form -->
                 <form id="add-project-form" class="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0 mb-6">
                     <input type="text" id="project-input" placeholder="Enter new project title" class="flex-1 bg-gray-700 text-white p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400">
+                    <select id="employee-select" class="bg-gray-700 text-white p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <!-- Employee options will be populated by JS -->
+                    </select>
                     <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors duration-300">
                         Add Project
                     </button>
@@ -323,7 +371,7 @@
             
         </main>
 
-        <!-- Employees Section (Placeholder) -->
+        <!-- Employees Section -->
         <div class="bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-700">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-bold">Company Employees</h2>
