@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aryaveer's Dashboard</title>
+    <!-- Tailwind CSS CDN for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom font import for a modern look */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Style for the project completion checkbox */
+        .project-checkbox:checked + span {
+            text-decoration: line-through;
+            color: #9ca3af; /* Gray-400 */
+        }
+    </style>
+    <!-- Firebase SDK Imports -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global variables provided by the Canvas environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        // Initialize Firebase app and services
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        
+        // Modal logic
+        const employeeModal = document.getElementById('add-employee-modal');
+        const openModalBtn = document.getElementById('open-add-employee-modal');
+        const closeModalBtn = document.getElementById('close-add-employee-modal');
+        const addEmployeeForm = document.getElementById('add-employee-form');
+
+        openModalBtn.addEventListener('click', () => employeeModal.classList.remove('hidden'));
+        closeModalBtn.addEventListener('click', () => employeeModal.classList.add('hidden'));
+        employeeModal.addEventListener('click', (e) => {
+            if (e.target === employeeModal) {
+                employeeModal.classList.add('hidden');
+            }
+        });
+
+        // Main application logic
+        document.addEventListener('DOMContentLoaded', async () => {
+            let userId = null;
+
+            // --- USER AUTHENTICATION ---
+            // Sign in using the custom token or anonymously if it's not available
+            try {
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Firebase auth error:", error);
+            }
+
+            // Listen for auth state changes and update UI accordingly
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    userId = user.uid;
+                    console.log("Authenticated with userId:", userId);
+                    document.getElementById('user-id-display').textContent = `User ID: ${userId}`;
+
+                    // Once authenticated, set up all real-time listeners
+                    setupRealtimeBalance();
+                    setupRealtimeProjects();
+                    setupRealtimeEmployees();
+                } else {
+                    console.log("No user is signed in.");
+                    document.getElementById('user-id-display').textContent = 'User ID: N/A';
+                }
+            });
+
+            // --- REAL-TIME ACCOUNT BALANCE LOGIC (Firestore) ---
+            const balanceIncrement = 5000; // in Rupees
+            const updateInterval = 12000; // in milliseconds (12 seconds)
+            const balanceDocRef = doc(db, `/artifacts/${appId}/public/data/company_balance/main_balance`);
+
+            function setupRealtimeBalance() {
+                // Set up a real-time listener for the balance document
+                onSnapshot(balanceDocRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        // Update the UI with the latest balance from the database
+                        const balanceData = docSnap.data();
+                        const currentBalance = balanceData.amount;
+                        document.getElementById('account-balance').textContent = `₹ ${currentBalance.toLocaleString('en-IN')}`;
+                    } else {
+                        // If the document doesn't exist, create it with an initial value
+                        setDoc(balanceDocRef, { amount: 0, lastUpdated: new Date() });
+                        console.log("Balance document created.");
+                    }
+                }, (error) => {
+                    console.error("Error fetching balance:", error);
+                });
+
+                // Start the interval to update the balance in the database
+                setInterval(async () => {
+                    try {
+                        const balanceDoc = await getDoc(balanceDocRef);
+                        const currentBalance = balanceDoc.exists() ? balanceDoc.data().amount : 0;
+                        await updateDoc(balanceDocRef, {
+                            amount: currentBalance + balanceIncrement,
+                            lastUpdated: new Date()
+                        });
+                    } catch (error) {
+                        console.error("Error updating balance:", error);
+                    }
+                }, updateInterval);
+            }
+
+            // --- REAL-TIME PROJECT MANAGEMENT LOGIC (Firestore) ---
+            const projectForm = document.getElementById('add-project-form');
+            const projectInput = document.getElementById('project-input');
+            const projectList = document.getElementById('project-list');
+            const projectsCollectionRef = collection(db, `/artifacts/${appId}/public/data/projects`);
+
+            function setupRealtimeProjects() {
+                // Set up a real-time listener for the projects collection
+                onSnapshot(projectsCollectionRef, (querySnapshot) => {
+                    const projects = [];
+                    querySnapshot.forEach((doc) => {
+                        projects.push({ id: doc.id, ...doc.data() });
+                    });
+                    renderProjects(projects);
+                }, (error) => {
+                    console.error("Error fetching projects:", error);
+                });
+            }
+
+            function renderProjects(projects) {
+                projectList.innerHTML = ''; // Clear the list
+                projects.forEach(project => {
+                    const projectItem = document.createElement('li');
+                    projectItem.className = 'flex items-center justify-between p-4 bg-gray-700 rounded-xl shadow-inner';
+                    projectItem.innerHTML = `
+                        <label class="flex items-center space-x-3 cursor-pointer flex-grow">
+                            <input type="checkbox" class="form-checkbox h-5 w-5 text-blue-600 bg-gray-600 rounded-md border-gray-500 focus:ring-blue-500 project-checkbox" ${project.completed ? 'checked' : ''} data-id="${project.id}">
+                            <span class="text-lg ${project.completed ? 'line-through text-gray-400' : ''}">${project.title}</span>
+                        </label>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-xs font-semibold px-2 py-1 rounded-full ${project.completed ? 'bg-green-500' : 'bg-yellow-500'}">
+                                ${project.completed ? 'Completed' : 'Pending'}
+                            </span>
+                            <button class="text-red-400 hover:text-red-500 transition-colors duration-200 delete-project-btn" data-id="${project.id}">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                        </div>
+                    `;
+                    projectList.appendChild(projectItem);
+                });
+            }
+
+            // Add new project to Firestore
+            projectForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const newProjectTitle = projectInput.value.trim();
+                if (newProjectTitle && userId) {
+                    try {
+                        await addDoc(projectsCollectionRef, {
+                            title: newProjectTitle,
+                            completed: false,
+                            createdAt: new Date(),
+                            createdBy: userId
+                        });
+                        projectInput.value = '';
+                    } catch (error) {
+                        console.error("Error adding project:", error);
+                    }
+                }
+            });
+
+            // Toggle project completion status in Firestore
+            projectList.addEventListener('change', async (e) => {
+                const checkbox = e.target;
+                if (checkbox.matches('.project-checkbox')) {
+                    const projectId = checkbox.dataset.id;
+                    const projectRef = doc(db, `/artifacts/${appId}/public/data/projects/${projectId}`);
+                    try {
+                        await updateDoc(projectRef, {
+                            completed: checkbox.checked
+                        });
+                    } catch (error) {
+                        console.error("Error updating project status:", error);
+                    }
+                }
+            });
+
+            // Delete project from Firestore
+            projectList.addEventListener('click', async (e) => {
+                const deleteBtn = e.target.closest('.delete-project-btn');
+                if (deleteBtn) {
+                    const projectId = deleteBtn.dataset.id;
+                    const projectRef = doc(db, `/artifacts/${appId}/public/data/projects/${projectId}`);
+                    try {
+                        await deleteDoc(projectRef);
+                    } catch (error) {
+                        console.error("Error deleting project:", error);
+                    }
+                }
+            });
+
+            // --- REAL-TIME EMPLOYEE MANAGEMENT LOGIC (Firestore) ---
+            const employeeList = document.getElementById('employee-list');
+            const employeesCollectionRef = collection(db, `/artifacts/${appId}/public/data/employees`);
+
+            function setupRealtimeEmployees() {
+                // Set up a real-time listener for the employees collection
+                onSnapshot(employeesCollectionRef, (querySnapshot) => {
+                    const employees = [];
+                    querySnapshot.forEach((doc) => {
+                        employees.push({ id: doc.id, ...doc.data() });
+                    });
+                    renderEmployees(employees);
+                }, (error) => {
+                    console.error("Error fetching employees:", error);
+                });
+            }
+
+            function renderEmployees(employees) {
+                employeeList.innerHTML = employees.map(employee => `
+                    <div class="bg-gray-700 p-5 rounded-2xl shadow-inner flex items-center space-x-4">
+                        <div class="w-12 h-12 bg-gray-600 rounded-full flex items-center justify-center text-xl font-bold text-gray-300">${employee.name.charAt(0)}</div>
+                        <div>
+                            <p class="font-semibold">${employee.name}</p>
+                            <p class="text-sm text-gray-400">${employee.role}</p>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            // Add new employee to Firestore via the modal form
+            addEmployeeForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const newEmployeeName = document.getElementById('employee-name-input').value.trim();
+                const newEmployeeRole = document.getElementById('employee-role-input').value.trim();
+                if (newEmployeeName && newEmployeeRole) {
+                    try {
+                        await addDoc(employeesCollectionRef, {
+                            name: newEmployeeName,
+                            role: newEmployeeRole,
+                            createdAt: new Date()
+                        });
+                        // Clear the form and close the modal
+                        document.getElementById('employee-name-input').value = '';
+                        document.getElementById('employee-role-input').value = '';
+                        employeeModal.classList.add('hidden');
+                    } catch (error) {
+                        console.error("Error adding employee:", error);
+                    }
+                }
+            });
+        });
+    </script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen p-4 md:p-8">
+
+    <!-- Main Container -->
+    <div class="max-w-7xl mx-auto space-y-8">
+
+        <!-- Header and User Profile Section -->
+        <header class="flex flex-col md:flex-row md:items-center justify-between bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-700">
+            <div class="flex items-center space-x-4">
+                <!-- User Avatar/Icon -->
+                <div class="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center text-3xl font-bold">A</div>
+                <div>
+                    <h1 class="text-3xl font-bold">Welcome, Aryaveer</h1>
+                    <p class="text-gray-400 text-lg">CEO and Founder</p>
+                    <p class="text-gray-500 text-xs mt-1" id="user-id-display">Authenticating...</p>
+                </div>
+            </div>
+            <!-- Optional Quick Actions -->
+            <div class="mt-4 md:mt-0">
+                <button class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-full transition-colors duration-300 shadow-md">
+                    View Reports
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Dashboard Content Grid -->
+        <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+            <!-- Financial Dashboard Card -->
+            <div class="lg:col-span-1 bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-700">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold">Account Balance</h2>
+                    <span class="text-green-400 text-sm font-semibold">Real-time</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <span class="text-5xl font-extrabold text-green-300" id="account-balance">Loading...</span>
+                </div>
+                <p class="text-sm text-gray-500 mt-2">Balance is updated automatically every 12 seconds.</p>
+            </div>
+
+            <!-- Projects Section -->
+            <div class="lg:col-span-2 bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-700">
+                <h2 class="text-xl font-bold mb-4">Projects</h2>
+
+                <!-- Add Project Form -->
+                <form id="add-project-form" class="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0 mb-6">
+                    <input type="text" id="project-input" placeholder="Enter new project title" class="flex-1 bg-gray-700 text-white p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400">
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors duration-300">
+                        Add Project
+                    </button>
+                </form>
+
+                <!-- Project List -->
+                <ul id="project-list" class="space-y-4">
+                    <p class="text-center text-gray-500">Loading projects...</p>
+                </ul>
+            </div>
+            
+        </main>
+
+        <!-- Employees Section (Placeholder) -->
+        <div class="bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-700">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold">Company Employees</h2>
+                <button id="open-add-employee-modal" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-xl transition-colors duration-300">
+                    Add Employee
+                </button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="employee-list">
+                <p class="text-center text-gray-500">Loading employees...</p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Add Employee Modal -->
+    <div id="add-employee-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4">
+        <div class="bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-700">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold">Add New Employee</h3>
+                <button id="close-add-employee-modal" class="text-gray-400 hover:text-white transition-colors duration-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <form id="add-employee-form" class="space-y-4">
+                <div>
+                    <label for="employee-name-input" class="block text-sm font-medium text-gray-300 mb-1">Employee Name</label>
+                    <input type="text" id="employee-name-input" placeholder="e.g., Jane Doe" class="w-full p-3 bg-gray-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label for="employee-role-input" class="block text-sm font-medium text-gray-300 mb-1">Role</label>
+                    <input type="text" id="employee-role-input" placeholder="e.g., Lead Engineer" class="w-full p-3 bg-gray-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-colors duration-300">
+                    Add Employee
+                </button>
+            </form>
+        </div>
+    </div>
+
+</body>
+</html>
