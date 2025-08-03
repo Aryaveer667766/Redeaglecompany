@@ -1,367 +1,304 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Aryaveer's Dashboard (LocalStorage)</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-    body { font-family: 'Inter', sans-serif; }
-    .project-checkbox:checked + span {
-      text-decoration: line-through;
-      color: #9ca3af;
-    }
-    .modal-bg {
-      background: rgba(30, 41, 59, 0.5);
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Red Eagle Company - Register</title>
+    <!-- Tailwind CSS CDN for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Using a custom font for better aesthetics and a darker theme */
+        html {
+            scroll-behavior: smooth; /* Ensures smooth scrolling */
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0b0c10; /* Dark background */
+            position: relative;
+            overflow: hidden; /* Hide overflow from animations */
+        }
+        .form-container {
+            background-color: #1f2833; /* Slightly lighter dark color for the card */
+            color: #c5c6c7; /* Light gray text for readability */
+            position: relative;
+            z-index: 10;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInSlideUp 0.8s ease-out forwards;
+        }
+        .input-field {
+            background-color: #0b0c10;
+            border-color: #45a29e;
+            color: #ffffff;
+            transition: all 0.3s ease-in-out;
+        }
+        .input-field:focus {
+            border-color: #66fcf1;
+            box-shadow: 0 0 0 2px #66fcf1;
+            transform: scale(1.01);
+        }
+        .btn-submit {
+            background-color: #66fcf1; /* A teal accent color */
+            color: #0b0c10;
+            font-weight: bold;
+            transition: background-color 0.3s ease-in-out, transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        }
+        .btn-submit:hover {
+            background-color: #45a29e;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+        .logo-text {
+            color: #66fcf1;
+            transition: color 0.3s ease-in-out;
+        }
+        .logo-text:hover {
+            color: #45a29e;
+        }
+
+        /* Keyframes for a subtle background animation */
+        @keyframes subtle-gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Keyframes for the form card entrance */
+        @keyframes fadeInSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Keyframes for confirmation message animation */
+        @keyframes confirmation-bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-10px);
+            }
+            60% {
+                transform: translateY(-5px);
+            }
+        }
+
+        .animated-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(-45deg, #1f2833, #0b0c10, #1f2833, #0b0c10);
+            background-size: 400% 400%;
+            animation: subtle-gradient 15s ease infinite;
+            z-index: 1;
+        }
+        
+        .animated-icon {
+            display: inline-block;
+            animation: confirmation-bounce 1s infinite;
+        }
+    </style>
 </head>
-<body class="bg-gray-900 text-white min-h-screen p-4 md:p-8">
-  <div class="max-w-7xl mx-auto space-y-8">
-    <!-- Header/User Profile -->
-    <header class="flex flex-col md:flex-row md:items-center justify-between bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-700">
-      <div class="flex items-center space-x-4">
-        <div class="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center text-3xl font-bold">A</div>
-        <div>
-          <h1 class="text-3xl font-bold">Welcome, Aryaveer</h1>
-          <p class="text-gray-400 text-lg">CEO and Founder</p>
-        </div>
-      </div>
-      <div class="mt-4 md:mt-0">
-        <button class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-full transition-colors duration-300 shadow-md">
-          View Reports
-        </button>
-      </div>
-    </header>
+<body class="flex items-center justify-center min-h-screen p-4">
 
-    <!-- Dashboard Grid -->
-    <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      <!-- Account Balance -->
-      <div class="lg:col-span-1 bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-700">
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-xl font-bold">Account Balance</h2>
-          <span class="text-green-400 text-sm font-semibold">Real-time</span>
-        </div>
-        <div class="flex items-center space-x-2">
-          <span class="text-5xl font-extrabold text-green-300" id="account-balance">Loading...</span>
-        </div>
-        <p class="text-sm text-gray-500 mt-2">Balance is updated automatically every 12 seconds.</p>
-      </div>
+    <!-- Animated background layer -->
+    <div class="animated-bg"></div>
 
-      <!-- Projects Section -->
-      <div class="lg:col-span-2 bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-700">
-        <h2 class="text-xl font-bold mb-4">Projects</h2>
-        <p id="add-project-message" class="text-center text-gray-400 mb-6 hidden">
-          Please add an employee before you can assign a project.
-        </p>
-        <form id="add-project-form" class="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0 mb-6">
-          <input type="text" id="project-input" placeholder="Enter new project title"
-                 class="flex-1 bg-gray-700 text-white p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <select id="employee-select"
-                  class="bg-gray-700 text-white p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"></select>
-          <button type="submit" id="add-project-btn"
-                  class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors duration-300">
-            Add Project
-          </button>
-        </form>
-        <ul id="project-list" class="space-y-4">
-          <p class="text-center text-gray-500">Loading projects...</p>
-        </ul>
-      </div>
-    </main>
+    <!-- Main container for the form card -->
+    <div class="max-w-md w-full p-8 rounded-2xl shadow-2xl form-container z-20">
 
-    <!-- Employees Section -->
-    <div class="bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-700">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-bold">Company Employees</h2>
-        <button id="open-add-employee-modal"
-                class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-xl transition-colors duration-300">
-          Add Employee
-        </button>
-      </div>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="employee-list">
-        <p class="text-center text-gray-500">Loading employees...</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- Add Employee Modal -->
-  <div id="add-employee-modal" class="hidden fixed inset-0 modal-bg flex items-center justify-center p-4">
-    <div class="bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-700">
-      <div class="flex justify-between items-center mb-6">
-        <h3 class="text-2xl font-bold">Add New Employee</h3>
-        <button id="close-add-employee-modal" class="text-gray-400 hover:text-white transition-colors duration-200">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-      <form id="add-employee-form" class="space-y-4">
-        <div>
-          <label for="employee-name-input" class="block text-sm font-medium text-gray-300 mb-1">Employee Name</label>
-          <input type="text" id="employee-name-input" placeholder="e.g., Jane Doe"
-                 class="w-full p-3 bg-gray-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-        </div>
-        <div>
-          <label for="employee-role-input" class="block text-sm font-medium text-gray-300 mb-1">Role</label>
-          <input type="text" id="employee-role-input" placeholder="e.g., Lead Engineer"
-                 class="w-full p-3 bg-gray-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-        </div>
-        <button type="submit"
-                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-colors duration-300">
-          Add Employee
-        </button>
-      </form>
-    </div>
-  </div>
-
-  <script>
-    // ========== LocalStorage Utility ==========
-    function getFromStorage(key, fallback) {
-      let data = localStorage.getItem(key);
-      return data ? JSON.parse(data) : fallback;
-    }
-    function setToStorage(key, value) {
-      localStorage.setItem(key, JSON.stringify(value));
-    }
-
-    // ========== Account Balance ==========
-    const BALANCE_KEY = 'account_balance';
-    const BALANCE_LAST_UPDATED_KEY = 'balance_last_updated';
-    const BALANCE_INCREMENT = 5000;
-    const BALANCE_INTERVAL = 12000; // ms
-
-    function getCurrentBalance() {
-      let balance = getFromStorage(BALANCE_KEY, 0);
-      let lastUpdated = getFromStorage(BALANCE_LAST_UPDATED_KEY, Date.now());
-      let now = Date.now();
-      let elapsed = now - lastUpdated;
-      let increments = Math.floor(elapsed / BALANCE_INTERVAL);
-      if (increments > 0) {
-        balance += increments * BALANCE_INCREMENT;
-        setToStorage(BALANCE_KEY, balance);
-        setToStorage(BALANCE_LAST_UPDATED_KEY, now - (elapsed % BALANCE_INTERVAL));
-      }
-      return balance;
-    }
-
-    function updateBalanceDisplay() {
-      let balance = getCurrentBalance();
-      document.getElementById('account-balance').textContent = `₹ ${balance.toLocaleString('en-IN')}`;
-    }
-
-    // This timer only affects the UI; actual value is calculated as above to avoid drift if page reloads.
-    setInterval(() => {
-      let last = getFromStorage(BALANCE_LAST_UPDATED_KEY, Date.now());
-      let now = Date.now();
-      if (now - last >= BALANCE_INTERVAL) {
-        let balance = getFromStorage(BALANCE_KEY, 0) + BALANCE_INCREMENT;
-        setToStorage(BALANCE_KEY, balance);
-        setToStorage(BALANCE_LAST_UPDATED_KEY, now);
-      }
-      updateBalanceDisplay();
-    }, 1000); // update every second for "real time" UI
-
-    // ========== Employees ==========
-    const EMPLOYEES_KEY = 'employees';
-
-    function getEmployees() {
-      return getFromStorage(EMPLOYEES_KEY, []);
-    }
-    function addEmployee(name, role) {
-      let employees = getEmployees();
-      employees.push({
-        id: Date.now().toString(),
-        name, role
-      });
-      setToStorage(EMPLOYEES_KEY, employees);
-      renderEmployees();
-      populateEmployeeSelect();
-      updateProjectFormVisibility();
-    }
-    function renderEmployees() {
-      let employees = getEmployees();
-      const employeeList = document.getElementById('employee-list');
-      if (employees.length === 0) {
-        employeeList.innerHTML = `<p class="text-center text-gray-500 col-span-full">No employees added yet.</p>`;
-        return;
-      }
-      employeeList.innerHTML = employees.map(employee => `
-        <div class="bg-gray-700 p-5 rounded-2xl shadow-inner flex items-center space-x-4">
-          <div class="w-12 h-12 bg-gray-600 rounded-full flex items-center justify-center text-xl font-bold text-gray-300">${employee.name.charAt(0)}</div>
-          <div>
-            <p class="font-semibold">${employee.name}</p>
-            <p class="text-sm text-gray-400">${employee.role}</p>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    // ========== Projects ==========
-    const PROJECTS_KEY = 'projects';
-
-    function getProjects() {
-      return getFromStorage(PROJECTS_KEY, []);
-    }
-    function addProject(title, assignedTo) {
-      let projects = getProjects();
-      projects.push({
-        id: Date.now().toString(),
-        title,
-        assignedTo,
-        completed: false
-      });
-      setToStorage(PROJECTS_KEY, projects);
-      renderProjects();
-    }
-    function setProjectCompleted(projectId, completed) {
-      let projects = getProjects();
-      let project = projects.find(p => p.id === projectId);
-      if (project) project.completed = completed;
-      setToStorage(PROJECTS_KEY, projects);
-      renderProjects();
-    }
-    function deleteProject(projectId) {
-      let projects = getProjects().filter(p => p.id !== projectId);
-      setToStorage(PROJECTS_KEY, projects);
-      renderProjects();
-    }
-    function renderProjects() {
-      let projects = getProjects();
-      let employees = getEmployees();
-      const projectList = document.getElementById('project-list');
-      if (projects.length === 0) {
-        projectList.innerHTML = `<p class="text-center text-gray-500">No projects yet. Add one above!</p>`;
-        return;
-      }
-      projectList.innerHTML = '';
-      projects.forEach(project => {
-        const assignedEmployee = employees.find(emp => emp.id === project.assignedTo)?.name || 'Unassigned';
-        const li = document.createElement('li');
-        li.className = 'flex flex-col md:flex-row md:items-center justify-between p-4 bg-gray-700 rounded-xl shadow-inner';
-        li.innerHTML = `
-        <div class="flex-grow flex items-center space-x-3 mb-2 md:mb-0">
-          <label class="flex items-center space-x-3 cursor-pointer">
-            <input type="checkbox" class="form-checkbox h-5 w-5 text-blue-600 bg-gray-600 rounded-md border-gray-500 focus:ring-blue-500 project-checkbox"
-              data-id="${project.id}" ${project.completed ? 'checked' : ''}>
-            <span class="text-lg ${project.completed ? 'line-through text-gray-400' : ''}">${project.title}</span>
-          </label>
-          <span class="text-xs font-semibold px-2 py-1 rounded-full bg-gray-600 text-gray-300">
-            Assigned to: ${assignedEmployee}
-          </span>
-        </div>
-        <div class="flex items-center space-x-2">
-          <span class="text-xs font-semibold px-2 py-1 rounded-full ${project.completed ? 'bg-green-500' : 'bg-yellow-500'}">
-            ${project.completed ? 'Completed' : 'Pending'}
-          </span>
-          <button class="bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-3 text-sm rounded-xl transition-colors duration-200 copy-whatsapp-btn"
-            data-project-title="${project.title}" data-employee-name="${assignedEmployee}">
-            Copy WhatsApp
-          </button>
-          <button class="text-red-400 hover:text-red-500 transition-colors duration-200 delete-project-btn" data-id="${project.id}">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 011-1h4a1 1 0 011 1v8H7V8z" clip-rule="evenodd"/>
+        <!-- Logo and Title -->
+        <div class="flex flex-col items-center mb-8">
+            <!-- Updated Red Eagle SVG Logo -->
+            <svg class="h-20 w-20 mb-4 transition-transform duration-300 ease-in-out transform hover:scale-110" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" fill="none">
+                <path d="M125 75C125 80 120 85 115 85C110 85 105 80 105 75C105 70 110 65 115 65C120 65 125 70 125 75Z" fill="#ff4d4d"/>
+                <path d="M100 120C100 125 95 130 90 130C85 130 80 125 80 120C80 115 85 110 90 110C95 110 100 115 100 120Z" fill="#ff4d4d"/>
+                <path d="M150 100C150 105 145 110 140 110C135 110 130 105 130 100C130 95 135 90 140 90C145 90 150 95 150 100Z" fill="#ff4d4d"/>
+                <path d="M75 100C75 105 70 110 65 110C60 110 55 105 55 100C55 95 60 90 65 90C70 90 75 95 75 100Z" fill="#ff4d4d"/>
+                <path d="M100 50C100 55 95 60 90 60C85 60 80 55 80 50C80 45 85 40 90 40C95 40 100 45 100 50Z" fill="#ff4d4d"/>
+                <path d="M175 100C175 105 170 110 165 110C160 110 155 105 155 100C155 95 160 90 165 90C170 90 175 95 175 100Z" fill="#ff4d4d"/>
+                <path d="M25 100C25 105 20 110 15 110C10 110 5 105 5 100C5 95 10 90 15 90C20 90 25 95 25 100Z" fill="#ff4d4d"/>
+                <path d="M100 150C100 155 95 160 90 160C85 160 80 155 80 150C80 145 85 140 90 140C95 140 100 145 100 150Z" fill="#ff4d4d"/>
+                <path d="M100 100C100 105 95 110 90 110C85 110 80 105 80 100C80 95 85 90 90 90C95 90 100 95 100 100Z" fill="#ff4d4d"/>
+                <path d="M115 110C115 115 110 120 105 120C100 120 95 115 95 110C95 105 100 100 105 100C110 100 115 105 115 110Z" fill="#ff4d4d"/>
+                <path d="M85 90C85 95 80 100 75 100C70 100 65 95 65 90C65 85 70 80 75 80C80 80 85 85 85 90Z" fill="#ff4d4d"/>
+                <path d="M100 100C100 105 95 110 90 110C85 110 80 105 80 100C80 95 85 90 90 90C95 90 100 95 100 100Z" fill="#ff4d4d"/>
             </svg>
-          </button>
+            <h1 class="text-3xl font-bold text-center logo-text">The Red Eagle Company</h1>
         </div>
-        `;
-        projectList.appendChild(li);
-      });
-    }
 
-    // ========== Employee Dropdown in Projects ==========
-    function populateEmployeeSelect() {
-      let employees = getEmployees();
-      const employeeSelect = document.getElementById('employee-select');
-      if (employees.length > 0) {
-        employeeSelect.innerHTML = employees.map(emp =>
-          `<option value="${emp.id}">${emp.name}</option>`
-        ).join('');
-      } else {
-        employeeSelect.innerHTML = '';
-      }
-    }
+        <!-- The main form element -->
+        <form id="registrationForm" class="space-y-6">
 
-    // ========== Show/Hide Project Form if Employees Exist ==========
-    function updateProjectFormVisibility() {
-      let employees = getEmployees();
-      if (employees.length === 0) {
-        document.getElementById('add-project-message').classList.remove('hidden');
-        document.getElementById('add-project-form').classList.add('hidden');
-      } else {
-        document.getElementById('add-project-message').classList.add('hidden');
-        document.getElementById('add-project-form').classList.remove('hidden');
-      }
-    }
+            <!-- Full Name Input Field -->
+            <div>
+                <label for="fullName" class="block text-sm font-medium mb-1">Full Name</label>
+                <input type="text" id="fullName" name="fullName" required
+                       class="mt-1 block w-full px-4 py-2 border rounded-md shadow-sm input-field sm:text-sm">
+            </div>
 
-    // ========== Modal Logic ==========
-    document.getElementById('open-add-employee-modal').onclick = () =>
-      document.getElementById('add-employee-modal').classList.remove('hidden');
-    document.getElementById('close-add-employee-modal').onclick = () =>
-      document.getElementById('add-employee-modal').classList.add('hidden');
-    document.getElementById('add-employee-modal').onclick = e => {
-      if (e.target === document.getElementById('add-employee-modal')) {
-        document.getElementById('add-employee-modal').classList.add('hidden');
-      }
-    };
+            <!-- Email Input Field -->
+            <div>
+                <label for="email" class="block text-sm font-medium mb-1">Email Address</label>
+                <input type="email" id="email" name="email" required
+                       class="mt-1 block w-full px-4 py-2 border rounded-md shadow-sm input-field sm:text-sm">
+            </div>
 
-    // ========== Event Listeners ==========
-    // Add Employee
-    document.getElementById('add-employee-form').onsubmit = function(e) {
-      e.preventDefault();
-      const name = document.getElementById('employee-name-input').value.trim();
-      const role = document.getElementById('employee-role-input').value.trim();
-      if (name && role) {
-        addEmployee(name, role);
-        document.getElementById('employee-name-input').value = '';
-        document.getElementById('employee-role-input').value = '';
-        document.getElementById('add-employee-modal').classList.add('hidden');
-      }
-    };
+            <!-- Phone Number Input Field -->
+            <div>
+                <label for="phone" class="block text-sm font-medium mb-1">Phone Number</label>
+                <input type="tel" id="phone" name="phone" required
+                       class="mt-1 block w-full px-4 py-2 border rounded-md shadow-sm input-field sm:text-sm">
+            </div>
 
-    // Add Project
-    document.getElementById('add-project-form').onsubmit = function(e) {
-      e.preventDefault();
-      const title = document.getElementById('project-input').value.trim();
-      const assignedTo = document.getElementById('employee-select').value;
-      if (title && assignedTo) {
-        addProject(title, assignedTo);
-        document.getElementById('project-input').value = '';
-      }
-    };
+            <!-- Password Input Fields -->
+            <div>
+                <label for="password" class="block text-sm font-medium mb-1">Password</label>
+                <input type="password" id="password" name="password" required
+                       class="mt-1 block w-full px-4 py-2 border rounded-md shadow-sm input-field sm:text-sm">
+            </div>
+            <div>
+                <label for="confirmPassword" class="block text-sm font-medium mb-1">Confirm Password</label>
+                <input type="password" id="confirmPassword" name="confirmPassword" required
+                       class="mt-1 block w-full px-4 py-2 border rounded-md shadow-sm input-field sm:text-sm">
+                <p id="password-error" class="hidden mt-2 text-sm text-red-400">Passwords do not match.</p>
+            </div>
 
-    // Handle Project Actions (complete, delete, copy WhatsApp)
-    document.getElementById('project-list').onclick = function(e) {
-      if (e.target.closest('.delete-project-btn')) {
-        const id = e.target.closest('.delete-project-btn').dataset.id;
-        deleteProject(id);
-      }
-      if (e.target.closest('.copy-whatsapp-btn')) {
-        const btn = e.target.closest('.copy-whatsapp-btn');
-        const employeeName = btn.dataset.employeeName;
-        const projectTitle = btn.dataset.projectTitle;
-        const msg = `Hello ${employeeName}, a new project has been assigned to you: "${projectTitle}". Please review the details. Best regards, Aryaveer.`;
-        navigator.clipboard.writeText(msg);
-        btn.textContent = "Copied!";
-        setTimeout(() => btn.textContent = 'Copy WhatsApp', 2000);
-      }
-      if (e.target.closest('.project-checkbox')) {
-        const id = e.target.closest('.project-checkbox').dataset.id;
-        setProjectCompleted(id, e.target.closest('.project-checkbox').checked);
-      }
-    };
+            <!-- Address Fields -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="street" class="block text-sm font-medium mb-1">Street Address</label>
+                    <input type="text" id="street" name="street" required
+                           class="mt-1 block w-full px-4 py-2 border rounded-md shadow-sm input-field sm:text-sm">
+                </div>
+                <div>
+                    <label for="city" class="block text-sm font-medium mb-1">City</label>
+                    <input type="text" id="city" name="city" required
+                           class="mt-1 block w-full px-4 py-2 border rounded-md shadow-sm input-field sm:text-sm">
+                </div>
+                <div>
+                    <label for="state" class="block text-sm font-medium mb-1">State/Province</label>
+                    <input type="text" id="state" name="state" required
+                           class="mt-1 block w-full px-4 py-2 border rounded-md shadow-sm input-field sm:text-sm">
+                </div>
+                <div>
+                    <label for="zip" class="block text-sm font-medium mb-1">Postal/ZIP Code</label>
+                    <input type="text" id="zip" name="zip" required
+                           class="mt-1 block w-full px-4 py-2 border rounded-md shadow-sm input-field sm:text-sm">
+                </div>
+            </div>
 
-    // ========== Initial Rendering ==========
-    document.addEventListener('DOMContentLoaded', () => {
-      updateBalanceDisplay();
-      renderEmployees();
-      populateEmployeeSelect();
-      updateProjectFormVisibility();
-      renderProjects();
-      setInterval(updateBalanceDisplay, 1000); // keep balance fresh
-    });
+            <!-- Country Dropdown -->
+            <div>
+                <label for="country" class="block text-sm font-medium mb-1">Nearest Server</label>
+                <select id="country" name="country" required
+                        class="mt-1 block w-full px-4 py-2 border rounded-md shadow-sm input-field sm:text-sm">
+                    <option value="">Select a Server</option>
+                    <option value="usa">USA</option>
+                    <option value="uk">UK</option>
+                    <option value="canada">Canada</option>
+                    <option value="singapore">Singapore</option>
+                </select>
+            </div>
+            
+            <!-- Photo Upload Field -->
+            <div>
+                <label for="photo" class="block text-sm font-medium mb-1">Profile Photo</label>
+                <input type="file" id="photo" name="photo" accept="image/*"
+                       class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100">
+            </div>
 
-  </script>
+            <!-- Submit Button -->
+            <button type="submit"
+                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm transition duration-150 ease-in-out btn-submit">
+                Register
+            </button>
+        </form>
+
+        <!-- Confirmation message area, hidden by default -->
+        <div id="confirmationMessage" class="hidden text-center mt-6 space-y-4">
+            <h2 class="text-2xl font-semibold text-green-400">
+                <span class="animated-icon">🎉</span> Hello <span id="userName" class="text-white"></span>!
+            </h2>
+            <p class="mt-2 text-gray-400 leading-relaxed">
+                Thank you for your registration. Your account with The Red Eagle Company has been successfully created. We're excited to have you on board! Our team is already reviewing your details and will contact you shortly to begin your journey toward financial success. Please sit back and relax. We'll be in touch soon! <span class="animated-icon">🚀</span>
+            </p>
+        </div>
+
+    </div>
+
+    <!-- JavaScript to handle form submission -->
+    <script>
+        // Get references to the form and message elements
+        const registrationForm = document.getElementById('registrationForm');
+        const confirmationMessage = document.getElementById('confirmationMessage');
+        const passwordInput = document.getElementById('password');
+        const confirmPasswordInput = document.getElementById('confirmPassword');
+        const passwordError = document.getElementById('password-error');
+        const userNameSpan = document.getElementById('userName');
+
+        // Add a 'submit' event listener to the form
+        registrationForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            if (passwordInput.value !== confirmPasswordInput.value) {
+                passwordError.classList.remove('hidden');
+                confirmPasswordInput.focus();
+                return;
+            } else {
+                passwordError.classList.add('hidden');
+            }
+
+            // Get all the values from the form inputs
+            const fullName = document.getElementById('fullName').value;
+            const email = document.getElementById('email').value;
+            const phone = document.getElementById('phone').value;
+            const street = document.getElementById('street').value;
+            const city = document.getElementById('city').value;
+            const state = document.getElementById('state').value;
+            const zip = document.getElementById('zip').value;
+            const country = document.getElementById('country').value;
+            // The photo file object cannot be directly stored in localStorage,
+            // so we will just log it for now. In a real app, it would be
+            // uploaded to a server.
+            const photoFile = document.getElementById('photo').files[0];
+
+            // Create a user data object
+            const userData = {
+                fullName: fullName,
+                email: email,
+                phone: phone,
+                address: {
+                    street: street,
+                    city: city,
+                    state: state,
+                    zip: zip,
+                    country: country
+                }
+            };
+
+            // Store the user data in localStorage
+            localStorage.setItem('red-eagle-user', JSON.stringify(userData));
+
+            // Log the form data to the console for demonstration
+            console.log('Form Submitted!');
+            console.log('User data stored in localStorage:', userData);
+            console.log('Photo File:', photoFile);
+
+            // Update the confirmation message with the user's name
+            userNameSpan.textContent = fullName;
+            
+            // Hide the form and show the confirmation message
+            registrationForm.classList.add('hidden');
+            confirmationMessage.classList.remove('hidden');
+        });
+    </script>
 </body>
 </html>
