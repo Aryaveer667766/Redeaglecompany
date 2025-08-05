@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Red Eagle Company - Register</title>
+    <title>The Red Eagle Company - Employee Registration</title>
     <!-- Tailwind CSS CDN for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -15,7 +15,12 @@
             font-family: 'Inter', sans-serif;
             background-color: #0b0c10; /* Dark background */
             position: relative;
-            overflow: hidden; /* Hide overflow from animations */
+            min-height: 100vh; /* Ensure body takes full viewport height */
+            display: flex;
+            align-items: center; /* Center vertically */
+            justify-content: center; /* Center horizontally */
+            padding: 1rem; /* Add some padding around the form */
+            box-sizing: border-box; /* Include padding in element's total width and height */
         }
         .form-container {
             background-color: #1f2833; /* Slightly lighter dark color for the card */
@@ -25,6 +30,8 @@
             opacity: 0;
             transform: translateY(20px);
             animation: fadeInSlideUp 0.8s ease-out forwards;
+            max-height: 95vh; /* Limit height to prevent overflow on very small screens */
+            overflow-y: auto; /* Enable vertical scrolling for the form container */
         }
         .input-field {
             background-color: #0b0c10;
@@ -75,21 +82,83 @@
             }
         }
         
-        /* Keyframes for confirmation message animation */
-        @keyframes confirmation-bounce {
-            0%, 20%, 50%, 80%, 100% {
-                transform: translateY(0);
+        /* Keyframes for confirmation message container animation */
+        @keyframes fade-in-scale {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
             }
-            40% {
-                transform: translateY(-10px);
-            }
-            60% {
-                transform: translateY(-5px);
+            to {
+                opacity: 1;
+                transform: scale(1);
             }
         }
 
+        /* Keyframes for pulsating icon */
+        @keyframes pulse-icon {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Custom checkbox styling */
+        .custom-checkbox {
+            position: relative;
+            display: inline-flex; /* Use flex to align checkbox and label */
+            align-items: center;
+            cursor: pointer;
+            user-select: none; /* Prevent text selection */
+        }
+
+        .custom-checkbox input[type="checkbox"] {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+            height: 0;
+            width: 0;
+        }
+
+        .checkmark {
+            height: 1.25rem; /* 20px */
+            width: 1.25rem; /* 20px */
+            background-color: #0b0c10; /* Dark background for unchecked state */
+            border: 2px solid #45a29e; /* Teal border */
+            border-radius: 0.25rem; /* Rounded corners */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease-in-out;
+            flex-shrink: 0; /* Prevent checkmark from shrinking */
+        }
+
+        .custom-checkbox input[type="checkbox"]:checked ~ .checkmark {
+            background-color: #66fcf1; /* Teal background when checked */
+            border-color: #66fcf1; /* Teal border when checked */
+        }
+
+        .checkmark svg {
+            fill: none;
+            stroke: #0b0c10; /* Dark checkmark color */
+            stroke-width: 3;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-dasharray: 24; /* Length of the SVG path */
+            stroke-dashoffset: 24; /* Hide the checkmark initially */
+            transition: stroke-dashoffset 0.3s ease-in-out, opacity 0.3s ease-in-out;
+            opacity: 0;
+        }
+
+        .custom-checkbox input[type="checkbox"]:checked ~ .checkmark svg {
+            stroke-dashoffset: 0; /* Show the checkmark */
+            opacity: 1;
+        }
+
+        .custom-checkbox:hover .checkmark {
+            box-shadow: 0 0 0 3px rgba(102, 252, 241, 0.3); /* Subtle glow on hover */
+        }
+
         .animated-bg {
-            position: fixed;
+            position: fixed; /* Keep background fixed while content scrolls */
             top: 0;
             left: 0;
             width: 100%;
@@ -100,9 +169,12 @@
             z-index: 1;
         }
         
-        .animated-icon {
-            display: inline-block;
-            animation: confirmation-bounce 1s infinite;
+        .confirmation-box {
+            animation: fade-in-scale 0.7s ease-out forwards;
+        }
+
+        .animated-pulse-icon {
+            animation: pulse-icon 2s infinite ease-in-out;
         }
     </style>
 </head>
@@ -116,26 +188,33 @@
 
         <!-- Logo and Title -->
         <div class="flex flex-col items-center mb-8">
-            <!-- Updated Red Eagle SVG Logo -->
-            <svg class="h-20 w-20 mb-4 transition-transform duration-300 ease-in-out transform hover:scale-110" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" fill="none">
-                <path d="M125 75C125 80 120 85 115 85C110 85 105 80 105 75C105 70 110 65 115 65C120 65 125 70 125 75Z" fill="#ff4d4d"/>
-                <path d="M100 120C100 125 95 130 90 130C85 130 80 125 80 120C80 115 85 110 90 110C95 110 100 115 100 120Z" fill="#ff4d4d"/>
-                <path d="M150 100C150 105 145 110 140 110C135 110 130 105 130 100C130 95 135 90 140 90C145 90 150 95 150 100Z" fill="#ff4d4d"/>
-                <path d="M75 100C75 105 70 110 65 110C60 110 55 105 55 100C55 95 60 90 65 90C70 90 75 95 75 100Z" fill="#ff4d4d"/>
-                <path d="M100 50C100 55 95 60 90 60C85 60 80 55 80 50C80 45 85 40 90 40C95 40 100 45 100 50Z" fill="#ff4d4d"/>
-                <path d="M175 100C175 105 170 110 165 110C160 110 155 105 155 100C155 95 160 90 165 90C170 90 175 95 175 100Z" fill="#ff4d4d"/>
-                <path d="M25 100C25 105 20 110 15 110C10 110 5 105 5 100C5 95 10 90 15 90C20 90 25 95 25 100Z" fill="#ff4d4d"/>
-                <path d="M100 150C100 155 95 160 90 160C85 160 80 155 80 150C80 145 85 140 90 140C95 140 100 145 100 150Z" fill="#ff4d4d"/>
-                <path d="M100 100C100 105 95 110 90 110C85 110 80 105 80 100C80 95 85 90 90 90C95 90 100 95 100 100Z" fill="#ff4d4d"/>
-                <path d="M115 110C115 115 110 120 105 120C100 120 95 115 95 110C95 105 100 100 105 100C110 100 115 105 115 110Z" fill="#ff4d4d"/>
-                <path d="M85 90C85 95 80 100 75 100C70 100 65 95 65 90C65 85 70 80 75 80C80 80 85 85 85 90Z" fill="#ff4d4d"/>
-                <path d="M100 100C100 105 95 110 90 110C85 110 80 105 80 100C80 95 85 90 90 90C95 90 100 95 100 100Z" fill="#ff4d4d"/>
+            <!-- New Red Eagle SVG Logo -->
+            <svg class="h-20 w-20 mb-4 transition-transform duration-300 ease-in-out transform hover:scale-110" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L2 12H5V22H19V12H22L12 2Z" fill="#ff4d4d"/>
+                <path d="M12 4.472L4.472 12H7V20H17V12H19.528L12 4.472Z" fill="#CC3333"/>
+                <path d="M12 6.944L6.944 12H9V18H15V12H17.056L12 6.944Z" fill="#990000"/>
+                <path d="M12 9.416L9.416 12H10.5V16H13.5V12H14.584L12 9.416Z" fill="#660000"/>
+                <path d="M12 11.888L11.888 12H12.112L12 11.888Z" fill="#330000"/>
+                <!-- Eagle Head Details -->
+                <path d="M12 2C12 2 15 5 17 7C19 9 20 12 20 12C20 12 19 15 17 17C15 19 12 22 12 22C12 22 9 19 7 17C5 15 4 12 4 12C4 12 5 9 7 7C9 5 12 2 12 2Z" stroke="#ff4d4d" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M12 2C12 2 10.5 4.5 9.5 6C8.5 7.5 8 9 8 9C8 9 8.5 10.5 9.5 12C10.5 13.5 12 16 12 16" stroke="#c5c6c7" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M12 2C12 2 13.5 4.5 14.5 6C15.5 7.5 16 9 16 9C16 9 15.5 10.5 14.5 12C13.5 13.5 12 16 12 16" stroke="#c5c6c7" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M12 16L12 22" stroke="#c5c6c7" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M12 12C12 12 13 11 14 10C15 9 16 8 16 8" stroke="#c5c6c7" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M12 12C12 12 11 11 10 10C9 9 8 8 8 8" stroke="#c5c6c7" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="12" cy="10" r="1" fill="#c5c6c7"/>
+                <path d="M12 10L12 12" stroke="#c5c6c7" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M12 12L10 14" stroke="#c5c6c7" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M12 12L14 14" stroke="#c5c6c7" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
             <h1 class="text-3xl font-bold text-center logo-text">The Red Eagle Company</h1>
         </div>
 
         <!-- The main form element -->
         <form id="registrationForm" class="space-y-6">
+
+            <!-- Form Title -->
+            <h2 class="text-2xl font-semibold text-center text-white mb-6">Employee Registration</h2>
 
             <!-- Full Name Input Field -->
             <div>
@@ -207,29 +286,54 @@
                     <option value="singapore">Singapore</option>
                 </select>
             </div>
-            
-            <!-- Photo Upload Field -->
-            <div>
-                <label for="photo" class="block text-sm font-medium mb-1">Profile Photo</label>
-                <input type="file" id="photo" name="photo" accept="image/*"
-                       class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100">
-            </div>
 
+            <!-- Terms and Conditions Checkbox -->
+            <div class="flex items-center">
+                <label class="custom-checkbox">
+                    <input type="checkbox" id="termsAccepted" name="termsAccepted" required>
+                    <span class="checkmark">
+                        <svg viewBox="0 0 24 24">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                    </span>
+                    <span class="ml-2 text-sm text-gray-400">
+                        I agree to the <a href="terms-conditions-page.html" target="_blank" class="text-teal-400 hover:text-teal-300 underline">Terms and Conditions</a> and <a href="privacy-policy-page.html" target="_blank" class="text-teal-400 hover:text-teal-300 underline">Privacy Policy</a>.
+                    </span>
+                </label>
+            </div>
+            
             <!-- Submit Button -->
             <button type="submit"
                     class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm transition duration-150 ease-in-out btn-submit">
-                Register
+                Register Employee
             </button>
         </form>
 
         <!-- Confirmation message area, hidden by default -->
-        <div id="confirmationMessage" class="hidden text-center mt-6 space-y-4">
-            <h2 class="text-2xl font-semibold text-green-400">
-                <span class="animated-icon">🎉</span> Hello <span id="userName" class="text-white"></span>!
-            </h2>
-            <p class="mt-2 text-gray-400 leading-relaxed">
-                Thank you for your registration. Your account with The Red Eagle Company has been successfully created. We're excited to have you on board! Our team is already reviewing your details and will contact you shortly to begin your journey toward financial success. Please sit back and relax. We'll be in touch soon! <span class="animated-icon">🚀</span>
+        <div id="confirmationMessage" class="hidden text-center mt-6 p-6 rounded-xl shadow-lg confirmation-box">
+            <div class="flex flex-col items-center mb-4">
+                <!-- Checkmark SVG Icon -->
+                <svg class="w-16 h-16 text-green-400 animated-pulse-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <h2 class="text-3xl font-bold text-green-400 mt-4">
+                    Welcome Aboard, <span id="userName" class="text-white"></span>!
+                </h2>
+            </div>
+            <p class="mt-4 text-gray-300 leading-relaxed text-lg">
+                Your employee registration with **The Red Eagle Company** has been successfully completed. We are absolutely thrilled to welcome you to our dedicated team!
+                Your commitment and expertise are invaluable, and we look forward to the significant contributions you will make.
             </p>
+            <div class="mt-6 text-gray-200 text-xl font-semibold">
+                Your Employee ID: <span id="employeeIdDisplay" class="text-teal-400"></span>
+            </div>
+            <p class="mt-4 text-gray-400 text-sm italic">
+                <span class="font-bold text-red-300">Important:</span> Please save this Employee ID in a secure location. You will be asked for it when our HR department contacts you for your onboarding process.
+            </p>
+            <div class="mt-6 text-gray-500 text-sm">
+                <p>Founded by <strong>Aryaveer</strong></p>
+                <p>Your journey with us begins now! 🚀</p>
+            </div>
         </div>
 
     </div>
@@ -243,6 +347,7 @@
         const confirmPasswordInput = document.getElementById('confirmPassword');
         const passwordError = document.getElementById('password-error');
         const userNameSpan = document.getElementById('userName');
+        const employeeIdDisplay = document.getElementById('employeeIdDisplay');
 
         // Add a 'submit' event listener to the form
         registrationForm.addEventListener('submit', function(event) {
@@ -256,6 +361,17 @@
                 passwordError.classList.add('hidden');
             }
 
+            // Check if terms and conditions are accepted
+            const termsAccepted = document.getElementById('termsAccepted').checked;
+            if (!termsAccepted) {
+                // Browser's native validation for 'required' checkbox will typically handle this,
+                // but a custom message could be added here if needed.
+                return; 
+            }
+
+            // Generate a unique Employee ID
+            const employeeId = 'RE-' + crypto.randomUUID().substring(0, 8).toUpperCase(); // Example: RE-A1B2C3D4
+
             // Get all the values from the form inputs
             const fullName = document.getElementById('fullName').value;
             const email = document.getElementById('email').value;
@@ -265,13 +381,10 @@
             const state = document.getElementById('state').value;
             const zip = document.getElementById('zip').value;
             const country = document.getElementById('country').value;
-            // The photo file object cannot be directly stored in localStorage,
-            // so we will just log it for now. In a real app, it would be
-            // uploaded to a server.
-            const photoFile = document.getElementById('photo').files[0];
 
             // Create a user data object
             const userData = {
+                employeeId: employeeId,
                 fullName: fullName,
                 email: email,
                 phone: phone,
@@ -281,19 +394,20 @@
                     state: state,
                     zip: zip,
                     country: country
-                }
+                },
+                termsAccepted: termsAccepted // Store acceptance status
             };
 
             // Store the user data in localStorage
-            localStorage.setItem('red-eagle-user', JSON.stringify(userData));
+            localStorage.setItem('red-eagle-employee', JSON.stringify(userData));
 
             // Log the form data to the console for demonstration
             console.log('Form Submitted!');
-            console.log('User data stored in localStorage:', userData);
-            console.log('Photo File:', photoFile);
+            console.log('Employee data stored in localStorage:', userData);
 
-            // Update the confirmation message with the user's name
+            // Update the confirmation message with the user's name and employee ID
             userNameSpan.textContent = fullName;
+            employeeIdDisplay.textContent = employeeId;
             
             // Hide the form and show the confirmation message
             registrationForm.classList.add('hidden');
