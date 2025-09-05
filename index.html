@@ -3,446 +3,1346 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Red Eagle - Trading Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
-    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <title>The Red Eagle</title>
     
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background: #000;
-            color: #e5e7eb;
-        }
-        .main-bg {
-            background-color: #0a0a0a;
-            position: relative;
-            overflow: hidden;
-        }
-        .aurora {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(ellipse 200% 100% at 90% -10%, rgba(192, 38, 211, 0.1), transparent),
-                        radial-gradient(ellipse 200% 100% at 10% 110%, rgba(79, 70, 229, 0.1), transparent);
-            animation: aurora-anim 15s infinite linear;
-            z-index: 0;
-        }
-        @keyframes aurora-anim {
-            0% { transform: rotate(0deg) scale(1.5); }
-            50% { transform: rotate(180deg) scale(2); }
-            100% { transform: rotate(360deg) scale(1.5); }
-        }
-        .glass-card {
-            background: rgba(17, 17, 17, 0.6);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
-        }
-        .glass-card:hover { transform: translateY(-4px); box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
-        .profit { color: #22c55e; }
-        .loss { color: #ef4444; }
-        .chart-container { position: relative; height: 100%; width: 100%; }
-        .modal-backdrop { background-color: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px); }
-        #qr-reader { width: 100%; border-radius: 1rem; overflow: hidden; border: 2px solid rgba(255, 255, 255, 0.2); }
-        .mobile-nav { background: rgba(10, 10, 10, 0.8); backdrop-filter: blur(10px); border-top: 1px solid rgba(255, 255, 255, 0.1); }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 3px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
 
-        /* PIN Screen Styles */
-        .pin-dot { width: 1rem; height: 1rem; border-radius: 50%; border: 2px solid #6366F1; transition: background-color 0.2s; }
-        .pin-dot.filled { background-color: #6366F1; }
-        .keypad-btn {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 50%; width: 72px; height: 72px; font-size: 1.75rem; font-weight: 600;
-            display: flex; justify-content: center; align-items: center;
-            transition: background-color 0.2s;
-            -webkit-tap-highlight-color: transparent; /* Disable tap highlight on mobile */
+    <style>
+        /* Custom Styles & Aurora Background */
+        :root {
+            --accent-color: 217, 94%, 57%; /* Default Blue */
+            --accent-color-rgb: 59, 130, 246;
         }
-        .keypad-btn:active { background: rgba(255, 255, 255, 0.2); }
-        .shake { animation: shake-anim 0.5s ease-in-out; }
-        @keyframes shake-anim {
-            0%, 100% { transform: translateX(0); }
-            10%, 30%, 50%, 70%, 90% { transform: translateX(-8px); }
-            20%, 40%, 60%, 80% { transform: translateX(8px); }
+
+        body {
+            background-color: #0c0a09;
+            color: #f2f2f2;
+            overflow-x: hidden;
+        }
+
+        .aurora-background {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: -1;
+            opacity: 0.5;
+            filter: blur(100px);
+            pointer-events: none;
+        }
+
+        .aurora-shape1 {
+            position: absolute;
+            height: 400px; width: 400px;
+            background: radial-gradient(circle, rgba(var(--accent-color-rgb), 0.5) 0%, rgba(var(--accent-color-rgb), 0) 70%);
+            animation: move1 20s infinite alternate;
+        }
+
+        .aurora-shape2 {
+            position: absolute;
+            height: 500px; width: 500px;
+            background: radial-gradient(circle, rgba(168, 85, 247, 0.4) 0%, rgba(168, 85, 247, 0) 70%);
+            animation: move2 25s infinite alternate;
+        }
+
+        .aurora-shape3 {
+            position: absolute;
+            height: 300px; width: 300px;
+            background: radial-gradient(circle, rgba(234, 179, 8, 0.3) 0%, rgba(234, 179, 8, 0) 70%);
+            animation: move3 15s infinite alternate;
+        }
+
+        @keyframes move1 {
+            from { transform: translate(10vw, 20vh) rotate(0deg); }
+            to { transform: translate(50vw, 60vh) rotate(360deg); }
+        }
+        @keyframes move2 {
+            from { transform: translate(80vw, 10vh) rotate(0deg); }
+            to { transform: translate(30vw, 80vh) rotate(-360deg); }
+        }
+        @keyframes move3 {
+            from { transform: translate(40vw, 90vh) rotate(0deg); }
+            to { transform: translate(70vw, 5vh) rotate(180deg); }
+        }
+        
+        .glass-card {
+            background-color: rgba(31, 41, 55, 0.4);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+        }
+
+        .nav-link.active {
+            background-color: hsla(var(--accent-color), 0.2);
+            color: hsla(var(--accent-color), 1);
+        }
+        
+        .pin-dot {
+            width: 1rem; height: 1rem;
+            border-radius: 50%;
+            border: 2px solid #6b7280;
+            transition: background-color 0.2s;
+        }
+        .pin-dot.filled {
+            background-color: hsl(var(--accent-color));
+            border-color: hsl(var(--accent-color));
+        }
+
+        .modal {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .modal.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        /* Chart.js tooltip custom styles */
+        .chartjs-tooltip {
+            background: rgba(31, 41, 55, 0.8) !important;
+            border-radius: 0.5rem !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        }
+
+        /* Hide scrollbar but allow scrolling */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* QR Scanner Styling */
+        #qr-reader video {
+            width: 100% !important;
+            height: auto !important;
+            border-radius: 1rem;
+        }
+        #qr-reader-results {
+            display: none;
         }
     </style>
 </head>
-<body class="text-gray-200">
+<body class="font-sans">
 
-    <!-- PIN Screen -->
-    <div id="pin-screen" class="fixed inset-0 z-[100] flex justify-center items-center modal-backdrop">
-        <div class="glass-card p-8 rounded-2xl text-center w-full max-w-sm m-4">
-            <h2 id="pin-title" class="text-2xl font-bold text-white mb-2">Enter PIN</h2>
-            <p id="pin-subtitle" class="text-gray-400 mb-6 h-10 flex items-center justify-center">Enter your 4-digit PIN to continue.</p>
-            <div id="pin-dots-container" class="flex justify-center items-center space-x-4 mb-8">
-                <div class="pin-dot"></div>
-                <div class="pin-dot"></div>
-                <div class="pin-dot"></div>
-                <div class="pin-dot"></div>
-            </div>
-            <div class="grid grid-cols-3 gap-4">
-                <button class="keypad-btn" data-key="1">1</button>
-                <button class="keypad-btn" data-key="2">2</button>
-                <button class="keypad-btn" data-key="3">3</button>
-                <button class="keypad-btn" data-key="4">4</button>
-                <button class="keypad-btn" data-key="5">5</button>
-                <button class="keypad-btn" data-key="6">6</button>
-                <button class="keypad-btn" data-key="7">7</button>
-                <button class="keypad-btn" data-key="8">8</button>
-                <button class="keypad-btn" data-key="9">9</button>
-                <div class="w-18 h-18"></div> <!-- Placeholder -->
-                <button class="keypad-btn" data-key="0">0</button>
-                <button class="keypad-btn flex justify-center items-center" data-key="backspace">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path><line x1="18" y1="9" x2="12" y2="15"></line><line x1="12" y1="9" x2="18" y2="15"></line></svg>
-                </button>
-            </div>
-        </div>
+    <div class="aurora-background">
+        <div class="aurora-shape1"></div>
+        <div class="aurora-shape2"></div>
+        <div class="aurora-shape3"></div>
     </div>
 
-    <!-- Main Dashboard Content (Initially Hidden) -->
-    <div id="dashboard-content" class="hidden">
-        <div class="flex h-screen overflow-hidden main-bg">
-            <div class="aurora"></div>
-            <!-- Sidebar for Desktop -->
-            <aside class="w-20 bg-black flex-col items-center py-6 space-y-6 z-10 hidden md:flex">
-                <div class="text-red-500">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11.64 3.42c.43-.23.96-.23 1.4 0l8 4.22a1 1 0 0 1 .55.88V15c0 .34-.17.65-.44.83l-8 5.22a1 1 0 0 1-1.1 0l-8-5.22A1 1 0 0 1 3 15V8.52a1 1 0 0 1 .55-.88zM12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"></path></svg>
-                </div>
-                <div class="flex flex-col items-center space-y-4 text-gray-500">
-                    <a href="#" class="p-3 bg-gray-800 rounded-lg text-white" title="Dashboard"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg></a>
-                    <a href="#" class="p-3 hover:bg-gray-800 rounded-lg" title="Markets"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg></a>
-                    <a href="#" class="p-3 hover:bg-gray-800 rounded-lg" title="Portfolio"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 7V5a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2"></path><path d="M22 7H2"></path><path d="M14 11h-1"></path><path d="M17 11h-1"></path><path d="M20 11h-1"></path><path d="M14 15h-1"></path><path d="M17 15h-1"></path><path d="M20 15h-1"></path></svg></a>
-                </div>
-            </aside>
+    <div id="lock-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-stone-950/80 backdrop-blur-md">
+        <div class="text-center">
+            <h1 class="text-3xl font-bold tracking-tighter text-white mb-2">The Red Eagle</h1>
+            <p id="lock-screen-message" class="text-gray-400 mb-6">Create a PIN to secure your account</p>
+            <div id="pin-dots" class="flex justify-center space-x-4 mb-8">
+                <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+            </div>
+        </div>
+        <div id="keypad" class="grid grid-cols-3 gap-4 w-64">
+            </div>
+    </div>
 
-            <!-- Main Content -->
-            <main class="relative flex-1 p-4 md:p-6 overflow-y-auto pb-24 md:pb-6 custom-scrollbar">
-                <header class="flex justify-between items-center mb-6">
-                    <div>
-                        <h1 class="text-2xl md:text-3xl font-bold text-white">Hi, Aryaveer</h1>
-                        <p class="text-gray-400 text-sm md:text-base">Welcome to The Red Eagle.</p>
-                    </div>
-                    <button id="pay-button" class="flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 md:py-3 md:px-6 rounded-xl transition-transform duration-200 hover:scale-105">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 md:h-6 md:w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"></rect><line x1="8" y1="12" x2="16" y2="12"></line></svg>
-                        <span class="hidden sm:inline">Pay with UPI</span>
+    <div id="app" class="hidden h-screen w-screen md:grid md:grid-cols-[240px_1fr]">
+
+        <aside class="hidden md:flex flex-col bg-stone-900/50 border-r border-stone-800 p-4">
+            <div class="text-2xl font-bold tracking-tighter mb-8 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-500"><path d="m14 11-4 4 4 4"/><path d="M20 11h-8"/></svg>
+                The Red Eagle
+            </div>
+            <nav id="desktop-nav" class="flex flex-col space-y-2">
+                <a href="#dashboard" class="nav-link flex items-center gap-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-stone-700/50 transition-colors" data-page="dashboard"><i data-lucide="layout-dashboard"></i> Dashboard</a>
+                <a href="#markets" class="nav-link flex items-center gap-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-stone-700/50 transition-colors" data-page="markets"><i data-lucide="candlestick-chart"></i> Markets</a>
+                <a href="#portfolio" class="nav-link flex items-center gap-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-stone-700/50 transition-colors" data-page="portfolio"><i data-lucide="briefcase"></i> Portfolio</a>
+                <a href="#settings" class="nav-link flex items-center gap-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-stone-700/50 transition-colors" data-page="settings"><i data-lucide="settings"></i> Settings</a>
+            </nav>
+            <button id="pay-button-desktop" class="mt-auto w-full flex items-center justify-center gap-2 bg-blue-600 text-white font-semibold py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                <i data-lucide="send"></i> Pay with UPI
+            </button>
+        </aside>
+
+        <main class="overflow-y-auto pb-24 md:pb-4">
+            <header class="p-4 flex md:hidden justify-between items-center sticky top-0 z-10 glass-card rounded-none">
+                <div class="text-xl font-bold tracking-tighter text-white">The Red Eagle</div>
+                <div class="relative">
+                    <button id="notification-bell">
+                        <i data-lucide="bell"></i>
+                        <div id="notification-dot" class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full hidden"></div>
                     </button>
-                </header>
-                <div class="grid grid-cols-1 xl:grid-cols-5 gap-6">
-                    <div class="xl:col-span-3 flex flex-col gap-6">
-                        <div class="grid grid-cols-2 gap-4 md:gap-6">
-                            <div class="glass-card col-span-2 p-4 md:p-6 rounded-2xl">
-                                <h3 class="text-gray-400 text-sm font-medium">Total Balance</h3>
-                                <p id="balance" class="text-3xl md:text-4xl font-extrabold text-white mt-2">₹800,000.00</p>
-                            </div>
-                            <div class="glass-card p-4 md:p-6 rounded-2xl">
-                                <h3 class="text-gray-400 text-sm font-medium">Today's P/L</h3>
-                                <div id="pnl" class="flex items-center mt-2">
-                                    <p class="text-xl md:text-2xl font-extrabold">₹0.00</p>
-                                </div>
-                            </div>
-                            <div class="glass-card p-4 md:p-6 rounded-2xl">
-                                <h3 class="text-gray-400 text-sm font-medium">Positions</h3>
-                                <p class="text-3xl md:text-4xl font-extrabold text-white mt-2">12</p>
-                            </div>
+                    <div id="notification-panel" class="hidden absolute right-0 mt-2 w-72 glass-card p-4 shadow-lg z-20">
+                        <h3 class="font-semibold mb-2">Notifications</h3>
+                        <div id="notification-list" class="text-sm text-gray-300 space-y-2 max-h-60 overflow-y-auto"></div>
+                    </div>
+                </div>
+            </header>
+            
+            <div id="content" class="p-4 md:p-8">
+                <div id="page-dashboard" class="page">
+                    <h1 id="greeting" class="text-3xl font-bold text-white mb-6">Hi, User</h1>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                        <div class="glass-card p-4 flex flex-col justify-between">
+                            <p class="text-gray-400">Available Balance</p>
+                            <p id="balance-value" class="text-2xl font-semibold text-white mt-2">$0.00</p>
                         </div>
-                        <div class="glass-card p-4 md:p-6 rounded-2xl h-[40vh] md:h-[50vh] xl:h-[calc(100%-12rem)]">
-                            <div class="chart-container"><canvas id="balanceChart"></canvas></div>
+                        <div class="glass-card p-4 flex flex-col justify-between">
+                            <p class="text-gray-400">Portfolio Value</p>
+                            <p id="portfolio-value" class="text-2xl font-semibold text-white mt-2">$0.00</p>
+                        </div>
+                        <div class="glass-card p-4 flex flex-col justify-between">
+                            <p class="text-gray-400">Today's P/L</p>
+                            <p id="profit-loss-value" class="text-2xl font-semibold mt-2">$0.00</p>
                         </div>
                     </div>
-                    <div class="xl:col-span-2 flex flex-col gap-6">
-                        <div class="glass-card p-4 md:p-6 rounded-2xl h-[40vh] md:h-auto xl:h-1/2 flex flex-col">
-                            <h3 class="text-lg font-bold text-white mb-4">Distribution</h3>
-                            <div class="chart-container flex-1"><canvas id="portfolioChart"></canvas></div>
+                    <div class="grid grid-cols-1 xl:grid-cols-5 gap-6 mb-6">
+                        <div class="xl:col-span-3 glass-card p-6">
+                            <h2 class="text-xl font-semibold text-white mb-4">Portfolio History</h2>
+                            <canvas id="portfolio-chart"></canvas>
                         </div>
-                        <div class="glass-card p-4 md:p-6 rounded-2xl h-[40vh] md:h-auto xl:h-1/2 flex flex-col">
-                            <h3 class="text-lg font-bold text-white mb-4">Recent Transactions</h3>
-                            <div id="transaction-list" class="flex-1 overflow-y-auto custom-scrollbar pr-2">
-                                <p class="text-gray-400 text-center py-4">No transactions yet.</p>
-                            </div>
+                        <div class="xl:col-span-2 glass-card p-6">
+                             <h2 class="text-xl font-semibold text-white mb-4">Asset Distribution</h2>
+                            <canvas id="asset-chart"></canvas>
+                        </div>
+                    </div>
+                     <div class="glass-card p-6">
+                        <h2 class="text-xl font-semibold text-white mb-4">Recent Transactions</h2>
+                        <div id="transactions-list" class="space-y-4 max-h-80 overflow-y-auto no-scrollbar">
+                           </div>
+                    </div>
+                </div>
+                
+                <div id="page-markets" class="page hidden">
+                     <h1 class="text-3xl font-bold text-white mb-6">Markets</h1>
+                     <div id="stock-list" class="space-y-3">
+                         </div>
+                </div>
+
+                <div id="page-portfolio" class="page hidden">
+                     <h1 class="text-3xl font-bold text-white mb-6">My Portfolio</h1>
+                     <div id="portfolio-list" class="space-y-4">
+                         </div>
+                </div>
+
+                <div id="page-settings" class="page hidden">
+                    <h1 class="text-3xl font-bold text-white mb-6">Settings</h1>
+                    <div class="space-y-6 max-w-md">
+                        <div class="glass-card p-6">
+                            <label for="display-name" class="block font-medium text-gray-300 mb-2">Display Name</label>
+                            <input type="text" id="display-name" class="w-full bg-stone-800 border border-stone-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div class="glass-card p-6">
+                            <h3 class="font-medium text-gray-300 mb-4">Theme Color</h3>
+                            <div id="theme-selector" class="flex space-x-4">
+                                </div>
+                        </div>
+                        <div class="glass-card p-6 flex justify-between items-center">
+                            <span class="font-medium text-gray-300">Sound Effects</span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="sound-toggle" class="sr-only peer">
+                                <div class="w-11 h-6 bg-stone-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
                         </div>
                     </div>
                 </div>
-            </main>
-        </div>
-        <nav class="md:hidden fixed bottom-0 left-0 right-0 h-16 mobile-nav flex justify-around items-center z-20">
-            <a href="#" class="p-3 text-indigo-400" title="Dashboard"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg></a>
-            <a href="#" class="p-3 text-gray-500" title="Markets"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg></a>
-            <a href="#" class="p-3 text-gray-500" title="Portfolio"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 7V5a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2"></path><path d="M22 7H2"></path><path d="M14 11h-1"></path><path d="M17 11h-1"></path><path d="M20 11h-1"></path><path d="M14 15h-1"></path><path d="M17 15h-1"></path><path d="M20 15h-1"></path></svg></a>
+            </div>
+        </main>
+
+        <nav id="mobile-nav" class="md:hidden fixed bottom-0 left-0 right-0 glass-card border-t border-stone-800 flex justify-around p-2">
+            <a href="#dashboard" class="nav-link flex flex-col items-center text-gray-400 p-2 rounded-lg w-1/5" data-page="dashboard"><i data-lucide="layout-dashboard"></i><span class="text-xs mt-1">Home</span></a>
+            <a href="#markets" class="nav-link flex flex-col items-center text-gray-400 p-2 rounded-lg w-1/5" data-page="markets"><i data-lucide="candlestick-chart"></i><span class="text-xs mt-1">Markets</span></a>
+            <button id="pay-button-mobile" class="flex items-center justify-center bg-blue-600 text-white rounded-full w-14 h-14 -mt-8 shadow-lg shadow-blue-900/50">
+                <i data-lucide="send" class="w-6 h-6"></i>
+            </button>
+            <a href="#portfolio" class="nav-link flex flex-col items-center text-gray-400 p-2 rounded-lg w-1/5" data-page="portfolio"><i data-lucide="briefcase"></i><span class="text-xs mt-1">Portfolio</span></a>
+            <a href="#settings" class="nav-link flex flex-col items-center text-gray-400 p-2 rounded-lg w-1/5" data-page="settings"><i data-lucide="settings"></i><span class="text-xs mt-1">Settings</span></a>
         </nav>
-        <div id="payment-modal" class="fixed inset-0 modal-backdrop flex justify-center items-center z-50 hidden">
-            <div id="modal-content" class="glass-card p-6 md:p-8 rounded-2xl w-full max-w-md m-4 transform transition-all duration-300 scale-95 opacity-0">
-                <div id="view-initial"><h2 class="text-2xl font-bold text-white mb-4 text-center">Pay with UPI</h2><div class="space-y-4"><button id="scan-qr-btn" class="w-full flex items-center justify-center space-x-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-4 px-6 rounded-xl transition-transform duration-200 hover:scale-105"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path><path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></path><rect x="7" y="7" width="10" height="10" rx="1"></rect></svg><span>Scan a new QR Code</span></button><button id="manual-entry-btn" class="w-full flex items-center justify-center space-x-3 bg-gray-800 hover:bg-gray-700 text-white font-semibold py-4 px-6 rounded-xl transition-transform duration-200 hover:scale-105"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 17v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg><span>Pay using UPI ID</span></button></div><button id="close-modal-btn-1" class="mt-6 w-full bg-gray-700 hover:bg-gray-600 text-gray-300 font-semibold py-2 px-4 rounded-xl">Cancel</button></div>
-                <div id="view-scanning" class="hidden text-center"><h2 class="text-2xl font-bold text-white mb-4">Scan QR Code</h2><div id="qr-reader" class="mx-auto"></div><p id="scanner-status" class="text-gray-400 mt-4 h-5"></p><button id="stop-scan-btn" class="mt-4 w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-xl">Cancel Scan</button></div>
-                <div id="view-manual-entry" class="hidden"><h2 class="text-2xl font-bold text-white mb-4">Enter UPI ID</h2><div class="relative"><input type="text" id="upi-id-input" placeholder="someone@bank" class="w-full bg-gray-900/50 text-white text-lg p-4 rounded-lg border-2 border-transparent focus:border-indigo-500 focus:outline-none focus:ring-0"><button id="verify-upi-btn" class="absolute right-2 top-1/2 -translate-y-1/2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg">Verify</button></div><p id="verify-status" class="text-sm mt-2 h-4"></p><h3 class="text-md font-semibold text-gray-300 mt-4 mb-2">Recent Payees</h3><div id="recent-payees-list" class="space-y-2 max-h-32 overflow-y-auto custom-scrollbar"></div><button id="close-modal-btn-manual" class="mt-4 w-full bg-gray-700 hover:bg-gray-600 text-gray-300 font-semibold py-2 px-4 rounded-xl">Cancel</button></div>
-                <div id="view-payment-details" class="hidden"><h2 class="text-2xl font-bold text-white mb-4">Payment Details</h2><div class="bg-gray-900/50 p-4 rounded-lg mb-4"><p class="text-sm text-gray-400">Paying to:</p><p id="recipient-name" class="text-lg font-semibold text-white"></p><p id="recipient-upi" class="text-sm text-gray-300"></p><p id="recipient-note" class="text-sm text-gray-400 mt-1"></p></div><div class="relative"><span class="absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-bold text-gray-400">₹</span><input type="number" id="payment-amount" placeholder="0.00" class="w-full bg-gray-900/50 text-white text-3xl font-bold p-4 pl-10 rounded-lg border-2 border-transparent focus:border-indigo-500 focus:outline-none focus:ring-0"></div><button id="confirm-pay-btn" disabled class="mt-6 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-xl transition-all duration-200 disabled:bg-gray-600 disabled:cursor-not-allowed disabled:opacity-50">Pay</button><button id="close-modal-btn-2" class="mt-4 w-full bg-gray-700 hover:bg-gray-600 text-gray-300 font-semibold py-2 px-4 rounded-xl">Cancel</button></div>
-                <div id="view-status" class="hidden text-center py-8"><div id="processing-spinner" class="flex flex-col items-center"><svg class="animate-spin h-12 w-12 text-indigo-400 mb-4" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><p class="text-xl font-semibold text-white">Processing Payment...</p></div><div id="success-message" class="hidden flex flex-col items-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-green-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><p class="text-2xl font-bold text-white">Payment Confirmed!</p><div id="receipt" class="text-gray-400 mt-4 text-sm bg-gray-900/50 p-4 rounded-lg w-full text-left"></div></div></div>
+    </div>
+
+    <div id="trade-modal" class="modal fixed inset-0 z-40 bg-black/70 items-center justify-center p-4">
+        <div class="glass-card w-full max-w-md p-6 rounded-2xl relative">
+            <button id="close-trade-modal" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i data-lucide="x"></i></button>
+            <h2 id="trade-modal-title" class="text-2xl font-bold mb-4">Trade Stock</h2>
+            <div class="flex border-b border-stone-700 mb-4">
+                <button id="buy-tab" class="py-2 px-4 font-semibold text-white border-b-2 border-blue-500">Buy</button>
+                <button id="sell-tab" class="py-2 px-4 font-semibold text-gray-500">Sell</button>
+            </div>
+            <div>
+                <p class="text-sm text-gray-400">Current Price: <span id="trade-modal-price" class="font-semibold text-white"></span></p>
+                <p class="text-sm text-gray-400">Available to trade: <span id="trade-modal-available" class="font-semibold text-white"></span></p>
+                <div class="mt-4">
+                    <label for="shares-input" class="block text-sm font-medium text-gray-300 mb-1">Shares</label>
+                    <input type="number" id="shares-input" min="1" class="w-full bg-stone-800 border border-stone-700 rounded-lg px-3 py-2 text-white" placeholder="0">
+                </div>
+                <div class="mt-4 text-center">
+                    <p class="text-gray-400">Total</p>
+                    <p id="trade-total" class="text-3xl font-bold">$0.00</p>
+                </div>
+                <button id="confirm-trade-button" class="mt-6 w-full bg-blue-600 text-white font-semibold py-3 rounded-lg hover:bg-blue-700 transition-colors">Confirm Purchase</button>
             </div>
         </div>
     </div>
+    
+    <div id="upi-modal" class="modal fixed inset-0 z-40 bg-black/70 items-end justify-center md:items-center">
+         <div class="glass-card w-full max-w-md p-6 rounded-t-2xl md:rounded-2xl relative transition-transform duration-300 transform translate-y-full md:translate-y-0 opacity-0" id="upi-modal-content">
+            <button id="close-upi-modal" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i data-lucide="x"></i></button>
+            
+            <div id="upi-step-1">
+                <h2 class="text-2xl font-bold mb-6">Send Money</h2>
+                <div class="space-y-4">
+                    <button id="scan-qr-button" class="w-full flex items-center justify-between p-4 rounded-lg bg-stone-700/50 hover:bg-stone-600/50">
+                        <span class="font-semibold">Scan any UPI QR</span>
+                        <i data-lucide="qr-code"></i>
+                    </button>
+                     <button id="enter-upi-id-button" class="w-full flex items-center justify-between p-4 rounded-lg bg-stone-700/50 hover:bg-stone-600/50">
+                        <span class="font-semibold">Enter UPI ID</span>
+                        <i data-lucide="at-sign"></i>
+                    </button>
+                </div>
+                <div id="recent-payees-section" class="mt-8 hidden">
+                    <h3 class="font-semibold text-gray-300 mb-3">Recent Payees</h3>
+                    <div id="recent-payees-list" class="space-y-2"></div>
+                </div>
+            </div>
+
+            <div id="upi-step-2-scan" class="hidden">
+                <button class="back-to-upi-choice mb-4 text-sm flex items-center gap-1 text-gray-400 hover:text-white"><i data-lucide="arrow-left" class="w-4 h-4"></i> Back</button>
+                <h2 class="text-2xl font-bold mb-4">Scan QR Code</h2>
+                <div id="qr-reader" class="w-full aspect-square bg-stone-900 rounded-2xl overflow-hidden"></div>
+                <p id="qr-status" class="text-center text-sm text-gray-400 mt-4">Place a QR code inside the frame</p>
+            </div>
+
+            <div id="upi-step-2-manual" class="hidden">
+                 <button class="back-to-upi-choice mb-4 text-sm flex items-center gap-1 text-gray-400 hover:text-white"><i data-lucide="arrow-left" class="w-4 h-4"></i> Back</button>
+                 <h2 class="text-2xl font-bold mb-4">Enter UPI ID</h2>
+                 <div class="flex gap-2">
+                    <input type="text" id="upi-id-input" placeholder="someone@bank" class="flex-grow bg-stone-800 border border-stone-700 rounded-lg px-3 py-2 text-white">
+                    <button id="verify-upi-id" class="bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg">Verify</button>
+                 </div>
+                 <p id="upi-verify-status" class="text-sm mt-2 h-4"></p>
+            </div>
+
+            <div id="upi-step-3" class="hidden">
+                <h2 class="text-2xl font-bold mb-2">Paying</h2>
+                <div class="flex items-center gap-3 bg-stone-800/50 p-3 rounded-lg mb-6">
+                    <div class="w-10 h-10 rounded-full bg-purple-500 flex items-center justify-center font-bold text-white text-lg" id="payee-initial">P</div>
+                    <div>
+                        <p id="payee-name" class="font-semibold text-white">Recipient Name</p>
+                        <p id="payee-upi-id" class="text-sm text-gray-400">upi@id</p>
+                    </div>
+                </div>
+                <div class="text-center">
+                    <input type="number" id="payment-amount-input" class="bg-transparent text-5xl font-bold text-white w-full text-center outline-none" placeholder="$0">
+                    <button id="confirm-payment-button" class="mt-8 w-full bg-blue-600 text-white font-semibold py-3 rounded-lg hover:bg-blue-700 transition-colors">Pay</button>
+                </div>
+            </div>
+
+            <div id="upi-step-4-success" class="hidden text-center py-8">
+                <div class="w-20 h-20 mx-auto bg-green-500/20 rounded-full flex items-center justify-center mb-4">
+                    <i data-lucide="check-circle-2" class="w-12 h-12 text-green-400"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-white mb-2">Payment Successful!</h2>
+                <p class="text-4xl font-bold text-white mb-4" id="success-amount"></p>
+                <p class="text-gray-400">to <span id="success-payee-name" class="font-semibold text-gray-300"></span></p>
+                <p class="text-xs text-gray-500 mt-6">Transaction ID: <span id="success-txn-id"></span></p>
+                 <button id="payment-done-button" class="mt-8 w-full bg-stone-700 text-white font-semibold py-3 rounded-lg hover:bg-stone-600 transition-colors">Done</button>
+            </div>
+         </div>
+    </div>
+
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', () => {
 
-            // --- Data Persistence and PIN Logic ---
-            const STORAGE_KEY = 'redEagleData';
-            let appData = {
-                pinHash: null,
-                balance: 800000,
-                todaysPnl: 0,
-                transactions: [],
-                payees: [],
-            };
+        // =========================================================================
+        // === STATE MANAGEMENT & INITIALIZATION =================================
+        // =========================================================================
+        
+        const THEMES = [
+            { name: 'Blue', accent: '217, 94%, 57%', accentRgb: '59, 130, 246' },
+            { name: 'Green', accent: '142, 71%, 45%', accentRgb: '52, 211, 153' },
+            { name: 'Purple', accent: '262, 84%, 60%', accentRgb: '139, 92, 246' },
+            { name: 'Yellow', accent: '43, 96%, 56%', accentRgb: '234, 179, 8' }
+        ];
 
-            const pinScreen = document.getElementById('pin-screen');
-            const dashboardContent = document.getElementById('dashboard-content');
-            const pinTitle = document.getElementById('pin-title');
-            const pinSubtitle = document.getElementById('pin-subtitle');
-            const pinDots = document.querySelectorAll('.pin-dot');
-            const pinDotsContainer = document.getElementById('pin-dots-container');
+        const INITIAL_STOCKS = [
+            { ticker: 'APXD', name: 'Apex Dynamics', price: 154.32, history: [], trend: 0 },
+            { ticker: 'NVCR', name: 'Nova Core Inc.', price: 278.91, history: [], trend: 0 },
+            { ticker: 'CYBG', name: 'Cyber Guard', price: 88.50, history: [], trend: 0 },
+            { ticker: 'SOLX', name: 'Solaris Energy', price: 412.67, history: [], trend: 0 },
+            { ticker: 'EQNM', name: 'Equinox Media', price: 112.10, history: [], trend: 0 },
+            { ticker: 'VRTX', name: 'Vortex Motors', price: 330.45, history: [], trend: 0 },
+        ];
 
-            let currentPin = '';
-            let pinCreationStep = 0; // 0: enter, 1: confirm
-            let tempPin = '';
+        const DEFAULT_STATE = {
+            user: {
+                pin: null,
+                name: 'Aryaveer',
+                balance: 25000,
+                recentPayees: [],
+            },
+            portfolio: {
+                stocks: {}, // e.g. { APXD: { shares: 10, avgPrice: 150.00 } }
+                history: [{ time: Date.now(), value: 0 }],
+            },
+            stocks: INITIAL_STOCKS,
+            transactions: [],
+            notifications: [],
+            settings: {
+                theme: 'Blue',
+                soundEnabled: true,
+            },
+        };
 
-            function saveData() {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+        let appState = {};
+        
+        let portfolioChart, assetChart, marketSparklines = {};
+        let marketInterval;
+        let html5QrCode;
+        let currentTrade = { stock: null, type: 'buy' };
+        let currentPayment = { name: null, upiId: null, amount: null };
+        
+        const loadState = () => {
+            const savedState = localStorage.getItem('redEagleState');
+            if (savedState) {
+                appState = JSON.parse(savedState);
+                // Ensure default keys exist if state is old
+                appState.user = { ...DEFAULT_STATE.user, ...appState.user };
+                appState.portfolio = { ...DEFAULT_STATE.portfolio, ...appState.portfolio };
+                appState.stocks = appState.stocks && appState.stocks.length === INITIAL_STOCKS.length ? appState.stocks : INITIAL_STOCKS;
+                appState.transactions = appState.transactions || [];
+                appState.notifications = appState.notifications || [];
+                appState.settings = { ...DEFAULT_STATE.settings, ...appState.settings };
+            } else {
+                appState = JSON.parse(JSON.stringify(DEFAULT_STATE)); // Deep copy
+            }
+        };
+
+        const saveState = () => {
+            localStorage.setItem('redEagleState', JSON.stringify(appState));
+        };
+
+        const initApp = () => {
+            loadState();
+            if (appState.user.pin) {
+                setupLockScreen('enter');
+            } else {
+                setupLockScreen('create');
+            }
+            lucide.createIcons();
+        };
+
+        const unlockApp = () => {
+            document.getElementById('lock-screen').style.display = 'none';
+            document.getElementById('app').classList.remove('hidden');
+            
+            setupNavigation();
+            setupDashboard();
+            setupMarkets();
+            setupPortfolio();
+            setupSettings();
+            setupNotifications();
+            setupPaymentModal();
+            
+            startMarketSimulation();
+            
+            handleRouteChange();
+        };
+        
+        initApp();
+        
+        // =========================================================================
+        // === FEATURE 1: SECURITY LOCK SCREEN =====================================
+        // =========================================================================
+
+        let pinEntry = '';
+        let pinConfirm = '';
+        let lockScreenState = 'create'; // 'create', 'confirm', 'enter'
+
+        const setupLockScreen = (mode) => {
+            lockScreenState = mode;
+            const messageEl = document.getElementById('lock-screen-message');
+            if (mode === 'create') messageEl.textContent = 'Create a 4-digit PIN to secure your account';
+            if (mode === 'confirm') messageEl.textContent = 'Confirm your PIN';
+            if (mode === 'enter') messageEl.textContent = 'Enter your PIN to unlock';
+            
+            const keypad = document.getElementById('keypad');
+            keypad.innerHTML = '';
+            const keys = ['1','2','3','4','5','6','7','8','9','','0','del'];
+            keys.forEach(key => {
+                const keyEl = document.createElement('button');
+                keyEl.className = "text-2xl font-semibold text-white p-4 rounded-full hover:bg-stone-700/50 transition-colors";
+                if (key === '') {
+                    keyEl.disabled = true;
+                } else if (key === 'del') {
+                    keyEl.innerHTML = `<i data-lucide="delete" class="mx-auto"></i>`;
+                    keyEl.onclick = () => handlePinInput('del');
+                } else {
+                    keyEl.textContent = key;
+                    keyEl.onclick = () => handlePinInput(key);
+                }
+                keypad.appendChild(keyEl);
+            });
+            lucide.createIcons();
+        };
+
+        const handlePinInput = (key) => {
+            if (key === 'del') {
+                pinEntry = pinEntry.slice(0, -1);
+            } else if (pinEntry.length < 4) {
+                pinEntry += key;
+            }
+            updatePinDots();
+
+            if (pinEntry.length === 4) {
+                setTimeout(processPin, 200);
+            }
+        };
+        
+        const processPin = () => {
+            if (lockScreenState === 'create') {
+                pinConfirm = pinEntry;
+                pinEntry = '';
+                updatePinDots();
+                setupLockScreen('confirm');
+            } else if (lockScreenState === 'confirm') {
+                if (pinEntry === pinConfirm) {
+                    appState.user.pin = pinEntry;
+                    saveState();
+                    unlockApp();
+                } else {
+                    document.getElementById('lock-screen-message').textContent = 'PINs do not match. Please try again.';
+                    pinEntry = '';
+                    pinConfirm = '';
+                    updatePinDots();
+                    setTimeout(() => setupLockScreen('create'), 1500);
+                }
+            } else if (lockScreenState === 'enter') {
+                if (pinEntry === appState.user.pin) {
+                    unlockApp();
+                } else {
+                    document.getElementById('lock-screen-message').textContent = 'Incorrect PIN. Please try again.';
+                    const pinDots = document.getElementById('pin-dots');
+                    pinDots.classList.add('animate-shake'); // You'd need a shake animation for this
+                    pinEntry = '';
+                    updatePinDots();
+                    setTimeout(() => {
+                        pinDots.classList.remove('animate-shake');
+                        document.getElementById('lock-screen-message').textContent = 'Enter your PIN to unlock';
+                    }, 1500);
+                }
+            }
+        };
+
+        const updatePinDots = () => {
+            const dots = document.querySelectorAll('#pin-dots .pin-dot');
+            dots.forEach((dot, index) => {
+                if (index < pinEntry.length) {
+                    dot.classList.add('filled');
+                } else {
+                    dot.classList.remove('filled');
+                }
+            });
+        };
+
+        // =========================================================================
+        // === FEATURE 2: MULTI-PAGE NAVIGATION (ROUTER) ===========================
+        // =========================================================================
+
+        const setupNavigation = () => {
+            window.addEventListener('hashchange', handleRouteChange);
+            
+            // Set initial active link
+            const initialHash = window.location.hash || '#dashboard';
+            document.querySelectorAll(`.nav-link[href="${initialHash}"]`).forEach(link => link.classList.add('active'));
+        };
+
+        const handleRouteChange = () => {
+            const hash = window.location.hash || '#dashboard';
+            const pageId = 'page-' + hash.substring(1);
+
+            document.querySelectorAll('.page').forEach(page => page.classList.add('hidden'));
+            const activePage = document.getElementById(pageId);
+            if (activePage) {
+                activePage.classList.remove('hidden');
+            } else {
+                 document.getElementById('page-dashboard').classList.remove('hidden'); // Fallback
             }
 
-            function loadData() {
-                const savedData = localStorage.getItem(STORAGE_KEY);
-                if (savedData) {
-                    appData = JSON.parse(savedData);
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === hash) {
+                    link.classList.add('active');
+                }
+            });
+        };
+        
+        // =========================================================================
+        // === UTILITY & FORMATTING FUNCTIONS ======================================
+        // =========================================================================
+
+        const formatCurrency = (value) => {
+            return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
+        };
+        
+        const formatChange = (value) => {
+            const color = value >= 0 ? 'text-green-400' : 'text-red-400';
+            const sign = value >= 0 ? '+' : '';
+            return `<span class="${color}">${sign}${formatCurrency(value)}</span>`;
+        };
+        
+        const addTransaction = (type, amount, details) => {
+            const transaction = {
+                id: `txn_${Date.now()}${Math.random().toString(36).substr(2, 5)}`,
+                type, // 'BUY', 'SELL', 'PAYMENT'
+                amount, // Positive for sell/deposit, negative for buy/payment
+                details,
+                timestamp: new Date().toISOString(),
+            };
+            appState.transactions.unshift(transaction);
+            if (appState.transactions.length > 50) {
+                appState.transactions.pop();
+            }
+            renderTransactions();
+        };
+
+        const addNotification = (message) => {
+            appState.notifications.unshift({ message, read: false, timestamp: new Date().toISOString() });
+             if (appState.notifications.length > 20) {
+                appState.notifications.pop();
+            }
+            updateNotificationUI();
+        };
+
+        const playSound = (note = "E5") => {
+            if (appState.settings.soundEnabled) {
+                try {
+                    const synth = new Tone.Synth().toDestination();
+                    synth.triggerAttackRelease(note, "8n");
+                } catch (e) {
+                    console.error("Tone.js error:", e);
+                }
+            }
+        };
+
+        // =========================================================================
+        // === FEATURE 3: DYNAMIC DASHBOARD ========================================
+        // =========================================================================
+
+        const setupDashboard = () => {
+            updateDashboard();
+            initCharts();
+            renderTransactions();
+        };
+
+        const updateDashboard = () => {
+            const portfolioValue = calculatePortfolioValue();
+            const totalValue = appState.user.balance + portfolioValue;
+            
+            // Calculate today's P/L
+            const startOfDayValue = appState.portfolio.history[0]?.value || 0;
+            const profitLoss = portfolioValue - startOfDayValue;
+
+            document.getElementById('greeting').textContent = `Hi, ${appState.user.name}`;
+            document.getElementById('balance-value').textContent = formatCurrency(appState.user.balance);
+            document.getElementById('portfolio-value').textContent = formatCurrency(portfolioValue);
+            document.getElementById('profit-loss-value').innerHTML = formatChange(profitLoss);
+
+            // Update charts
+            if (assetChart) {
+                assetChart.data.datasets[0].data = [appState.user.balance, portfolioValue];
+                assetChart.update();
+            }
+            if (portfolioChart && appState.portfolio.history.length > 1) {
+                const latestHistory = appState.portfolio.history[appState.portfolio.history.length - 1];
+                if (portfolioChart.data.labels.length === 0 || portfolioChart.data.labels[portfolioChart.data.labels.length - 1] < latestHistory.time) {
+                    portfolioChart.data.labels.push(latestHistory.time);
+                    portfolioChart.data.datasets[0].data.push(latestHistory.value);
+                    if (portfolioChart.data.labels.length > 30) {
+                        portfolioChart.data.labels.shift();
+                        portfolioChart.data.datasets[0].data.shift();
+                    }
+                    portfolioChart.update('none');
+                }
+            }
+        };
+        
+        const renderTransactions = () => {
+            const list = document.getElementById('transactions-list');
+            if(appState.transactions.length === 0) {
+                list.innerHTML = '<p class="text-gray-500 text-center">No transactions yet.</p>';
+                return;
+            }
+            list.innerHTML = appState.transactions.map(tx => {
+                const isDebit = tx.amount < 0;
+                const icon = {
+                    'BUY': '<i data-lucide="arrow-down-left" class="text-red-400"></i>',
+                    'SELL': '<i data-lucide="arrow-up-right" class="text-green-400"></i>',
+                    'PAYMENT': '<i data-lucide="send" class="text-blue-400"></i>'
+                }[tx.type];
+                
+                return `
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-full bg-stone-800 flex items-center justify-center">${icon}</div>
+                            <div>
+                                <p class="font-semibold text-white">${tx.details}</p>
+                                <p class="text-sm text-gray-400">${new Date(tx.timestamp).toLocaleString()}</p>
+                            </div>
+                        </div>
+                        <p class="font-semibold ${isDebit ? 'text-red-400' : 'text-green-400'}">${formatCurrency(tx.amount)}</p>
+                    </div>
+                `;
+            }).join('');
+            lucide.createIcons();
+        };
+
+        const initCharts = () => {
+            Chart.defaults.color = '#9ca3af';
+            Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.1)';
+            
+            // Portfolio Line Chart
+            const portfolioCtx = document.getElementById('portfolio-chart').getContext('2d');
+            const accentRgb = getComputedStyle(document.documentElement).getPropertyValue('--accent-color-rgb');
+            const gradient = portfolioCtx.createLinearGradient(0, 0, 0, 300);
+            gradient.addColorStop(0, `rgba(${accentRgb}, 0.5)`);
+            gradient.addColorStop(1, `rgba(${accentRgb}, 0)`);
+
+            portfolioChart = new Chart(portfolioCtx, {
+                type: 'line',
+                data: {
+                    labels: appState.portfolio.history.map(p => p.time),
+                    datasets: [{
+                        label: 'Portfolio Value',
+                        data: appState.portfolio.history.map(p => p.value),
+                        borderColor: `rgba(${accentRgb}, 1)`,
+                        backgroundColor: gradient,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 0,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { type: 'time', time: { unit: 'minute' }, grid: { display: false }, ticks: { display: false } },
+                        y: { grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { callback: value => formatCurrency(value) } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            // Asset Doughnut Chart
+            const assetCtx = document.getElementById('asset-chart').getContext('2d');
+            assetChart = new Chart(assetCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Cash', 'Stocks'],
+                    datasets: [{
+                        data: [appState.user.balance, calculatePortfolioValue()],
+                        backgroundColor: [`rgba(${accentRgb}, 0.8)`, `rgba(168, 85, 247, 0.8)`],
+                        borderColor: 'transparent',
+                        borderWidth: 4,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12, padding: 20 } }
+                    }
+                }
+            });
+        };
+
+        // =========================================================================
+        // === FEATURE 4: MOCK STOCK MARKET & TRADING ==============================
+        // =========================================================================
+
+        const setupMarkets = () => {
+            renderStockList();
+            initSparklines();
+            setupTradeModal();
+        };
+
+        const calculatePortfolioValue = () => {
+            let total = 0;
+            for (const ticker in appState.portfolio.stocks) {
+                const holding = appState.portfolio.stocks[ticker];
+                const stockData = appState.stocks.find(s => s.ticker === ticker);
+                if (stockData) {
+                    total += holding.shares * stockData.price;
+                }
+            }
+            return total;
+        };
+
+        const startMarketSimulation = () => {
+            marketInterval = setInterval(() => {
+                appState.stocks.forEach(stock => {
+                    const changePercent = (Math.random() - 0.49) * 0.015; // Small random fluctuation
+                    const changeAmount = stock.price * changePercent;
+                    stock.price += changeAmount;
+                    stock.price = Math.max(10, stock.price); // Floor price
+                    stock.trend = changeAmount;
+                    
+                    stock.history.push(stock.price);
+                    if (stock.history.length > 20) stock.history.shift();
+                });
+                
+                // Update portfolio history
+                const currentPortfolioValue = calculatePortfolioValue();
+                appState.portfolio.history.push({ time: Date.now(), value: currentPortfolioValue });
+                if (appState.portfolio.history.length > 100) appState.portfolio.history.shift();
+                
+                // Update UI elements
+                updateStockList();
+                updateDashboard();
+                updatePortfolioList();
+
+                saveState();
+            }, 2500);
+        };
+
+        const renderStockList = () => {
+            const listEl = document.getElementById('stock-list');
+            listEl.innerHTML = appState.stocks.map(stock => `
+                <div class="glass-card p-4 flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-full bg-stone-800 flex items-center justify-center font-bold text-lg text-white">${stock.ticker[0]}</div>
+                        <div>
+                            <p class="font-semibold text-white">${stock.ticker}</p>
+                            <p class="text-sm text-gray-400">${stock.name}</p>
+                        </div>
+                    </div>
+                    <div class="w-24 h-12 mr-4">
+                        <canvas id="sparkline-${stock.ticker}"></canvas>
+                    </div>
+                    <div class="text-right w-28">
+                        <p class="font-semibold text-white stock-price" data-ticker="${stock.ticker}">${formatCurrency(stock.price)}</p>
+                        <p class="text-sm stock-change" data-ticker="${stock.ticker}">${formatChange(0)}</p>
+                    </div>
+                    <button class="trade-button ml-4 bg-blue-600/80 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg" data-ticker="${stock.ticker}">Trade</button>
+                </div>
+            `).join('');
+            
+            document.querySelectorAll('.trade-button').forEach(btn => btn.addEventListener('click', openTradeModal));
+        };
+        
+        const updateStockList = () => {
+            appState.stocks.forEach(stock => {
+                const priceEl = document.querySelector(`.stock-price[data-ticker="${stock.ticker}"]`);
+                const changeEl = document.querySelector(`.stock-change[data-ticker="${stock.ticker}"]`);
+                if (priceEl) priceEl.textContent = formatCurrency(stock.price);
+                if (changeEl) changeEl.innerHTML = formatChange(stock.trend);
+
+                const sparkline = marketSparklines[stock.ticker];
+                if (sparkline) {
+                    sparkline.data.datasets[0].data = stock.history;
+                    sparkline.data.datasets[0].borderColor = stock.trend >= 0 ? '#4ade80' : '#f87171';
+                    sparkline.update('none');
+                }
+            });
+        };
+        
+        const initSparklines = () => {
+            appState.stocks.forEach(stock => {
+                const ctx = document.getElementById(`sparkline-${stock.ticker}`).getContext('2d');
+                marketSparklines[stock.ticker] = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: Array(20).fill(''),
+                        datasets: [{
+                            data: stock.history,
+                            borderColor: '#9ca3af',
+                            borderWidth: 2,
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        scales: { x: { display: false }, y: { display: false } },
+                        plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                        elements: { point: { radius: 0 } },
+                    }
+                });
+            });
+        };
+
+        const setupTradeModal = () => {
+            document.getElementById('close-trade-modal').addEventListener('click', () => toggleModal('trade-modal', false));
+            document.getElementById('buy-tab').addEventListener('click', () => setTradeType('buy'));
+            document.getElementById('sell-tab').addEventListener('click', () => setTradeType('sell'));
+            document.getElementById('shares-input').addEventListener('input', updateTradeTotal);
+            document.getElementById('confirm-trade-button').addEventListener('click', executeTrade);
+        };
+        
+        const openTradeModal = (e) => {
+            const ticker = e.currentTarget.dataset.ticker;
+            currentTrade.stock = appState.stocks.find(s => s.ticker === ticker);
+            if (!currentTrade.stock) return;
+            
+            document.getElementById('trade-modal-title').textContent = `Trade ${currentTrade.stock.ticker}`;
+            setTradeType('buy');
+            toggleModal('trade-modal', true);
+        };
+
+        const setTradeType = (type) => {
+            currentTrade.type = type;
+            const buyTab = document.getElementById('buy-tab');
+            const sellTab = document.getElementById('sell-tab');
+            const confirmBtn = document.getElementById('confirm-trade-button');
+            const availableEl = document.getElementById('trade-modal-available');
+
+            if (type === 'buy') {
+                buyTab.classList.add('border-blue-500', 'text-white');
+                buyTab.classList.remove('text-gray-500');
+                sellTab.classList.remove('border-blue-500', 'text-white');
+                sellTab.classList.add('text-gray-500');
+                confirmBtn.textContent = 'Confirm Purchase';
+                confirmBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                confirmBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                availableEl.textContent = formatCurrency(appState.user.balance);
+            } else {
+                sellTab.classList.add('border-blue-500', 'text-white');
+                sellTab.classList.remove('text-gray-500');
+                buyTab.classList.remove('border-blue-500', 'text-white');
+                buyTab.classList.add('text-gray-500');
+                confirmBtn.textContent = 'Confirm Sale';
+                confirmBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                confirmBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+                const ownedShares = appState.portfolio.stocks[currentTrade.stock.ticker]?.shares || 0;
+                availableEl.textContent = `${ownedShares} shares`;
+            }
+            document.getElementById('shares-input').value = '';
+            updateTradeTotal();
+        };
+
+        const updateTradeTotal = () => {
+            const shares = parseFloat(document.getElementById('shares-input').value) || 0;
+            const price = currentTrade.stock.price;
+            document.getElementById('trade-modal-price').textContent = formatCurrency(price);
+            document.getElementById('trade-total').textContent = formatCurrency(shares * price);
+        };
+        
+        const executeTrade = () => {
+            const shares = parseInt(document.getElementById('shares-input').value);
+            if (!shares || shares <= 0) return;
+
+            const stock = currentTrade.stock;
+            const totalCost = shares * stock.price;
+
+            if (currentTrade.type === 'buy') {
+                if (appState.user.balance >= totalCost) {
+                    appState.user.balance -= totalCost;
+                    const existing = appState.portfolio.stocks[stock.ticker];
+                    if (existing) {
+                        const newTotalShares = existing.shares + shares;
+                        const newTotalCost = (existing.avgPrice * existing.shares) + totalCost;
+                        existing.avgPrice = newTotalCost / newTotalShares;
+                        existing.shares = newTotalShares;
+                    } else {
+                        appState.portfolio.stocks[stock.ticker] = { shares: shares, avgPrice: stock.price };
+                    }
+                    addTransaction('BUY', -totalCost, `${shares} shares of ${stock.ticker}`);
+                    addNotification(`Successfully bought ${shares} shares of ${stock.ticker}.`);
+                    playSound("C5");
+                } else {
+                    alert("Insufficient funds."); return;
+                }
+            } else { // Sell
+                const holding = appState.portfolio.stocks[stock.ticker];
+                if (holding && holding.shares >= shares) {
+                    appState.user.balance += totalCost;
+                    holding.shares -= shares;
+                    if (holding.shares === 0) {
+                        delete appState.portfolio.stocks[stock.ticker];
+                    }
+                    addTransaction('SELL', totalCost, `${shares} shares of ${stock.ticker}`);
+                    addNotification(`Successfully sold ${shares} shares of ${stock.ticker}.`);
+                    playSound("G5");
+                } else {
+                    alert("You don't own enough shares."); return;
                 }
             }
             
-            // Simple hash function using Web Crypto API
-            async function hashPin(pin) {
-                const msgUint8 = new TextEncoder().encode(pin);
-                const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
-                const hashArray = Array.from(new Uint8Array(hashBuffer));
-                return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-            }
+            saveState();
+            updateAllUI();
+            toggleModal('trade-modal', false);
+        };
 
-            function updatePinDots() {
-                pinDots.forEach((dot, index) => {
-                    dot.classList.toggle('filled', index < currentPin.length);
+        const setupPortfolio = () => {
+            renderPortfolioList();
+        };
+
+        const renderPortfolioList = () => {
+            const listEl = document.getElementById('portfolio-list');
+            const portfolioStocks = Object.keys(appState.portfolio.stocks);
+
+            if(portfolioStocks.length === 0) {
+                listEl.innerHTML = '<div class="glass-card text-center p-8"><p class="text-gray-400">Your portfolio is empty.</p><p class="text-gray-500 mt-2">Visit the Markets page to start trading.</p></div>';
+                return;
+            }
+            
+            listEl.innerHTML = portfolioStocks.map(ticker => {
+                const holding = appState.portfolio.stocks[ticker];
+                const stockData = appState.stocks.find(s => s.ticker === ticker);
+                if (!stockData) return '';
+
+                const currentValue = holding.shares * stockData.price;
+                const totalCost = holding.shares * holding.avgPrice;
+                const gainLoss = currentValue - totalCost;
+
+                return `
+                    <div class="glass-card p-4">
+                        <div class="flex items-center justify-between mb-3">
+                             <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 rounded-full bg-stone-800 flex items-center justify-center font-bold text-lg text-white">${ticker[0]}</div>
+                                <div>
+                                    <p class="font-semibold text-white">${ticker}</p>
+                                    <p class="text-sm text-gray-400">${holding.shares} shares</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-semibold text-white">${formatCurrency(currentValue)}</p>
+                                <p class="text-sm">${formatChange(gainLoss)}</p>
+                            </div>
+                        </div>
+                        <div class="text-xs text-gray-400 flex justify-between pt-2 border-t border-stone-800">
+                            <span>Avg. Cost: ${formatCurrency(holding.avgPrice)}</span>
+                            <span>Current Price: ${formatCurrency(stockData.price)}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        };
+        
+        const updatePortfolioList = () => {
+            if (document.getElementById('page-portfolio').classList.contains('hidden')) return;
+            renderPortfolioList();
+        };
+
+        // =========================================================================
+        // === FEATURE 5: ADVANCED UPI PAYMENT SIMULATION ==========================
+        // =========================================================================
+
+        const setupPaymentModal = () => {
+            document.getElementById('pay-button-desktop').addEventListener('click', () => openUpiModal());
+            document.getElementById('pay-button-mobile').addEventListener('click', () => openUpiModal());
+            document.getElementById('close-upi-modal').addEventListener('click', () => closeUpiModal());
+
+            // Step 1
+            document.getElementById('scan-qr-button').addEventListener('click', () => showUpiStep('2-scan'));
+            document.getElementById('enter-upi-id-button').addEventListener('click', () => showUpiStep('2-manual'));
+            
+            // Step 2
+            document.querySelectorAll('.back-to-upi-choice').forEach(btn => btn.addEventListener('click', () => showUpiStep(1)));
+            document.getElementById('verify-upi-id').addEventListener('click', verifyUpiId);
+            
+            // Step 3
+            document.getElementById('confirm-payment-button').addEventListener('click', executePayment);
+
+            // Step 4
+            document.getElementById('payment-done-button').addEventListener('click', () => closeUpiModal());
+        };
+
+        const openUpiModal = () => {
+            showUpiStep(1);
+            renderRecentPayees();
+            document.getElementById('upi-modal').classList.add('active');
+            setTimeout(() => {
+                document.getElementById('upi-modal-content').classList.remove('translate-y-full', 'opacity-0');
+            }, 10);
+        };
+
+        const closeUpiModal = () => {
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop().catch(err => console.error("QR stop error", err));
+            }
+            const modalContent = document.getElementById('upi-modal-content');
+            modalContent.classList.add('translate-y-full', 'opacity-0');
+            setTimeout(() => {
+                 document.getElementById('upi-modal').classList.remove('active');
+                 modalContent.classList.remove('translate-y-full', 'opacity-0'); // reset for next open
+            }, 300);
+        };
+
+        const showUpiStep = (step) => {
+            ['1', '2-scan', '2-manual', '3', '4-success'].forEach(s => {
+                document.getElementById(`upi-step-${s}`).classList.add('hidden');
+            });
+            document.getElementById(`upi-step-${step}`).classList.remove('hidden');
+
+            if (step === '2-scan') {
+                startQrScanner();
+            } else if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop().catch(err => console.error("QR stop error", err));
+            }
+        };
+
+        const startQrScanner = () => {
+            document.getElementById('qr-status').textContent = "Requesting camera access...";
+            if (!html5QrCode) {
+                 html5QrCode = new Html5Qrcode("qr-reader");
+            }
+           
+            const qrCodeSuccessCallback = (decodedText, decodedResult) => {
+                document.getElementById('qr-status').textContent = "QR Code detected!";
+                playSound("C4");
+                html5QrCode.stop();
+                handleQrScan(decodedText);
+            };
+            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+            html5QrCode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback)
+                .then(() => {
+                    document.getElementById('qr-status').textContent = "Place a QR code inside the frame";
+                })
+                .catch(err => {
+                    document.getElementById('qr-status').textContent = "Camera permission denied or not available.";
+                    console.error(err);
                 });
-            }
-
-            function resetPinInput(message, isError = true) {
-                pinDotsContainer.classList.add('shake');
-                setTimeout(() => pinDotsContainer.classList.remove('shake'), 500);
-                pinSubtitle.textContent = message;
-                if (isError) {
-                    pinSubtitle.classList.add('text-red-400');
-                    pinSubtitle.classList.remove('text-gray-400');
-                }
-                currentPin = '';
-                updatePinDots();
-            }
-
-            async function handlePinEntry() {
-                if (currentPin.length !== 4) return;
-
-                if (!appData.pinHash) { // PIN Creation Flow
-                    if (pinCreationStep === 0) {
-                        tempPin = currentPin;
-                        currentPin = '';
-                        updatePinDots();
-                        pinTitle.textContent = 'Confirm PIN';
-                        pinSubtitle.textContent = 'Enter the 4-digit PIN again to confirm.';
-                        pinCreationStep = 1;
+        };
+        
+        const handleQrScan = (qrData) => {
+            try {
+                // Example UPI QR format: upi://pay?pa=recipient@bank&pn=Recipient%20Name&am=100.00
+                const url = new URL(qrData);
+                if (url.protocol === 'upi:') {
+                    const params = url.searchParams;
+                    currentPayment.upiId = params.get('pa');
+                    currentPayment.name = params.get('pn') || 'Unknown';
+                    currentPayment.amount = params.get('am');
+                    
+                    if(currentPayment.upiId) {
+                        goToPaymentConfirmation();
                     } else {
-                        if (currentPin === tempPin) {
-                            appData.pinHash = await hashPin(currentPin);
-                            saveData();
-                            unlockDashboard();
-                        } else {
-                            resetPinInput('PINs do not match. Please start over.');
-                            pinTitle.textContent = 'Create PIN';
-                            pinCreationStep = 0;
-                            tempPin = '';
-                        }
-                    }
-                } else { // PIN Verification Flow
-                    const enteredPinHash = await hashPin(currentPin);
-                    if (enteredPinHash === appData.pinHash) {
-                        unlockDashboard();
-                    } else {
-                        resetPinInput('Incorrect PIN. Please try again.');
+                        throw new Error('Invalid UPI QR');
                     }
                 }
+            } catch (e) {
+                alert("Could not parse UPI QR code. Data: " + qrData);
+                showUpiStep(1);
+            }
+        };
+        
+        const verifyUpiId = () => {
+            const upiId = document.getElementById('upi-id-input').value;
+            if (!upiId || !upiId.includes('@')) {
+                alert("Please enter a valid UPI ID."); return;
+            }
+            
+            const statusEl = document.getElementById('upi-verify-status');
+            statusEl.textContent = 'Verifying...';
+            statusEl.classList.remove('text-green-400', 'text-red-400');
+            
+            // Simulate API call
+            setTimeout(() => {
+                // Mock a name based on the UPI ID
+                const name = upiId.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                statusEl.textContent = `Verified: ${name}`;
+                statusEl.classList.add('text-green-400');
+                
+                currentPayment.upiId = upiId;
+                currentPayment.name = name;
+                
+                setTimeout(goToPaymentConfirmation, 1000);
+
+            }, 1500);
+        };
+        
+        const goToPaymentConfirmation = () => {
+            document.getElementById('payee-name').textContent = currentPayment.name;
+            document.getElementById('payee-upi-id').textContent = currentPayment.upiId;
+            document.getElementById('payee-initial').textContent = currentPayment.name[0].toUpperCase();
+            
+            const amountInput = document.getElementById('payment-amount-input');
+            if (currentPayment.amount) {
+                amountInput.value = currentPayment.amount;
+                amountInput.disabled = true;
+            } else {
+                amountInput.value = '';
+                amountInput.placeholder = '$0';
+                amountInput.disabled = false;
+            }
+            showUpiStep(3);
+        };
+        
+        const executePayment = () => {
+            const amount = parseFloat(document.getElementById('payment-amount-input').value);
+            if (!amount || amount <= 0) {
+                alert("Please enter a valid amount."); return;
+            }
+            if (amount > appState.user.balance) {
+                alert("Insufficient balance."); return;
             }
 
-            function unlockDashboard() {
-                pinScreen.classList.add('hidden');
-                dashboardContent.classList.remove('hidden');
-                initializeDashboard();
+            appState.user.balance -= amount;
+            addTransaction('PAYMENT', -amount, `To: ${currentPayment.name}`);
+            addNotification(`Payment of ${formatCurrency(amount)} to ${currentPayment.name} was successful.`);
+            
+            // Save recent payee
+            const existingPayee = appState.user.recentPayees.find(p => p.upiId === currentPayment.upiId);
+            if (!existingPayee) {
+                appState.user.recentPayees.unshift({ name: currentPayment.name, upiId: currentPayment.upiId });
+                if (appState.user.recentPayees.length > 5) appState.user.recentPayees.pop();
             }
 
-            document.querySelectorAll('.keypad-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const key = btn.dataset.key;
-                    if (key === 'backspace') {
-                        currentPin = currentPin.slice(0, -1);
-                    } else if (currentPin.length < 4) {
-                        currentPin += key;
-                    }
-                    if (pinSubtitle.classList.contains('text-red-400')) {
-                        pinSubtitle.textContent = pinCreationStep === 0 ? 'Enter your 4-digit PIN to continue.' : 'Enter the 4-digit PIN again to confirm.';
-                        pinSubtitle.classList.remove('text-red-400');
-                        pinSubtitle.classList.add('text-gray-400');
-                    }
-                    updatePinDots();
-                    handlePinEntry();
+            saveState();
+            playSound("E6");
+            
+            document.getElementById('success-amount').textContent = formatCurrency(amount);
+            document.getElementById('success-payee-name').textContent = currentPayment.name;
+            document.getElementById('success-txn-id').textContent = `TRE${Date.now()}`;
+            showUpiStep('4-success');
+            
+            updateDashboard();
+        };
+
+        const renderRecentPayees = () => {
+            const section = document.getElementById('recent-payees-section');
+            const list = document.getElementById('recent-payees-list');
+
+            if (appState.user.recentPayees.length === 0) {
+                section.classList.add('hidden');
+                return;
+            }
+
+            section.classList.remove('hidden');
+            list.innerHTML = appState.user.recentPayees.map(payee => `
+                <button class="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-stone-700/50 recent-payee-btn" data-name="${payee.name}" data-upi-id="${payee.upiId}">
+                    <div class="w-10 h-10 rounded-full bg-purple-500 flex items-center justify-center font-bold text-white text-lg">${payee.name[0].toUpperCase()}</div>
+                    <div>
+                        <p class="font-semibold text-white text-left">${payee.name}</p>
+                        <p class="text-sm text-gray-400 text-left">${payee.upiId}</p>
+                    </div>
+                </button>
+            `).join('');
+
+            document.querySelectorAll('.recent-payee-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const target = e.currentTarget;
+                    currentPayment.name = target.dataset.name;
+                    currentPayment.upiId = target.dataset.upiId;
+                    currentPayment.amount = null; // Reset amount for manual entry
+                    goToPaymentConfirmation();
                 });
             });
+        };
 
-            // Initial startup check
-            loadData();
-            if (!appData.pinHash) {
-                pinTitle.textContent = 'Create PIN';
-                pinSubtitle.textContent = 'Create a 4-digit PIN for your account.';
+        // =========================================================================
+        // === FEATURE 6: SETTINGS & NOTIFICATIONS =================================
+        // =========================================================================
+
+        const setupSettings = () => {
+            // Display Name
+            const nameInput = document.getElementById('display-name');
+            nameInput.value = appState.user.name;
+            nameInput.addEventListener('change', (e) => {
+                appState.user.name = e.target.value;
+                document.getElementById('greeting').textContent = `Hi, ${appState.user.name}`;
+                saveState();
+            });
+
+            // Theme Selector
+            const themeSelector = document.getElementById('theme-selector');
+            themeSelector.innerHTML = THEMES.map(theme => `
+                <button class="theme-btn w-10 h-10 rounded-full" style="background-color: hsl(${theme.accent});" data-theme-name="${theme.name}"></button>
+            `).join('');
+            document.querySelectorAll('.theme-btn').forEach(btn => btn.addEventListener('click', (e) => {
+                setTheme(e.currentTarget.dataset.themeName);
+            }));
+
+            // Sound Toggle
+            const soundToggle = document.getElementById('sound-toggle');
+            soundToggle.checked = appState.settings.soundEnabled;
+            soundToggle.addEventListener('change', (e) => {
+                appState.settings.soundEnabled = e.target.checked;
+                saveState();
+            });
+
+            setTheme(appState.settings.theme, true); // Apply initial theme without saving
+        };
+        
+        const setTheme = (themeName, isInitial = false) => {
+            const theme = THEMES.find(t => t.name === themeName);
+            if (!theme) return;
+            
+            document.documentElement.style.setProperty('--accent-color', theme.accent);
+            document.documentElement.style.setProperty('--accent-color-rgb', theme.accentRgb);
+            
+            appState.settings.theme = themeName;
+            
+            // Re-initialize charts to apply new colors
+            if (portfolioChart) portfolioChart.destroy();
+            if (assetChart) assetChart.destroy();
+            initCharts();
+            
+            if (!isInitial) saveState();
+        };
+        
+        const setupNotifications = () => {
+            const bell = document.getElementById('notification-bell');
+            const panel = document.getElementById('notification-panel');
+
+            bell.addEventListener('click', () => {
+                panel.classList.toggle('hidden');
+                if(!panel.classList.contains('hidden')) {
+                    appState.notifications.forEach(n => n.read = true);
+                    saveState();
+                    updateNotificationUI();
+                }
+            });
+            
+            document.addEventListener('click', (e) => {
+                if (!bell.contains(e.target) && !panel.contains(e.target)) {
+                    panel.classList.add('hidden');
+                }
+            });
+
+            updateNotificationUI();
+        };
+
+        const updateNotificationUI = () => {
+            const dot = document.getElementById('notification-dot');
+            const list = document.getElementById('notification-list');
+            
+            const unreadCount = appState.notifications.filter(n => !n.read).length;
+            dot.classList.toggle('hidden', unreadCount === 0);
+
+            if (appState.notifications.length === 0) {
+                list.innerHTML = '<p class="text-gray-500">No new notifications.</p>';
+                return;
             }
 
-            // --- Dashboard and Modal Logic ---
-            function initializeDashboard() {
-                let soundEnabled = false;
-                const balanceEl = document.getElementById('balance');
-                const pnlEl = document.getElementById('pnl').querySelector('p');
-                const synth = new Tone.Synth({ oscillator: { type: "sine" }, envelope: { attack: 0.005, decay: 0.1, sustain: 0.3, release: 1 } }).toDestination();
+            list.innerHTML = appState.notifications.map(n => `
+                <div class="border-b border-stone-700/50 pb-2">
+                    <p>${n.message}</p>
+                    <p class="text-xs text-gray-500 mt-1">${new Date(n.timestamp).toLocaleTimeString()}</p>
+                </div>
+            `).join('');
+        };
+        
+        // =========================================================================
+        // === GLOBAL UI UPDATE HELPER =============================================
+        // =========================================================================
 
-                // Update UI with loaded data
-                balanceEl.textContent = `₹${appData.balance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                pnlEl.textContent = `₹${appData.todaysPnl.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                pnlEl.parentElement.className = `flex items-center mt-2 ${appData.todaysPnl >= 0 ? 'profit' : 'loss'}`;
-                renderTransactions();
-                renderRecentPayees();
+        const updateAllUI = () => {
+            updateDashboard();
+            renderTransactions();
+            renderPortfolioList();
+            renderStockList();
+            updateStockList();
+        };
+        
+        const toggleModal = (modalId, show) => {
+            const modal = document.getElementById(modalId);
+            if (show) {
+                modal.classList.add('active');
+            } else {
+                modal.classList.remove('active');
+            }
+        };
 
-
-                const chartLabels = Array.from({ length: 30 }, (_, i) => `T-${29 - i}`);
-                const chartDataPoints = Array.from({ length: 29 }, () => appData.balance + (Math.random() - 0.5) * 50000);
-                chartDataPoints.push(appData.balance);
-
-                const balanceChartCtx = document.getElementById('balanceChart').getContext('2d');
-                const gradient = balanceChartCtx.createLinearGradient(0, 0, 0, balanceChartCtx.canvas.clientHeight);
-                gradient.addColorStop(0, 'rgba(79, 70, 229, 0.5)');
-                gradient.addColorStop(1, 'rgba(79, 70, 229, 0)');
-
-                const balanceChart = new Chart(balanceChartCtx, { 
-                    type: 'line', data: { labels: chartLabels, datasets: [{ label: 'Balance', data: chartDataPoints, borderColor: '#6366F1', backgroundColor: gradient, borderWidth: 3, pointRadius: 0, tension: 0.4, fill: true, }] }, 
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { enabled: true, mode: 'index', intersect: false, backgroundColor: 'rgba(0,0,0,0.7)', titleFont: { weight: 'bold'}, bodyFont: { size: 14 } } }, scales: { y: { ticks: { color: 'rgba(255, 255, 255, 0.5)' }, grid: { color: 'rgba(255, 255, 255, 0.05)' } }, x: { ticks: { color: 'rgba(255, 255, 255, 0.5)', maxRotation: 0, autoSkip: true, maxTicksLimit: 10 }, grid: { display: false } } } } 
-                });
-
-                const portfolioChartCtx = document.getElementById('portfolioChart').getContext('2d');
-                new Chart(portfolioChartCtx, {
-                    type: 'doughnut', data: { labels: ['Stocks', 'Crypto', 'Commodities', 'Forex'], datasets: [{ data: [45, 25, 15, 15], backgroundColor: ['#4F46E5', '#10B981', '#F59E0B', '#3B82F6'], borderColor: '#111111', borderWidth: 4, }] },
-                    options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'bottom', labels: { color: 'rgba(255,255,255,0.7)', padding: 20, font: {size: 14} } } } }
-                });
-
-                const dataUpdateInterval = setInterval(() => {
-                    const change = (Math.random() - 0.5) * 5000;
-                    appData.balance += change;
-                    appData.todaysPnl += change;
-                    balanceEl.textContent = `₹${appData.balance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                    pnlEl.textContent = `₹${appData.todaysPnl.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                    pnlEl.parentElement.className = `flex items-center mt-2 ${appData.todaysPnl >= 0 ? 'profit' : 'loss'}`;
-                    balanceChart.data.datasets[0].data.shift();
-                    balanceChart.data.datasets[0].data.push(appData.balance);
-                    balanceChart.update('none');
-                    saveData(); // Persist balance changes periodically
-                }, 2000);
-
-                // --- Modal & Payment Logic ---
-                const modal = document.getElementById('payment-modal'); 
-                const modalContent = document.getElementById('modal-content'); 
-                const payButton = document.getElementById('pay-button');
-                const scanQrBtn = document.getElementById('scan-qr-btn'); 
-                const stopScanBtn = document.getElementById('stop-scan-btn'); 
-                const manualEntryBtn = document.getElementById('manual-entry-btn'); 
-                const verifyUpiBtn = document.getElementById('verify-upi-btn'); 
-                const upiIdInput = document.getElementById('upi-id-input'); 
-                const verifyStatusEl = document.getElementById('verify-status'); 
-                const confirmPayBtn = document.getElementById('confirm-pay-btn'); 
-                const amountInput = document.getElementById('payment-amount'); 
-                const scannerStatusEl = document.getElementById('scanner-status'); 
-                const viewInitial = document.getElementById('view-initial'); 
-                const viewScanning = document.getElementById('view-scanning'); 
-                const viewManualEntry = document.getElementById('view-manual-entry'); 
-                const viewPaymentDetails = document.getElementById('view-payment-details'); 
-                const viewStatus = document.getElementById('view-status'); 
-                const processingSpinner = document.getElementById('processing-spinner'); 
-                const successMessage = document.getElementById('success-message'); 
-                const receiptEl = document.getElementById('receipt'); 
-                const recipientNameEl = document.getElementById('recipient-name'); 
-                const recipientUpiEl = document.getElementById('recipient-upi'); 
-                const recipientNoteEl = document.getElementById('recipient-note');
-                let html5QrCode = null;
-
-                function switchView(viewToShow) { [viewInitial, viewScanning, viewManualEntry, viewPaymentDetails, viewStatus].forEach(v => v.classList.add('hidden')); viewToShow.classList.remove('hidden'); }
-                function stopScanner() { if (html5QrCode && html5QrCode.isScanning) { html5QrCode.stop().catch(err => console.error("Failed to stop QR scanner.", err)); } }
-                function openModal() { if (!soundEnabled) { Tone.start().then(() => soundEnabled = true); } switchView(viewInitial); modal.classList.remove('hidden'); setTimeout(() => modalContent.classList.remove('scale-95', 'opacity-0'), 10); }
-                function closeModal() { stopScanner(); modalContent.classList.add('scale-95', 'opacity-0'); setTimeout(() => modal.classList.add('hidden'), 300); }
-                payButton.addEventListener('click', openModal);
-                [document.getElementById('close-modal-btn-1'), document.getElementById('close-modal-btn-2'), document.getElementById('close-modal-btn-manual'), stopScanBtn].forEach(btn => btn.addEventListener('click', closeModal));
-                modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
-
-                function parseUpiQr(str) { try { const url = new URL(str); if (url.protocol !== 'upi:') return null; const params = url.searchParams; return { name: params.get('pn') || 'N/A', upi: params.get('pa') || 'N/A', amount: params.get('am'), note: params.get('tn') }; } catch (e) { return null; } }
-                function populatePaymentDetails(details) { recipientNameEl.textContent = details.name; recipientUpiEl.textContent = details.upi; recipientNoteEl.textContent = details.note ? `Note: ${details.note}` : ''; recipientNoteEl.classList.toggle('hidden', !details.note); amountInput.value = details.amount || ''; amountInput.disabled = !!details.amount; const amount = parseFloat(amountInput.value) || 0; confirmPayBtn.disabled = !(amount > 0 && amount <= appData.balance); confirmPayBtn.textContent = amount > 0 ? `Pay ₹${amount.toLocaleString('en-IN')}` : 'Pay'; switchView(viewPaymentDetails); }
-                const onScanSuccess = (decodedText) => { stopScanner(); const upiDetails = parseUpiQr(decodedText); if (upiDetails && upiDetails.upi !== 'N/A') { populatePaymentDetails(upiDetails); } else { scannerStatusEl.textContent = 'Invalid UPI QR Code. Try again.'; scannerStatusEl.classList.add('text-red-500'); setTimeout(() => startScanner(), 2000); } };
-                const onScanFailure = (error) => {};
-                function startScanner() { scannerStatusEl.textContent = 'Position camera over QR code'; scannerStatusEl.classList.remove('text-red-500'); if (!html5QrCode) { html5QrCode = new Html5Qrcode("qr-reader"); } html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } }, onScanSuccess, onScanFailure).catch(err => { scannerStatusEl.textContent = 'Error: Camera access denied.'; scannerStatusEl.classList.add('text-red-500'); }); }
-                scanQrBtn.addEventListener('click', () => { switchView(viewScanning); startScanner(); });
-                manualEntryBtn.addEventListener('click', () => { switchView(viewManualEntry); renderRecentPayees(); });
-                verifyUpiBtn.addEventListener('click', () => { const upiId = upiIdInput.value; if (!upiId || !upiId.includes('@')) { verifyStatusEl.textContent = "Invalid UPI ID format."; verifyStatusEl.className = "text-sm mt-2 h-4 text-red-500"; return; } verifyStatusEl.textContent = "Verifying..."; verifyStatusEl.className = "text-sm mt-2 h-4 text-yellow-400"; setTimeout(() => { verifyStatusEl.textContent = "Verified!"; verifyStatusEl.className = "text-sm mt-2 h-4 text-green-400"; const name = upiId.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase()); populatePaymentDetails({ name, upi: upiId }); }, 1500); });
-                amountInput.addEventListener('input', (e) => { const amount = parseFloat(e.target.value) || 0; confirmPayBtn.disabled = !(amount > 0 && amount <= appData.balance); confirmPayBtn.textContent = amount > 0 ? `Pay ₹${amount.toLocaleString('en-IN')}` : 'Pay'; });
-                
-                function renderTransactions() { 
-                    const transactionListEl = document.getElementById('transaction-list');
-                    if (appData.transactions.length === 0) { transactionListEl.innerHTML = '<p class="text-gray-400 text-center py-4">No transactions yet.</p>'; return; }
-                    transactionListEl.innerHTML = appData.transactions.map(tx => `<div class="flex justify-between items-center py-2 border-b border-gray-800"><div><p class="font-semibold text-white">${tx.recipientName}</p><p class="text-xs text-gray-400">${new Date(tx.date).toLocaleString()}</p></div><p class="font-bold text-red-400">- ₹${tx.amount.toLocaleString('en-IN')}</p></div>`).join('');
-                }
-
-                function renderRecentPayees() {
-                    const listEl = document.getElementById('recent-payees-list');
-                    if (appData.payees.length === 0) { listEl.innerHTML = '<p class="text-gray-500 text-sm text-center">No recent payees.</p>'; return; }
-                    listEl.innerHTML = appData.payees.map(p => `<button class="w-full text-left p-2 rounded-lg hover:bg-gray-800 recent-payee-btn" data-upi="${p.upi}" data-name="${p.name}"><p class="font-semibold text-white">${p.name}</p><p class="text-xs text-gray-400">${p.upi}</p></button>`).join('');
-                    document.querySelectorAll('.recent-payee-btn').forEach(btn => { btn.addEventListener('click', () => { populatePaymentDetails({ name: btn.dataset.name, upi: btn.dataset.upi }); }); });
-                }
-
-                confirmPayBtn.addEventListener('click', () => {
-                    processingSpinner.classList.remove('hidden'); successMessage.classList.add('hidden'); switchView(viewStatus);
-                    setTimeout(() => {
-                        processingSpinner.classList.add('hidden'); successMessage.classList.remove('hidden');
-                        if (soundEnabled) { synth.triggerAttackRelease("C5", "8n", Tone.now()); synth.triggerAttackRelease("G5", "8n", Tone.now() + 0.2); }
-                        const amountPaid = parseFloat(amountInput.value);
-                        if (!isNaN(amountPaid) && amountPaid > 0 && amountPaid <= appData.balance) {
-                            appData.balance -= amountPaid;
-                            const txId = 'T' + Date.now();
-                            const newTx = { recipientName: recipientNameEl.textContent, upiId: recipientUpiEl.textContent, amount: amountPaid, date: new Date().toISOString(), transactionId: txId };
-                            appData.transactions.unshift(newTx);
-                            if (!appData.payees.find(p => p.upi === newTx.upiId)) {
-                                appData.payees.unshift({ name: newTx.recipientName, upi: newTx.upiId });
-                                if (appData.payees.length > 5) appData.payees.pop();
-                            }
-                            saveData(); // Save data after transaction
-                            renderTransactions();
-                            renderRecentPayees();
-                            balanceEl.textContent = `₹${appData.balance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`; // Update balance on main screen immediately
-                            receiptEl.innerHTML = `<p><strong>Amount:</strong> ₹${amountPaid.toLocaleString('en-IN')}</p><p><strong>To:</strong> ${newTx.recipientName}</p><p><strong>Transaction ID:</strong> ${txId}</p>`;
-                        }
-                        setTimeout(closeModal, 4000);
-                    }, 2000);
-                });
-            } // end of initializeDashboard
-        });
+    }); // End DOMContentLoaded
     </script>
 </body>
 </html>
-
-
