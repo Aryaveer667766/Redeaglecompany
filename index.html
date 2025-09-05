@@ -10,7 +10,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-    <!-- NEW: Audio Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
     
     <style>
@@ -24,7 +23,6 @@
             position: relative;
             overflow: hidden;
         }
-        /* NEW: Animated Aurora background */
         .aurora {
             position: absolute;
             top: 0;
@@ -71,11 +69,22 @@
             overflow: hidden;
             border: 2px solid rgba(255, 255, 255, 0.2);
         }
-        /* Mobile Nav */
         .mobile-nav {
             background: rgba(10, 10, 10, 0.8);
             backdrop-filter: blur(10px);
             border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        /* For custom scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.05);
+            border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.2);
+            border-radius: 3px;
         }
     </style>
 </head>
@@ -101,7 +110,7 @@
         </aside>
 
         <!-- Main Content -->
-        <main class="relative flex-1 p-4 md:p-6 overflow-y-auto pb-24 md:pb-6">
+        <main class="relative flex-1 p-4 md:p-6 overflow-y-auto pb-24 md:pb-6 custom-scrollbar">
             <header class="flex justify-between items-center mb-6">
                 <div>
                     <h1 class="text-2xl md:text-3xl font-bold text-white">Hi, Aryaveer</h1>
@@ -113,34 +122,44 @@
                 </button>
             </header>
 
-            <!-- Dashboard Cards -->
-            <div class="grid grid-cols-2 md:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6 mb-6">
-                <div class="glass-card col-span-2 p-4 md:p-6 rounded-2xl">
-                    <h3 class="text-gray-400 text-sm font-medium">Total Balance</h3>
-                    <p id="balance" class="text-3xl md:text-4xl font-extrabold text-white mt-2">₹800,000.00</p>
-                </div>
-                <div class="glass-card p-4 md:p-6 rounded-2xl">
-                    <h3 class="text-gray-400 text-sm font-medium">Today's P/L</h3>
-                    <div id="pnl" class="flex items-center mt-2">
-                        <p class="text-xl md:text-2xl font-extrabold">₹0.00</p>
+            <div class="grid grid-cols-1 xl:grid-cols-5 gap-6">
+                <div class="xl:col-span-3 flex flex-col gap-6">
+                    <div class="grid grid-cols-2 gap-4 md:gap-6">
+                        <div class="glass-card col-span-2 p-4 md:p-6 rounded-2xl">
+                            <h3 class="text-gray-400 text-sm font-medium">Total Balance</h3>
+                            <p id="balance" class="text-3xl md:text-4xl font-extrabold text-white mt-2">₹800,000.00</p>
+                        </div>
+                        <div class="glass-card p-4 md:p-6 rounded-2xl">
+                            <h3 class="text-gray-400 text-sm font-medium">Today's P/L</h3>
+                            <div id="pnl" class="flex items-center mt-2">
+                                <p class="text-xl md:text-2xl font-extrabold">₹0.00</p>
+                            </div>
+                        </div>
+                        <div class="glass-card p-4 md:p-6 rounded-2xl">
+                            <h3 class="text-gray-400 text-sm font-medium">Positions</h3>
+                            <p class="text-3xl md:text-4xl font-extrabold text-white mt-2">12</p>
+                        </div>
+                    </div>
+                    <div class="glass-card p-4 md:p-6 rounded-2xl h-[40vh] md:h-[50vh] xl:h-[calc(100%-12rem)]">
+                        <div class="chart-container">
+                            <canvas id="balanceChart"></canvas>
+                        </div>
                     </div>
                 </div>
-                <div class="glass-card p-4 md:p-6 rounded-2xl">
-                    <h3 class="text-gray-400 text-sm font-medium">Positions</h3>
-                    <p class="text-3xl md:text-4xl font-extrabold text-white mt-2">12</p>
-                </div>
-            </div>
-            
-            <div class="flex flex-col xl:flex-row gap-6">
-                <div class="glass-card xl:w-2/3 p-4 md:p-6 rounded-2xl h-[40vh] md:h-[50vh] xl:h-auto">
-                    <div class="chart-container">
-                        <canvas id="balanceChart"></canvas>
+
+                <div class="xl:col-span-2 flex flex-col gap-6">
+                    <div class="glass-card p-4 md:p-6 rounded-2xl h-[40vh] md:h-auto xl:h-1/2 flex flex-col">
+                        <h3 class="text-lg font-bold text-white mb-4">Distribution</h3>
+                        <div class="chart-container flex-1">
+                            <canvas id="portfolioChart"></canvas>
+                        </div>
                     </div>
-                </div>
-                <div class="glass-card xl:w-1/3 p-4 md:p-6 rounded-2xl h-[40vh] md:h-[50vh] xl:h-auto flex flex-col">
-                    <h3 class="text-lg font-bold text-white mb-4">Distribution</h3>
-                    <div class="chart-container flex-1">
-                        <canvas id="portfolioChart"></canvas>
+                    <!-- NEW: Transaction History -->
+                    <div class="glass-card p-4 md:p-6 rounded-2xl h-[40vh] md:h-auto xl:h-1/2 flex flex-col">
+                        <h3 class="text-lg font-bold text-white mb-4">Recent Transactions</h3>
+                        <div id="transaction-list" class="flex-1 overflow-y-auto custom-scrollbar pr-2">
+                            <p class="text-gray-400 text-center py-4">No transactions yet.</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -149,24 +168,19 @@
 
     <!-- Mobile Navigation -->
     <nav class="md:hidden fixed bottom-0 left-0 right-0 h-16 mobile-nav flex justify-around items-center z-20">
-        <a href="#" class="p-3 text-indigo-400" title="Dashboard">
-             <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-        </a>
-        <a href="#" class="p-3 text-gray-500" title="Markets">
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-        </a>
-         <a href="#" class="p-3 text-gray-500" title="Portfolio">
-           <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 7V5a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2"></path><path d="M22 7H2"></path><path d="M14 11h-1"></path><path d="M17 11h-1"></path><path d="M20 11h-1"></path><path d="M14 15h-1"></path><path d="M17 15h-1"></path><path d="M20 15h-1"></path></svg>
-        </a>
+        <a href="#" class="p-3 text-indigo-400" title="Dashboard"> <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg> </a>
+        <a href="#" class="p-3 text-gray-500" title="Markets"> <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg> </a>
+        <a href="#" class="p-3 text-gray-500" title="Portfolio"> <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 7V5a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2"></path><path d="M22 7H2"></path><path d="M14 11h-1"></path><path d="M17 11h-1"></path><path d="M20 11h-1"></path><path d="M14 15h-1"></path><path d="M17 15h-1"></path><path d="M20 15h-1"></path></svg> </a>
     </nav>
     
     <!-- UPI Payment Modal -->
     <div id="payment-modal" class="fixed inset-0 modal-backdrop flex justify-center items-center z-50 hidden">
         <div id="modal-content" class="glass-card p-6 md:p-8 rounded-2xl w-full max-w-md m-4 transform transition-all duration-300 scale-95 opacity-0">
-             <div id="view-initial"> <h2 class="text-2xl font-bold text-white mb-4 text-center">Pay with UPI</h2> <button id="scan-qr-btn" class="w-full flex items-center justify-center space-x-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-4 px-6 rounded-xl transition-transform duration-200 hover:scale-105"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path><path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></path><rect x="7" y="7" width="10" height="10" rx="1"></rect></svg> <span>Scan a new QR Code</span> </button> <button id="close-modal-btn-1" class="mt-4 w-full bg-gray-700 hover:bg-gray-600 text-gray-300 font-semibold py-2 px-4 rounded-xl">Cancel</button> </div>
-            <div id="view-scanning" class="hidden text-center"> <h2 class="text-2xl font-bold text-white mb-4">Scan QR Code</h2> <div id="qr-reader" class="mx-auto"></div> <p id="scanner-status" class="text-gray-400 mt-4 h-5"></p> <button id="stop-scan-btn" class="mt-4 w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-xl">Cancel Scan</button> </div>
-            <div id="view-payment-details" class="hidden"> <h2 class="text-2xl font-bold text-white mb-4">Payment Details</h2> <div class="bg-gray-900/50 p-4 rounded-lg mb-4"> <p class="text-sm text-gray-400">Paying to:</p> <p id="recipient-name" class="text-lg font-semibold text-white"></p> <p id="recipient-upi" class="text-sm text-gray-300"></p> </div> <div class="relative"> <span class="absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-bold text-gray-400">₹</span> <input type="number" id="payment-amount" placeholder="0.00" class="w-full bg-gray-900/50 text-white text-3xl font-bold p-4 pl-10 rounded-lg border-2 border-transparent focus:border-indigo-500 focus:outline-none focus:ring-0"> </div> <button id="confirm-pay-btn" disabled class="mt-6 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-xl transition-all duration-200 disabled:bg-gray-600 disabled:cursor-not-allowed disabled:opacity-50"> Pay </button> <button id="close-modal-btn-2" class="mt-4 w-full bg-gray-700 hover:bg-gray-600 text-gray-300 font-semibold py-2 px-4 rounded-xl">Cancel</button> </div>
-            <div id="view-status" class="hidden text-center py-8"> <div id="processing-spinner" class="flex flex-col items-center"> <svg class="animate-spin h-12 w-12 text-indigo-400 mb-4" viewBox="0 0 24 24"> <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle> <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path> </svg> <p class="text-xl font-semibold text-white">Processing Payment...</p> </div> <div id="success-message" class="hidden flex flex-col items-center"> <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-green-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"> <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /> </svg> <p class="text-2xl font-bold text-white">Payment Confirmed!</p> <p class="text-gray-400 mt-2">The amount will be credited to the recipient within a few hours.</p> </div> </div>
+             <div id="view-initial"> <h2 class="text-2xl font-bold text-white mb-4 text-center">Pay with UPI</h2> <div class="space-y-4"> <button id="scan-qr-btn" class="w-full flex items-center justify-center space-x-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-4 px-6 rounded-xl transition-transform duration-200 hover:scale-105"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path><path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></path><rect x="7" y="7" width="10" height="10" rx="1"></rect></svg> <span>Scan a new QR Code</span> </button> <button id="manual-entry-btn" class="w-full flex items-center justify-center space-x-3 bg-gray-800 hover:bg-gray-700 text-white font-semibold py-4 px-6 rounded-xl transition-transform duration-200 hover:scale-105"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 17v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> <span>Pay using UPI ID</span> </button> </div> <button id="close-modal-btn-1" class="mt-6 w-full bg-gray-700 hover:bg-gray-600 text-gray-300 font-semibold py-2 px-4 rounded-xl">Cancel</button> </div>
+             <div id="view-scanning" class="hidden text-center"> <h2 class="text-2xl font-bold text-white mb-4">Scan QR Code</h2> <div id="qr-reader" class="mx-auto"></div> <p id="scanner-status" class="text-gray-400 mt-4 h-5"></p> <button id="stop-scan-btn" class="mt-4 w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-xl">Cancel Scan</button> </div>
+             <div id="view-manual-entry" class="hidden"> <h2 class="text-2xl font-bold text-white mb-4">Enter UPI ID</h2> <div class="relative"><input type="text" id="upi-id-input" placeholder="someone@bank" class="w-full bg-gray-900/50 text-white text-lg p-4 rounded-lg border-2 border-transparent focus:border-indigo-500 focus:outline-none focus:ring-0"> <button id="verify-upi-btn" class="absolute right-2 top-1/2 -translate-y-1/2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg">Verify</button> </div> <p id="verify-status" class="text-sm mt-2 h-4"></p> <h3 class="text-md font-semibold text-gray-300 mt-4 mb-2">Recent Payees</h3> <div id="recent-payees-list" class="space-y-2 max-h-32 overflow-y-auto custom-scrollbar"></div> <button id="close-modal-btn-manual" class="mt-4 w-full bg-gray-700 hover:bg-gray-600 text-gray-300 font-semibold py-2 px-4 rounded-xl">Cancel</button></div>
+             <div id="view-payment-details" class="hidden"> <h2 class="text-2xl font-bold text-white mb-4">Payment Details</h2> <div class="bg-gray-900/50 p-4 rounded-lg mb-4"> <p class="text-sm text-gray-400">Paying to:</p> <p id="recipient-name" class="text-lg font-semibold text-white"></p> <p id="recipient-upi" class="text-sm text-gray-300"></p> <p id="recipient-note" class="text-sm text-gray-400 mt-1"></p> </div> <div class="relative"> <span class="absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-bold text-gray-400">₹</span> <input type="number" id="payment-amount" placeholder="0.00" class="w-full bg-gray-900/50 text-white text-3xl font-bold p-4 pl-10 rounded-lg border-2 border-transparent focus:border-indigo-500 focus:outline-none focus:ring-0"> </div> <button id="confirm-pay-btn" disabled class="mt-6 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-xl transition-all duration-200 disabled:bg-gray-600 disabled:cursor-not-allowed disabled:opacity-50"> Pay </button> <button id="close-modal-btn-2" class="mt-4 w-full bg-gray-700 hover:bg-gray-600 text-gray-300 font-semibold py-2 px-4 rounded-xl">Cancel</button> </div>
+             <div id="view-status" class="hidden text-center py-8"> <div id="processing-spinner" class="flex flex-col items-center"> <svg class="animate-spin h-12 w-12 text-indigo-400 mb-4" viewBox="0 0 24 24"> <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle> <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path> </svg> <p class="text-xl font-semibold text-white">Processing Payment...</p> </div> <div id="success-message" class="hidden flex flex-col items-center"> <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-green-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"> <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /> </svg> <p class="text-2xl font-bold text-white">Payment Confirmed!</p> <div id="receipt" class="text-gray-400 mt-4 text-sm bg-gray-900/50 p-4 rounded-lg w-full text-left"></div> </div> </div>
         </div>
     </div>
 
@@ -174,15 +188,13 @@
         document.addEventListener('DOMContentLoaded', () => {
             let currentBalance = 800000;
             let todaysPnl = 0;
+            let transactionHistory = [];
+            let recentPayees = [];
             const balanceEl = document.getElementById('balance');
             const pnlEl = document.getElementById('pnl').querySelector('p');
             let soundEnabled = false;
 
-            // --- Sound Synthesizer ---
-            const synth = new Tone.Synth({
-                oscillator: { type: "sine" },
-                envelope: { attack: 0.005, decay: 0.1, sustain: 0.3, release: 1 }
-            }).toDestination();
+            const synth = new Tone.Synth({ oscillator: { type: "sine" }, envelope: { attack: 0.005, decay: 0.1, sustain: 0.3, release: 1 } }).toDestination();
 
             const chartLabels = Array.from({ length: 30 }, (_, i) => `T-${29 - i}`);
             const chartDataPoints = Array.from({ length: 30 }, () => 800000 + (Math.random() - 0.5) * 50000);
@@ -210,35 +222,42 @@
                 balanceEl.textContent = `₹${currentBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
                 pnlEl.textContent = `₹${todaysPnl.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
                 pnlEl.parentElement.className = `flex items-center mt-2 ${todaysPnl >= 0 ? 'profit' : 'loss'}`;
-                
                 balanceChart.data.datasets[0].data.shift();
                 balanceChart.data.datasets[0].data.push(currentBalance);
                 balanceChart.update('none');
             }, 2000);
 
-            // --- Modal & QR Scanner Logic ---
+            // --- Modal & Payment Logic ---
             const modal = document.getElementById('payment-modal');
             const modalContent = document.getElementById('modal-content');
             const payButton = document.getElementById('pay-button');
             const scanQrBtn = document.getElementById('scan-qr-btn');
             const stopScanBtn = document.getElementById('stop-scan-btn');
+            const manualEntryBtn = document.getElementById('manual-entry-btn');
+            const verifyUpiBtn = document.getElementById('verify-upi-btn');
+            const upiIdInput = document.getElementById('upi-id-input');
+            const verifyStatusEl = document.getElementById('verify-status');
             const confirmPayBtn = document.getElementById('confirm-pay-btn');
             const amountInput = document.getElementById('payment-amount');
             const scannerStatusEl = document.getElementById('scanner-status');
+            const transactionListEl = document.getElementById('transaction-list');
             
             const viewInitial = document.getElementById('view-initial');
             const viewScanning = document.getElementById('view-scanning');
+            const viewManualEntry = document.getElementById('view-manual-entry');
             const viewPaymentDetails = document.getElementById('view-payment-details');
             const viewStatus = document.getElementById('view-status');
             const processingSpinner = document.getElementById('processing-spinner');
             const successMessage = document.getElementById('success-message');
+            const receiptEl = document.getElementById('receipt');
             const recipientNameEl = document.getElementById('recipient-name');
             const recipientUpiEl = document.getElementById('recipient-upi');
+            const recipientNoteEl = document.getElementById('recipient-note');
             
             let html5QrCode = null;
 
             function switchView(viewToShow) {
-                [viewInitial, viewScanning, viewPaymentDetails, viewStatus].forEach(v => v.classList.add('hidden'));
+                [viewInitial, viewScanning, viewManualEntry, viewPaymentDetails, viewStatus].forEach(v => v.classList.add('hidden'));
                 viewToShow.classList.remove('hidden');
             }
             
@@ -249,11 +268,7 @@
             }
 
             function openModal() {
-                if (!soundEnabled) {
-                    Tone.start();
-                    soundEnabled = true;
-                    console.log('Audio context started');
-                }
+                if (!soundEnabled) { Tone.start().then(() => soundEnabled = true); }
                 switchView(viewInitial);
                 modal.classList.remove('hidden');
                 setTimeout(() => modalContent.classList.remove('scale-95', 'opacity-0'), 10);
@@ -266,7 +281,7 @@
             }
 
             payButton.addEventListener('click', openModal);
-            [document.getElementById('close-modal-btn-1'), document.getElementById('close-modal-btn-2'), stopScanBtn].forEach(btn => btn.addEventListener('click', closeModal));
+            [document.getElementById('close-modal-btn-1'), document.getElementById('close-modal-btn-2'), document.getElementById('close-modal-btn-manual'), stopScanBtn].forEach(btn => btn.addEventListener('click', closeModal));
             modal.addEventListener('click', (e) => { if(e.target === modal) closeModal(); });
             
             function parseUpiQr(str) {
@@ -274,22 +289,33 @@
                     const url = new URL(str);
                     if (url.protocol !== 'upi:') return null;
                     const params = url.searchParams;
-                    const upiId = params.get('pa');
-                    const name = params.get('pn');
-                    return (upiId && name) ? { name, upi: upiId } : null;
+                    return {
+                        name: params.get('pn') || 'N/A',
+                        upi: params.get('pa') || 'N/A',
+                        amount: params.get('am'),
+                        note: params.get('tn')
+                    };
                 } catch (e) { return null; }
+            }
+            
+            function populatePaymentDetails(details) {
+                recipientNameEl.textContent = details.name;
+                recipientUpiEl.textContent = details.upi;
+                recipientNoteEl.textContent = details.note ? `Note: ${details.note}` : '';
+                recipientNoteEl.classList.toggle('hidden', !details.note);
+                amountInput.value = details.amount || '';
+                amountInput.disabled = !!details.amount;
+                const amount = parseFloat(details.amount);
+                confirmPayBtn.disabled = !(amount > 0);
+                confirmPayBtn.textContent = amount > 0 ? `Pay ₹${amount.toLocaleString('en-IN')}` : 'Pay';
+                switchView(viewPaymentDetails);
             }
 
             const onScanSuccess = (decodedText) => {
                 stopScanner();
                 const upiDetails = parseUpiQr(decodedText);
-                if (upiDetails) {
-                    recipientNameEl.textContent = upiDetails.name;
-                    recipientUpiEl.textContent = upiDetails.upi;
-                    amountInput.value = '';
-                    confirmPayBtn.disabled = true;
-                    confirmPayBtn.textContent = 'Pay';
-                    switchView(viewPaymentDetails);
+                if (upiDetails && upiDetails.upi !== 'N/A') {
+                    populatePaymentDetails(upiDetails);
                 } else {
                     scannerStatusEl.textContent = 'Invalid UPI QR Code. Try again.';
                     scannerStatusEl.classList.add('text-red-500');
@@ -302,31 +328,79 @@
             function startScanner() {
                 scannerStatusEl.textContent = 'Position camera over QR code';
                 scannerStatusEl.classList.remove('text-red-500');
-                if (!html5QrCode) {
-                    html5QrCode = new Html5Qrcode("qr-reader");
-                }
-                html5QrCode.start( { facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } }, onScanSuccess, onScanFailure)
-                .catch(err => {
-                    scannerStatusEl.textContent = 'Error: Camera access denied.';
-                    scannerStatusEl.classList.add('text-red-500');
-                });
+                if (!html5QrCode) { html5QrCode = new Html5Qrcode("qr-reader"); }
+                html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } }, onScanSuccess, onScanFailure)
+                .catch(err => { scannerStatusEl.textContent = 'Error: Camera access denied.'; scannerStatusEl.classList.add('text-red-500'); });
             }
+            
+            scanQrBtn.addEventListener('click', () => { switchView(viewScanning); startScanner(); });
+            manualEntryBtn.addEventListener('click', () => { switchView(viewManualEntry); renderRecentPayees(); });
 
-            scanQrBtn.addEventListener('click', () => {
-                switchView(viewScanning);
-                startScanner();
+            verifyUpiBtn.addEventListener('click', () => {
+                const upiId = upiIdInput.value;
+                if (!upiId || !upiId.includes('@')) {
+                    verifyStatusEl.textContent = "Invalid UPI ID format.";
+                    verifyStatusEl.className = "text-sm mt-2 h-4 text-red-500";
+                    return;
+                }
+                verifyStatusEl.textContent = "Verifying...";
+                verifyStatusEl.className = "text-sm mt-2 h-4 text-yellow-400";
+                
+                setTimeout(() => {
+                    verifyStatusEl.textContent = "Verified!";
+                    verifyStatusEl.className = "text-sm mt-2 h-4 text-green-400";
+                    // Simulate fetching name based on UPI handle
+                    const name = upiId.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    populatePaymentDetails({ name, upi: upiId });
+                }, 1500);
             });
-
+            
             amountInput.addEventListener('input', (e) => {
                 const amount = parseFloat(e.target.value);
                 confirmPayBtn.disabled = !(amount > 0);
                 confirmPayBtn.textContent = amount > 0 ? `Pay ₹${amount.toLocaleString('en-IN')}` : 'Pay';
             });
+            
+            function renderTransactions() {
+                if (transactionHistory.length === 0) {
+                    transactionListEl.innerHTML = '<p class="text-gray-400 text-center py-4">No transactions yet.</p>';
+                    return;
+                }
+                transactionListEl.innerHTML = transactionHistory.map(tx => `
+                    <div class="flex justify-between items-center py-2 border-b border-gray-800">
+                        <div>
+                            <p class="font-semibold text-white">${tx.recipientName}</p>
+                            <p class="text-xs text-gray-400">${new Date(tx.date).toLocaleString()}</p>
+                        </div>
+                        <p class="font-bold text-red-400">- ₹${tx.amount.toLocaleString('en-IN')}</p>
+                    </div>
+                `).join('');
+            }
+            
+            function renderRecentPayees() {
+                const listEl = document.getElementById('recent-payees-list');
+                if (recentPayees.length === 0) {
+                    listEl.innerHTML = '<p class="text-gray-500 text-sm text-center">No recent payees.</p>';
+                    return;
+                }
+                listEl.innerHTML = recentPayees.map(p => `
+                    <button class="w-full text-left p-2 rounded-lg hover:bg-gray-800 recent-payee-btn" data-upi="${p.upi}" data-name="${p.name}">
+                        <p class="font-semibold text-white">${p.name}</p>
+                        <p class="text-xs text-gray-400">${p.upi}</p>
+                    </button>
+                `).join('');
+                document.querySelectorAll('.recent-payee-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        populatePaymentDetails({ name: btn.dataset.name, upi: btn.dataset.upi });
+                    });
+                });
+            }
 
             confirmPayBtn.addEventListener('click', () => {
                 processingSpinner.classList.remove('hidden');
                 successMessage.classList.add('hidden');
                 switchView(viewStatus);
+
                 setTimeout(() => {
                     processingSpinner.classList.add('hidden');
                     successMessage.classList.remove('hidden');
@@ -337,8 +411,27 @@
                     const amountPaid = parseFloat(amountInput.value);
                     if (!isNaN(amountPaid)) {
                         currentBalance -= amountPaid;
+                        const txId = 'T' + Date.now();
+                        const newTx = {
+                            recipientName: recipientNameEl.textContent,
+                            upiId: recipientUpiEl.textContent,
+                            amount: amountPaid,
+                            date: new Date(),
+                            transactionId: txId
+                        };
+                        transactionHistory.unshift(newTx);
+                        if (!recentPayees.find(p => p.upi === newTx.upiId)) {
+                            recentPayees.unshift({ name: newTx.recipientName, upi: newTx.upiId });
+                            if(recentPayees.length > 5) recentPayees.pop();
+                        }
+                        renderTransactions();
+                        receiptEl.innerHTML = `
+                            <p><strong>Amount:</strong> ₹${amountPaid.toLocaleString('en-IN')}</p>
+                            <p><strong>To:</strong> ${newTx.recipientName}</p>
+                            <p><strong>Transaction ID:</strong> ${txId}</p>
+                        `;
                     }
-                    setTimeout(closeModal, 3000);
+                    setTimeout(closeModal, 4000);
                 }, 2000);
             });
         });
