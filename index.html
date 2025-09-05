@@ -3,416 +3,606 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Red Eagle Company - Employee Registration</title>
-    <!-- Tailwind CSS CDN for styling -->
+    <title>Mini Metropolis 3D - Deluxe Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- NEW: Classic script loading for Three.js for maximum compatibility -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/controls/OrbitControls.js"></script>
+    <!-- REMOVED: CapsuleGeometry script as it's not in this version of Three.js -->
     <style>
-        /* Using a custom font for better aesthetics and a darker theme */
-        html {
-            scroll-behavior: smooth; /* Ensures smooth scrolling */
-        }
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #0b0c10; /* Dark background */
-            position: relative;
-            min-height: 100vh; /* Ensure body takes full viewport height */
-            display: flex;
-            align-items: center; /* Center vertically */
-            justify-content: center; /* Center horizontally */
-            padding: 1rem; /* Add some padding around the form */
-            box-sizing: border-box; /* Include padding in element's total width and height */
+            overscroll-behavior: none;
         }
-        .form-container {
-            background-color: #1f2833; /* Slightly lighter dark color for the card */
-            color: #c5c6c7; /* Light gray text for readability */
-            position: relative;
-            z-index: 10;
-            opacity: 0;
-            transform: translateY(20px);
-            animation: fadeInSlideUp 0.8s ease-out forwards;
-            max-height: 95vh; /* Limit height to prevent overflow on very small screens */
-            overflow-y: auto; /* Enable vertical scrolling for the form container */
+        .tool-btn.active {
+            background-color: #4f46e5;
+            color: white;
+            box-shadow: 0 0 15px rgba(79, 70, 229, 0.7);
         }
-        .input-field {
-            background-color: #0b0c10;
-            border-color: #45a29e;
-            color: #ffffff;
-            transition: all 0.3s ease-in-out;
+        .stat-card {
+            @apply bg-gray-800/60 p-2 rounded-lg text-center backdrop-blur-sm shadow-lg;
         }
-        .input-field:focus {
-            border-color: #66fcf1;
-            box-shadow: 0 0 0 2px #66fcf1;
-            transform: scale(1.01);
+        .stat-label {
+            @apply text-xs text-gray-300 font-semibold uppercase tracking-wider;
         }
-        .btn-submit {
-            background-color: #66fcf1; /* A teal accent color */
-            color: #0b0c10;
-            font-weight: bold;
-            transition: background-color 0.3s ease-in-out, transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-        }
-        .btn-submit:hover {
-            background-color: #45a29e;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-        }
-        .logo-text {
-            color: #66fcf1;
-            transition: color 0.3s ease-in-out;
-        }
-        .logo-text:hover {
-            color: #45a29e;
-        }
-
-        /* Keyframes for a subtle background animation */
-        @keyframes subtle-gradient {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        /* Keyframes for the form card entrance */
-        @keyframes fadeInSlideUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        /* Keyframes for confirmation message container animation */
-        @keyframes fade-in-scale {
-            from {
-                opacity: 0;
-                transform: scale(0.95);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-
-        /* Keyframes for pulsating icon */
-        @keyframes pulse-icon {
-            0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.1); opacity: 0.8; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-
-        /* Custom checkbox styling */
-        .custom-checkbox {
-            position: relative;
-            display: inline-flex; /* Use flex to align checkbox and label */
-            align-items: center;
-            cursor: pointer;
-            user-select: none; /* Prevent text selection */
-        }
-
-        .custom-checkbox input[type="checkbox"] {
-            position: absolute;
-            opacity: 0;
-            cursor: pointer;
-            height: 0;
-            width: 0;
-        }
-
-        .checkmark {
-            height: 1.25rem; /* 20px */
-            width: 1.25rem; /* 20px */
-            background-color: #0b0c10; /* Dark background for unchecked state */
-            border: 2px solid #45a29e; /* Teal border */
-            border-radius: 0.25rem; /* Rounded corners */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease-in-out;
-            flex-shrink: 0; /* Prevent checkmark from shrinking */
-        }
-
-        .custom-checkbox input[type="checkbox"]:checked ~ .checkmark {
-            background-color: #66fcf1; /* Teal background when checked */
-            border-color: #66fcf1; /* Teal border when checked */
-        }
-
-        .checkmark svg {
-            fill: none;
-            stroke: #0b0c10; /* Dark checkmark color */
-            stroke-width: 3;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-            stroke-dasharray: 24; /* Length of the SVG path */
-            stroke-dashoffset: 24; /* Hide the checkmark initially */
-            transition: stroke-dashoffset 0.3s ease-in-out, opacity 0.3s ease-in-out;
-            opacity: 0;
-        }
-
-        .custom-checkbox input[type="checkbox"]:checked ~ .checkmark svg {
-            stroke-dashoffset: 0; /* Show the checkmark */
-            opacity: 1;
-        }
-
-        .custom-checkbox:hover .checkmark {
-            box-shadow: 0 0 0 3px rgba(102, 252, 241, 0.3); /* Subtle glow on hover */
-        }
-
-        .animated-bg {
-            position: fixed; /* Keep background fixed while content scrolls */
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(-45deg, #1f2833, #0b0c10, #1f2833, #0b0c10);
-            background-size: 400% 400%;
-            animation: subtle-gradient 15s ease infinite;
-            z-index: 1;
-        }
-        
-        .confirmation-box {
-            animation: fade-in-scale 0.7s ease-out forwards;
-        }
-
-        .animated-pulse-icon {
-            animation: pulse-icon 2s infinite ease-in-out;
+        .stat-value {
+            @apply text-xl font-bold text-white;
         }
     </style>
 </head>
-<body class="flex items-center justify-center min-h-screen p-4">
+<body class="bg-gray-900 text-gray-200 flex flex-col h-screen overflow-hidden">
 
-    <!-- Animated background layer -->
-    <div class="animated-bg"></div>
-
-    <!-- Main container for the form card -->
-    <div class="max-w-md w-full p-8 rounded-2xl shadow-2xl form-container z-20">
-
-        <!-- Logo and Title -->
-        <div class="flex flex-col items-center mb-8">
-            <!-- New Red Eagle SVG Logo -->
-            <svg class="h-20 w-20 mb-4 transition-transform duration-300 ease-in-out transform hover:scale-110" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2L2 12H5V22H19V12H22L12 2Z" fill="#ff4d4d"/>
-                <path d="M12 4.472L4.472 12H7V20H17V12H19.528L12 4.472Z" fill="#CC3333"/>
-                <path d="M12 6.944L6.944 12H9V18H15V12H17.056L12 6.944Z" fill="#990000"/>
-                <path d="M12 9.416L9.416 12H10.5V16H13.5V12H14.584L12 9.416Z" fill="#660000"/>
-                <path d="M12 11.888L11.888 12H12.112L12 11.888Z" fill="#330000"/>
-                <!-- Eagle Head Details -->
-                <path d="M12 2C12 2 15 5 17 7C19 9 20 12 20 12C20 12 19 15 17 17C15 19 12 22 12 22C12 22 9 19 7 17C5 15 4 12 4 12C4 12 5 9 7 7C9 5 12 2 12 2Z" stroke="#ff4d4d" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M12 2C12 2 10.5 4.5 9.5 6C8.5 7.5 8 9 8 9C8 9 8.5 10.5 9.5 12C10.5 13.5 12 16 12 16" stroke="#c5c6c7" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M12 2C12 2 13.5 4.5 14.5 6C15.5 7.5 16 9 16 9C16 9 15.5 10.5 14.5 12C13.5 13.5 12 16 12 16" stroke="#c5c6c7" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M12 16L12 22" stroke="#c5c6c7" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M12 12C12 12 13 11 14 10C15 9 16 8 16 8" stroke="#c5c6c7" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M12 12C12 12 11 11 10 10C9 9 8 8 8 8" stroke="#c5c6c7" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
-                <circle cx="12" cy="10" r="1" fill="#c5c6c7"/>
-                <path d="M12 10L12 12" stroke="#c5c6c7" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M12 12L10 14" stroke="#c5c6c7" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M12 12L14 14" stroke="#c5c6c7" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <h1 class="text-3xl font-bold text-center logo-text">The Red Eagle Company</h1>
-        </div>
-
-        <!-- The main form element -->
-        <form id="registrationForm" class="space-y-6">
-
-            <!-- Form Title -->
-            <h2 class="text-2xl font-semibold text-center text-white mb-6">Employee Registration</h2>
-
-            <!-- Full Name Input Field -->
-            <div>
-                <label for="fullName" class="block text-sm font-medium mb-1">Full Name</label>
-                <input type="text" id="fullName" name="fullName" required
-                       class="mt-1 block w-full px-4 py-2 border rounded-md shadow-sm input-field sm:text-sm">
-            </div>
-
-            <!-- Email Input Field -->
-            <div>
-                <label for="email" class="block text-sm font-medium mb-1">Email Address</label>
-                <input type="email" id="email" name="email" required
-                       class="mt-1 block w-full px-4 py-2 border rounded-md shadow-sm input-field sm:text-sm">
-            </div>
-
-            <!-- Phone Number Input Field -->
-            <div>
-                <label for="phone" class="block text-sm font-medium mb-1">Phone Number</label>
-                <input type="tel" id="phone" name="phone" required
-                       class="mt-1 block w-full px-4 py-2 border rounded-md shadow-sm input-field sm:text-sm">
-            </div>
-
-            <!-- Password Input Fields -->
-            <div>
-                <label for="password" class="block text-sm font-medium mb-1">Password</label>
-                <input type="password" id="password" name="password" required
-                       class="mt-1 block w-full px-4 py-2 border rounded-md shadow-sm input-field sm:text-sm">
-            </div>
-            <div>
-                <label for="confirmPassword" class="block text-sm font-medium mb-1">Confirm Password</label>
-                <input type="password" id="confirmPassword" name="confirmPassword" required
-                       class="mt-1 block w-full px-4 py-2 border rounded-md shadow-sm input-field sm:text-sm">
-                <p id="password-error" class="hidden mt-2 text-sm text-red-400">Passwords do not match.</p>
-            </div>
-
-            <!-- Address Fields -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label for="street" class="block text-sm font-medium mb-1">Street Address</label>
-                    <input type="text" id="street" name="street" required
-                           class="mt-1 block w-full px-4 py-2 border rounded-md shadow-sm input-field sm:text-sm">
+    <!-- Game Header -->
+    <header class="bg-gray-900/50 shadow-lg z-20 absolute top-0 left-0 right-0">
+        <div class="container mx-auto px-4 py-2 flex justify-between items-center">
+            <h1 class="text-xl md:text-2xl font-bold text-white">Mini Metropolis 3D: Deluxe</h1>
+            <div class="flex space-x-2 md:space-x-4">
+                <div class="stat-card">
+                    <div class="stat-label">Money</div>
+                    <div id="money-stat" class="stat-value">$20000</div>
                 </div>
-                <div>
-                    <label for="city" class="block text-sm font-medium mb-1">City</label>
-                    <input type="text" id="city" name="city" required
-                           class="mt-1 block w-full px-4 py-2 border rounded-md shadow-sm input-field sm:text-sm">
+                <div class="stat-card">
+                    <div class="stat-label">Population</div>
+                    <div id="population-stat" class="stat-value">0</div>
                 </div>
-                <div>
-                    <label for="state" class="block text-sm font-medium mb-1">State/Province</label>
-                    <input type="text" id="state" name="state" required
-                           class="mt-1 block w-full px-4 py-2 border rounded-md shadow-sm input-field sm:text-sm">
+                <div class="stat-card">
+                    <div class="stat-label">Day</div>
+                    <div id="day-stat" class="stat-value">0</div>
                 </div>
-                <div>
-                    <label for="zip" class="block text-sm font-medium mb-1">Postal/ZIP Code</label>
-                    <input type="text" id="zip" name="zip" required
-                           class="mt-1 block w-full px-4 py-2 border rounded-md shadow-sm input-field sm:text-sm">
-                </div>
-            </div>
-
-            <!-- Country Dropdown -->
-            <div>
-                <label for="country" class="block text-sm font-medium mb-1">Nearest Server</label>
-                <select id="country" name="country" required
-                        class="mt-1 block w-full px-4 py-2 border rounded-md shadow-sm input-field sm:text-sm">
-                    <option value="">Select a Server</option>
-                    <option value="usa">USA</option>
-                    <option value="uk">UK</option>
-                    <option value="canada">Canada</option>
-                    <option value="singapore">Singapore</option>
-                </select>
-            </div>
-
-            <!-- Terms and Conditions Checkbox -->
-            <div class="flex items-center">
-                <label class="custom-checkbox">
-                    <input type="checkbox" id="termsAccepted" name="termsAccepted" required>
-                    <span class="checkmark">
-                        <svg viewBox="0 0 24 24">
-                            <polyline points="20 6 9 17 4 12"></polyline>
-                        </svg>
-                    </span>
-                    <span class="ml-2 text-sm text-gray-400">
-                        I agree to the <a href="terms-conditions-page.html" target="_blank" class="text-teal-400 hover:text-teal-300 underline">Terms and Conditions</a> and <a href="privacy-policy-page.html" target="_blank" class="text-teal-400 hover:text-teal-300 underline">Privacy Policy</a>.
-                    </span>
-                </label>
-            </div>
-            
-            <!-- Submit Button -->
-            <button type="submit"
-                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm transition duration-150 ease-in-out btn-submit">
-                Register Employee
-            </button>
-        </form>
-
-        <!-- Confirmation message area, hidden by default -->
-        <div id="confirmationMessage" class="hidden text-center mt-6 p-6 rounded-xl shadow-lg confirmation-box">
-            <div class="flex flex-col items-center mb-4">
-                <!-- Checkmark SVG Icon -->
-                <svg class="w-16 h-16 text-green-400 animated-pulse-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                <h2 class="text-3xl font-bold text-green-400 mt-4">
-                    Welcome Aboard, <span id="userName" class="text-white"></span>!
-                </h2>
-            </div>
-            <p class="mt-4 text-gray-300 leading-relaxed text-lg">
-                Your employee registration with **The Red Eagle Company** has been successfully completed. We are absolutely thrilled to welcome you to our dedicated team!
-                Your commitment and expertise are invaluable, and we look forward to the significant contributions you will make.
-            </p>
-            <div class="mt-6 text-gray-200 text-xl font-semibold">
-                Your Employee ID: <span id="employeeIdDisplay" class="text-teal-400"></span>
-            </div>
-            <p class="mt-4 text-gray-400 text-sm italic">
-                <span class="font-bold text-red-300">Important:</span> Please save this Employee ID in a secure location. You will be asked for it when our HR department contacts you for your onboarding process.
-            </p>
-            <div class="mt-6 text-gray-500 text-sm">
-                <p>Founded by <strong>Aryaveer</strong></p>
-                <p>Your journey with us begins now! 🚀</p>
             </div>
         </div>
+    </header>
 
-    </div>
+    <!-- Toolbar -->
+    <aside class="w-20 bg-gray-800/80 p-2 flex flex-col items-center space-y-2 z-10 absolute left-0 top-1/2 -translate-y-1/2 rounded-r-lg backdrop-blur-sm">
+        <button id="tool-select" title="Select/Navigate (LMB: Rotate, RMB: Pan, Wheel: Zoom)" class="tool-btn w-14 h-14 flex justify-center items-center bg-gray-700 hover:bg-indigo-600 rounded-lg transition-colors duration-200">
+             <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"></path><path d="M13 13l6 6"></path></svg>
+        </button>
+        <button id="tool-road" title="Road ($100)" class="tool-btn w-14 h-14 flex justify-center items-center bg-gray-700 hover:bg-indigo-600 rounded-lg transition-colors duration-200">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13a8 8 0 0 1 7-7 6 6 0 0 1 6 6 8 8 0 0 1-7 7 6 6 0 0 1-6-6z"></path><path d="M4 21v-5"></path><path d="M20 9v5"></path></svg>
+        </button>
+        <button id="tool-residential" title="Residential Zone ($50)" class="tool-btn w-14 h-14 flex justify-center items-center bg-green-900/50 hover:bg-green-600 border-2 border-green-500 rounded-lg transition-colors duration-200 text-green-300">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+        </button>
+        <button id="tool-commercial" title="Commercial Zone ($50)" class="tool-btn w-14 h-14 flex justify-center items-center bg-blue-900/50 hover:bg-blue-600 border-2 border-blue-500 rounded-lg transition-colors duration-200 text-blue-300">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path><rect x="3" y="10" width="18" height="12" rx="2"></rect><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+        </button>
+        <button id="tool-industrial" title="Industrial Zone ($50)" class="tool-btn w-14 h-14 flex justify-center items-center bg-yellow-900/50 hover:bg-yellow-600 border-2 border-yellow-500 rounded-lg transition-colors duration-200 text-yellow-300">
+             <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4l4 4-4 4"></path><path d="M8 8l4-4 4 4"></path><rect x="2" y="14" width="20" height="8" rx="2"></rect></svg>
+        </button>
+        <button id="tool-bulldozer" title="Bulldoze ($10)" class="tool-btn w-14 h-14 flex justify-center items-center bg-red-900/50 hover:bg-red-600 border-2 border-red-500 rounded-lg transition-colors duration-200 text-red-300">
+             <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 13.5l2-2 4-4 2 2 4 4 2 2-4 4-4-4-2-2-2 2z"></path><path d="M13.5 2l-2 2-4 4-2 2 2 2 4 4 4-4 2-2-2-2z"></path><path d="M2 13.5L13.5 2"></path><path d="M10.5 22L22 10.5"></path></svg>
+        </button>
+    </aside>
 
-    <!-- JavaScript to handle form submission -->
+    <!-- Canvas Container -->
+    <main id="canvas-container" class="flex-1 bg-gray-900 overflow-hidden relative">
+        <div id="message-overlay" class="absolute inset-0 bg-black/60 flex justify-center items-center text-center hidden z-30 p-4">
+            <div class="bg-gray-800 p-8 rounded-lg shadow-2xl max-w-md">
+                <h2 id="message-title" class="text-3xl font-bold mb-4"></h2>
+                <p id="message-text" class="text-lg mb-6"></p>
+                <button id="message-close" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg">Close</button>
+            </div>
+        </div>
+    </main>
+
     <script>
-        // Get references to the form and message elements
-        const registrationForm = document.getElementById('registrationForm');
-        const confirmationMessage = document.getElementById('confirmationMessage');
-        const passwordInput = document.getElementById('password');
-        const confirmPasswordInput = document.getElementById('confirmPassword');
-        const passwordError = document.getElementById('password-error');
-        const userNameSpan = document.getElementById('userName');
-        const employeeIdDisplay = document.getElementById('employeeIdDisplay');
+        // --- DOM Elements ---
+        const ui = {
+            container: document.getElementById('canvas-container'),
+            money: document.getElementById('money-stat'),
+            population: document.getElementById('population-stat'),
+            day: document.getElementById('day-stat'),
+            toolButtons: document.querySelectorAll('.tool-btn'),
+            message: {
+                overlay: document.getElementById('message-overlay'),
+                title: document.getElementById('message-title'),
+                text: document.getElementById('message-text'),
+                close: document.getElementById('message-close'),
+            },
+        };
+        
+        function showMessage(title, text, buttonText = "Close") {
+            ui.message.title.textContent = title;
+            ui.message.text.textContent = text;
+            ui.message.close.textContent = buttonText;
+            ui.message.overlay.classList.remove('hidden');
+        }
 
-        // Add a 'submit' event listener to the form
-        registrationForm.addEventListener('submit', function(event) {
-            event.preventDefault();
+        // --- Global Error Handler ---
+        window.onerror = function (message, source, lineno, colno, error) {
+            showMessage("An Error Occurred!", `The game has encountered a problem. Please reload the page. Details: ${message}`);
+            return true;
+        };
 
-            if (passwordInput.value !== confirmPasswordInput.value) {
-                passwordError.classList.remove('hidden');
-                confirmPasswordInput.focus();
-                return;
-            } else {
-                passwordError.classList.add('hidden');
-            }
+        // --- Game Logic (wrapped to ensure libraries are loaded) ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Game Config ---
+            const TILE_SIZE = 10;
+            const MAP_SIZE = 50;
+            const TILE_TYPE = { EMPTY: 0, ROAD: 1, RESIDENTIAL_ZONE: 2, COMMERCIAL_ZONE: 3, INDUSTRIAL_ZONE: 4 };
+            const COSTS = { road: 100, zone: 50, bulldozer: 10 };
+            const TAX_RATE = 0.1;
 
-            // Check if terms and conditions are accepted
-            const termsAccepted = document.getElementById('termsAccepted').checked;
-            if (!termsAccepted) {
-                // Browser's native validation for 'required' checkbox will typically handle this,
-                // but a custom message could be added here if needed.
-                return; 
-            }
+            // --- Game State ---
+            let map = [];
+            let cityObjects = new Map();
+            let gameState = { money: 20000, population: 0, day: 0, gameSpeed: 1000, roads: 0 };
+            let currentTool = 'select';
+            let clock = new THREE.Clock();
 
-            // Generate a unique Employee ID
-            const employeeId = 'RE-' + crypto.randomUUID().substring(0, 8).toUpperCase(); // Example: RE-A1B2C3D4
+            // --- Agent State ---
+            let cars = [];
+            let pedestrians = [];
+            const MAX_CARS = 50;
+            const MAX_PEDESTRIANS = 100;
 
-            // Get all the values from the form inputs
-            const fullName = document.getElementById('fullName').value;
-            const email = document.getElementById('email').value;
-            const phone = document.getElementById('phone').value;
-            const street = document.getElementById('street').value;
-            const city = document.getElementById('city').value;
-            const state = document.getElementById('state').value;
-            const zip = document.getElementById('zip').value;
-            const country = document.getElementById('country').value;
+            // --- 3D Scene Objects ---
+            let scene, camera, renderer, controls, raycaster, mouse, planeMesh, rollOverMesh;
 
-            // Create a user data object
-            const userData = {
-                employeeId: employeeId,
-                fullName: fullName,
-                email: email,
-                phone: phone,
-                address: {
-                    street: street,
-                    city: city,
-                    state: state,
-                    zip: zip,
-                    country: country
+            // --- Materials (re-usable) ---
+            const materials = {
+                ground: new THREE.MeshLambertMaterial({ color: 0x508134 }),
+                zone: {
+                    res: new THREE.MeshLambertMaterial({ color: 0x38a169, opacity: 0.5, transparent: true }),
+                    com: new THREE.MeshLambertMaterial({ color: 0x3182ce, opacity: 0.5, transparent: true }),
+                    ind: new THREE.MeshLambertMaterial({ color: 0xb7791f, opacity: 0.5, transparent: true }),
                 },
-                termsAccepted: termsAccepted // Store acceptance status
+                rollOver: new THREE.MeshBasicMaterial({ color: 0xffffff, opacity: 0.5, transparent: true }),
+                road: new THREE.MeshStandardMaterial({ color: 0x2d3748, roughness: 0.8, metalness: 0.2 }),
+                roadLine: new THREE.MeshStandardMaterial({ color: 0xf6e05e }),
+                sidewalk: new THREE.MeshStandardMaterial({ color: 0xa0aec0, roughness: 0.9 }),
+                person: new THREE.MeshStandardMaterial({ color: 0xffadad, roughness: 1 }),
             };
 
-            // Store the user data in localStorage
-            localStorage.setItem('red-eagle-employee', JSON.stringify(userData));
+            function init() {
+                init3D();
+                initMap();
+                setActiveTool('select');
+                onWindowResize(); // Set initial size
+                animate();
+                gameLoop();
+                showMessage("Welcome, Mayor!", "Your new city awaits! This deluxe version features live traffic and pedestrians. Build roads, zone areas, and watch your metropolis come to life!", "Let's Build!");
+            }
 
-            // Log the form data to the console for demonstration
-            console.log('Form Submitted!');
-            console.log('Employee data stored in localStorage:', userData);
+            function init3D() {
+                scene = new THREE.Scene();
+                scene.background = new THREE.Color(0x1a202c); // Fallback color
+                
+                const loader = new THREE.CubeTextureLoader();
+                loader.load([
+                    'https://threejsfundamentals.org/threejs/resources/images/cubemaps/computer-history-museum/pos-x.jpg', 'https://threejsfundamentals.org/threejs/resources/images/cubemaps/computer-history-museum/neg-x.jpg',
+                    'https://threejsfundamentals.org/threejs/resources/images/cubemaps/computer-history-museum/pos-y.jpg', 'https://threejsfundamentals.org/threejs/resources/images/cubemaps/computer-history-museum/neg-y.jpg',
+                    'https://threejsfundamentals.org/threejs/resources/images/cubemaps/computer-history-museum/pos-z.jpg', 'https://threejsfundamentals.org/threejs/resources/images/cubemaps/computer-history-museum/neg-z.jpg',
+                ], (texture) => {
+                    scene.background = texture;
+                }, undefined, (error) => {
+                    console.error('Skybox failed to load:', error);
+                    showMessage("Graphics Warning", "Could not load the skybox texture. The background will be a solid color.");
+                });
 
-            // Update the confirmation message with the user's name and employee ID
-            userNameSpan.textContent = fullName;
-            employeeIdDisplay.textContent = employeeId;
+                camera = new THREE.PerspectiveCamera(60, ui.container.clientWidth / ui.container.clientHeight, 1, 1000);
+                camera.position.set(60, 80, 60);
+                
+                renderer = new THREE.WebGLRenderer({ antialias: true });
+                renderer.setPixelRatio(window.devicePixelRatio);
+                renderer.shadowMap.enabled = true;
+                renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                ui.container.appendChild(renderer.domElement);
+
+                controls = new THREE.OrbitControls(camera, renderer.domElement);
+                controls.enableDamping = true;
+                controls.dampingFactor = 0.05;
+                controls.maxPolarAngle = Math.PI / 2.1;
+
+                scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+                const sun = new THREE.DirectionalLight(0xffffff, 1.0);
+                sun.position.set(100, 100, 50);
+                sun.castShadow = true;
+                sun.shadow.mapSize.width = 2048; sun.shadow.mapSize.height = 2048;
+                const d = 150;
+                sun.shadow.camera.left = -d; sun.shadow.camera.right = d;
+                sun.shadow.camera.top = d; sun.shadow.camera.bottom = -d;
+                sun.shadow.camera.far = 350;
+                scene.add(sun);
+
+                const groundGeo = new THREE.PlaneGeometry(MAP_SIZE * TILE_SIZE, MAP_SIZE * TILE_SIZE);
+                const ground = new THREE.Mesh(groundGeo, materials.ground);
+                ground.rotation.x = -Math.PI / 2;
+                ground.receiveShadow = true;
+                scene.add(ground);
+
+                planeMesh = new THREE.Mesh(groundGeo, new THREE.MeshBasicMaterial({ visible: false }));
+                planeMesh.rotation.x = -Math.PI / 2;
+                scene.add(planeMesh);
+                
+                rollOverMesh = new THREE.Mesh(new THREE.BoxGeometry(TILE_SIZE, 0.2, TILE_SIZE), materials.rollOver);
+                scene.add(rollOverMesh);
+
+                raycaster = new THREE.Raycaster();
+                mouse = new THREE.Vector2();
+
+                window.addEventListener('resize', onWindowResize);
+                ui.container.addEventListener('pointermove', onPointerMove);
+                ui.container.addEventListener('pointerdown', onPointerDown);
+            }
+
+            function createRoadMesh(orientation, hasNorth, hasSouth, hasEast, hasWest) {
+                const group = new THREE.Group();
+                const pavement = new THREE.Mesh(new THREE.BoxGeometry(TILE_SIZE, 0.2, TILE_SIZE), materials.road);
+                pavement.receiveShadow = true;
+                group.add(pavement);
+
+                if (orientation === 'vertical' || orientation === 'horizontal') {
+                    const lineGeo = (orientation === 'vertical')
+                        ? new THREE.BoxGeometry(0.3, 0.1, TILE_SIZE)
+                        : new THREE.BoxGeometry(TILE_SIZE, 0.1, 0.3);
+                    const line = new THREE.Mesh(lineGeo, materials.roadLine);
+                    line.position.y = 0.15;
+                    group.add(line);
+                }
+
+                const sidewalkSize = TILE_SIZE * 0.1;
+                const sidewalkGeoH = new THREE.BoxGeometry(TILE_SIZE, 0.4, sidewalkSize);
+                const sidewalkGeoV = new THREE.BoxGeometry(sidewalkSize, 0.4, TILE_SIZE);
+                
+                if (!hasNorth) {
+                    const sw = new THREE.Mesh(sidewalkGeoH, materials.sidewalk);
+                    sw.position.z = -TILE_SIZE * 0.5 + sidewalkSize/2;
+                    sw.receiveShadow = true; group.add(sw);
+                }
+                if (!hasSouth) {
+                    const sw = new THREE.Mesh(sidewalkGeoH, materials.sidewalk);
+                    sw.position.z = TILE_SIZE * 0.5 - sidewalkSize/2;
+                    sw.receiveShadow = true; group.add(sw);
+                }
+                if (!hasWest) {
+                    const sw = new THREE.Mesh(sidewalkGeoV, materials.sidewalk);
+                    sw.position.x = -TILE_SIZE * 0.5 + sidewalkSize/2;
+                    sw.receiveShadow = true; group.add(sw);
+                }
+                if (!hasEast) {
+                    const sw = new THREE.Mesh(sidewalkGeoV, materials.sidewalk);
+                    sw.position.x = TILE_SIZE * 0.5 - sidewalkSize/2;
+                    sw.receiveShadow = true; group.add(sw);
+                }
+                
+                return group;
+            }
             
-            // Hide the form and show the confirmation message
-            registrationForm.classList.add('hidden');
-            confirmationMessage.classList.remove('hidden');
+            function updateRoadMesh(x, z) {
+                const key = `${x},${z}`;
+                const N = isValid(x, z - 1) && map[z - 1][x].type === TILE_TYPE.ROAD;
+                const S = isValid(x, z + 1) && map[z + 1][x].type === TILE_TYPE.ROAD;
+                const E = isValid(x + 1, z) && map[z][x + 1].type === TILE_TYPE.ROAD;
+                const W = isValid(x - 1, z) && map[z][x - 1].type === TILE_TYPE.ROAD;
+                
+                let orientation = 'none';
+                if (N && S && !E && !W) orientation = 'vertical';
+                if (!N && !S && E && W) orientation = 'horizontal';
+
+                removeCityObject(key);
+                const newMesh = createRoadMesh(orientation, N, S, E, W);
+                addCityObject(key, newMesh);
+            }
+
+            function createBuilding(type) {
+                const group = new THREE.Group();
+                let population = 0;
+                if (type === 'res') {
+                    const colors = [0xdb9b73, 0xbf8b67, 0xf6e8d6];
+                    const mat = new THREE.MeshStandardMaterial({ color: colors[Math.floor(Math.random() * colors.length)], roughness: 0.8 });
+                    const h = Math.random() * 8 + 4, w = Math.random() * 2 + TILE_SIZE * 0.5, d = Math.random() * 2 + TILE_SIZE * 0.5;
+                    const main = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+                    main.position.y = h/2; group.add(main);
+                    const roofH = Math.random() * 2 + 1;
+                    const roof = new THREE.Mesh(new THREE.CylinderGeometry(0, w * 0.7, roofH, 4), new THREE.MeshStandardMaterial({color: 0x7d4a2f, roughness: 0.9}));
+                    roof.position.y = h; roof.rotation.y = Math.PI / 4; group.add(roof);
+                    population = Math.floor(h);
+                } else if (type === 'com') {
+                    const mat = new THREE.MeshStandardMaterial({ color: 0xc9d6df, roughness: 0.3, metalness: 0.4 });
+                    const h = Math.random() * 20 + 15, w = TILE_SIZE * 0.7;
+                    const main = new THREE.Mesh(new THREE.BoxGeometry(w, h, w), mat);
+                    main.position.y = h/2; group.add(main);
+                } else { // Industrial
+                    const mat = new THREE.MeshStandardMaterial({color: 0x8f8f8f, roughness: 0.9});
+                    const h = Math.random() * 8 + 5, w = TILE_SIZE * 0.8;
+                    const main = new THREE.Mesh(new THREE.BoxGeometry(w, h, w), mat);
+                    main.position.y = h/2; group.add(main);
+                    const stackH = Math.random() * 8 + 6;
+                    const stack = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 1, stackH, 8), mat);
+                    stack.position.set(w * 0.3, h / 2 + stackH / 2, -w * 0.3); group.add(stack);
+                }
+                group.children.forEach(c => { c.castShadow = true; c.receiveShadow = true; });
+                return { model: group, population };
+            }
+
+            function createCarMesh() {
+                const group = new THREE.Group();
+                const colors = [0xff0000, 0x0000ff, 0xffff00, 0xcccccc, 0x333333];
+                const mat = new THREE.MeshStandardMaterial({ color: colors[Math.floor(Math.random()*colors.length)], roughness: 0.2, metalness: 0.6 });
+                const body = new THREE.Mesh(new THREE.BoxGeometry(2, 1, 1), mat);
+                const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.8, 0.9), new THREE.MeshStandardMaterial({color:0x000000, transparent: true, opacity: 0.4}));
+                cabin.position.set(-0.1, 0.7, 0);
+                body.position.y = 0.5;
+                group.add(body, cabin);
+                return group;
+            }
+
+            function spawnCar() {
+                if (cars.length >= MAX_CARS || gameState.roads < 10) return;
+                const edge = Math.floor(Math.random() * 4);
+                let x, z, dir;
+                let tries = 0;
+                do {
+                    if (edge === 0) { x = 0; z = Math.floor(Math.random()*MAP_SIZE); dir = new THREE.Vector3(1,0,0); }
+                    else if (edge === 1) { x = MAP_SIZE-1; z = Math.floor(Math.random()*MAP_SIZE); dir = new THREE.Vector3(-1,0,0); }
+                    else if (edge === 2) { x = Math.floor(Math.random()*MAP_SIZE); z = 0; dir = new THREE.Vector3(0,0,1); }
+                    else { x = Math.floor(Math.random()*MAP_SIZE); z = MAP_SIZE-1; dir = new THREE.Vector3(0,0,-1); }
+                    tries++;
+                } while (map[z][x].type !== TILE_TYPE.ROAD && tries < 50);
+
+                if (map[z][x].type !== TILE_TYPE.ROAD) return;
+
+                const mesh = createCarMesh();
+                mesh.position.set(...getTileCenter(x, z, 0.6));
+                mesh.lookAt(mesh.position.clone().add(dir));
+                scene.add(mesh);
+                cars.push({ mesh, x, z, dir, speed: Math.random() * 0.05 + 0.05 });
+            }
+            
+            function spawnPedestrian() {
+                if (pedestrians.length >= MAX_PEDESTRIANS || gameState.population < 1) return;
+                let tries = 0; let startX, startZ;
+                do {
+                    startX = Math.floor(Math.random()*MAP_SIZE);
+                    startZ = Math.floor(Math.random()*MAP_SIZE);
+                    tries++;
+                } while (map[startZ][startX].type !== TILE_TYPE.RESIDENTIAL_ZONE || !map[startZ][startX].building && tries < 50);
+                
+                if (!map[startZ][startX].building) return;
+
+                // FIXED: Replaced non-existent CapsuleGeometry with CylinderGeometry
+                const mesh = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 1.2, 8), materials.person);
+                mesh.castShadow = true;
+                const pos = getTileCenter(startX, startZ, 0.6); // Lowered spawn y-position
+                pos[0] += (Math.random()-0.5) * 4;
+                pos[2] += (Math.random()-0.5) * 4;
+                mesh.position.set(...pos);
+                scene.add(mesh);
+                pedestrians.push({ mesh, path: [], progress: 0, speed: Math.random() * 0.005 + 0.005, lifetime: 2000 + Math.random()*2000 });
+            }
+
+            function updateAgents(deltaTime) {
+                for (let i = cars.length - 1; i >= 0; i--) {
+                    const car = cars[i];
+                    const targetPos = new THREE.Vector3(...getTileCenter(car.x + car.dir.x, car.z + car.dir.z));
+                    const currentPos = new THREE.Vector3(...getTileCenter(car.x, car.z));
+                    const totalDist = currentPos.distanceTo(targetPos);
+                    const moveDist = car.speed * deltaTime * 100;
+
+                    if (car.mesh.position.distanceTo(currentPos) + moveDist >= totalDist) {
+                        car.x += car.dir.x; car.z += car.dir.z;
+                        car.mesh.position.set(...getTileCenter(car.x, car.z, 0.6));
+                        if (car.x < 0 || car.x >= MAP_SIZE || car.z < 0 || car.z >= MAP_SIZE) {
+                            scene.remove(car.mesh); car.mesh.traverse(c=>c.isMesh && c.geometry.dispose()); cars.splice(i, 1); continue;
+                        }
+                        const possibleDirs = [];
+                        const dirs = [new THREE.Vector3(1,0,0), new THREE.Vector3(-1,0,0), new THREE.Vector3(0,0,1), new THREE.Vector3(0,0,-1)];
+                        for (const d of dirs) {
+                            if (d.dot(car.dir) === -1) continue;
+                            const nextX = car.x + d.x, nextZ = car.z + d.z;
+                            if (isValid(nextX, nextZ) && map[nextZ][nextX].type === TILE_TYPE.ROAD) {
+                                possibleDirs.push(d);
+                            }
+                        }
+                        if (possibleDirs.length > 0) {
+                            car.dir = possibleDirs[Math.floor(Math.random() * possibleDirs.length)];
+                        } else { car.dir.negate(); }
+                    } else { car.mesh.position.add(car.dir.clone().multiplyScalar(moveDist)); }
+                    car.mesh.lookAt(car.mesh.position.clone().add(car.dir));
+                }
+                
+                for (let i = pedestrians.length - 1; i >= 0; i--) {
+                    const p = pedestrians[i];
+                    p.lifetime -= deltaTime * 1000;
+                    if(p.lifetime <= 0) {
+                         scene.remove(p.mesh); p.mesh.geometry.dispose(); pedestrians.splice(i, 1); continue;
+                    }
+
+                    if (p.path.length === 0 || p.progress >= 1) {
+                        const startPos = p.mesh.position; let endPos; let tries = 0;
+                        do {
+                           const nx = Math.floor(Math.random()*MAP_SIZE); const nz = Math.floor(Math.random()*MAP_SIZE);
+                           if(isValid(nx, nz) && map[nz][nx].type === TILE_TYPE.ROAD) {
+                                endPos = new THREE.Vector3(...getTileCenter(nx, nz));
+                                endPos.z += (Math.random() > 0.5 ? TILE_SIZE*0.45 : -TILE_SIZE*0.45);
+                           }
+                           tries++;
+                        } while(!endPos && tries < 20);
+                        
+                        if(endPos) { p.path = [startPos, endPos]; p.progress = 0; }
+                    }
+
+                    if (p.path.length > 1) {
+                        p.progress += p.speed * deltaTime;
+                        const newPos = new THREE.Vector3().lerpVectors(p.path[0], p.path[1], p.progress);
+                        p.mesh.position.copy(newPos);
+                        p.mesh.position.y = 0.6 + Math.sin(p.progress * Math.PI * 4) * 0.1;
+                    }
+                }
+            }
+            
+            function initMap() {
+                map = Array(MAP_SIZE).fill(0).map(() => Array(MAP_SIZE).fill(0).map(() => ({ type: TILE_TYPE.EMPTY, building: null })));
+            }
+            
+            function gameLoop() {
+                gameState.day++;
+                gameState.money += Math.floor(gameState.population * TAX_RATE);
+
+                if (Math.random() < 0.2) spawnCar();
+                if (Math.random() < 0.2) spawnPedestrian();
+
+                map.forEach((row, z) => row.forEach((tile, x) => {
+                    if (!tile.building && [TILE_TYPE.RESIDENTIAL_ZONE, TILE_TYPE.COMMERCIAL_ZONE, TILE_TYPE.INDUSTRIAL_ZONE].includes(tile.type)) {
+                        if (isAdjacentToRoad(x, z) && Math.random() < 0.05) {
+                            spawnBuilding(x, z, tile.type);
+                        }
+                    }
+                }));
+                updateUI();
+                setTimeout(gameLoop, gameState.gameSpeed);
+            }
+
+            function spawnBuilding(x, z, zoneType) {
+                const typeStr = zoneType === TILE_TYPE.RESIDENTIAL_ZONE ? 'res' : (zoneType === TILE_TYPE.COMMERCIAL_ZONE ? 'com' : 'ind');
+                const data = createBuilding(typeStr);
+                const key = `${x},${z}`;
+                removeCityObject(key);
+                addCityObject(key, data.model);
+                map[z][x].building = { population: data.population };
+                gameState.population += data.population;
+            }
+
+            function handleToolAction(x, z) {
+                const tile = map[z][x];
+                const key = `${x},${z}`;
+                const canAfford = (c) => gameState.money >= c;
+
+                switch(currentTool) {
+                    case 'road':
+                        if (tile.type === TILE_TYPE.EMPTY && canAfford(COSTS.road)) {
+                            tile.type = TILE_TYPE.ROAD;
+                            gameState.money -= COSTS.road; gameState.roads++;
+                            updateRoadMesh(x, z);
+                            [[0,1],[0,-1],[1,0],[-1,0]].forEach(([dx, dz]) => {
+                                const nx = x + dx, nz = z + dz;
+                                if (isValid(nx, nz) && map[nz][nx].type === TILE_TYPE.ROAD) updateRoadMesh(nx, nz);
+                            });
+                            updateUI();
+                        }
+                        break;
+                    case 'bulldozer':
+                        if (tile.type !== TILE_TYPE.EMPTY && canAfford(COSTS.bulldozer)) {
+                            gameState.money -= COSTS.bulldozer;
+                            const wasRoad = tile.type === TILE_TYPE.ROAD;
+                            if (tile.building) {
+                                gameState.population -= tile.building.population; tile.building = null; removeCityObject(key);
+                                let zoneMaterial;
+                                if (tile.type === TILE_TYPE.RESIDENTIAL_ZONE) zoneMaterial = materials.zone.res;
+                                else if (tile.type === TILE_TYPE.COMMERCIAL_ZONE) zoneMaterial = materials.zone.com;
+                                else if (tile.type === TILE_TYPE.INDUSTRIAL_ZONE) zoneMaterial = materials.zone.ind;
+                                if (zoneMaterial) {
+                                    const zoneMesh = new THREE.Mesh(new THREE.PlaneGeometry(TILE_SIZE, TILE_SIZE), zoneMaterial);
+                                    zoneMesh.rotation.x = -Math.PI / 2; zoneMesh.position.y = 0.1; addCityObject(key, zoneMesh);
+                                }
+                            } else {
+                                if (wasRoad) gameState.roads--;
+                                tile.type = TILE_TYPE.EMPTY; removeCityObject(key);
+                                if (wasRoad) {
+                                    [[0,1],[0,-1],[1,0],[-1,0]].forEach(([dx, dz]) => {
+                                        const nx = x + dx, nz = z + dz;
+                                        if (isValid(nx, nz) && map[nz][nx].type === TILE_TYPE.ROAD) updateRoadMesh(nx, nz);
+                                    });
+                                }
+                            }
+                            updateUI();
+                        }
+                        break;
+                    default:
+                        let zoneType = null, material = null;
+                        if (currentTool === 'residential') { zoneType = TILE_TYPE.RESIDENTIAL_ZONE; material = materials.zone.res; } 
+                        else if (currentTool === 'commercial') { zoneType = TILE_TYPE.COMMERCIAL_ZONE; material = materials.zone.com; } 
+                        else if (currentTool === 'industrial') { zoneType = TILE_TYPE.INDUSTRIAL_ZONE; material = materials.zone.ind; }
+                        
+                        if (zoneType && tile.type === TILE_TYPE.EMPTY && canAfford(COSTS.zone)) {
+                            tile.type = zoneType;
+                            const newMesh = new THREE.Mesh(new THREE.PlaneGeometry(TILE_SIZE, TILE_SIZE), material);
+                            newMesh.rotation.x = -Math.PI / 2; newMesh.position.y = 0.1;
+                            addCityObject(key, newMesh);
+                            gameState.money -= COSTS.zone; updateUI();
+                        }
+                        break;
+                }
+            }
+            
+            function animate() {
+                requestAnimationFrame(animate);
+                const deltaTime = clock.getDelta();
+                controls.update();
+                updateAgents(deltaTime);
+                renderer.render(scene, camera);
+            }
+
+            const getTileCenter = (x, z, y=0) => [(x - MAP_SIZE/2) * TILE_SIZE + TILE_SIZE/2, y, (z - MAP_SIZE/2) * TILE_SIZE + TILE_SIZE/2];
+            const isValid = (x, z) => x >= 0 && x < MAP_SIZE && z >= 0 && z < MAP_SIZE;
+            function isAdjacentToRoad(x, z) {
+                const n = [[0,1],[0,-1],[1,0],[-1,0]];
+                for (const [dx, dz] of n) if (isValid(x+dx, z+dz) && map[z+dz][x+dx].type === TILE_TYPE.ROAD) return true;
+                return false;
+            }
+            function addCityObject(key, obj) {
+                const [x, z] = key.split(',').map(Number);
+                obj.position.set(...getTileCenter(x, z));
+                cityObjects.set(key, obj); scene.add(obj);
+            }
+            function removeCityObject(key) {
+                if (cityObjects.has(key)) {
+                    const obj = cityObjects.get(key);
+                    scene.remove(obj);
+                    obj.traverse(c => { if(c.isMesh) { c.geometry.dispose(); } });
+                    cityObjects.delete(key);
+                }
+            }
+            function updateUI() {
+                ui.money.textContent = `$${gameState.money}`;
+                ui.population.textContent = gameState.population;
+                ui.day.textContent = gameState.day;
+            }
+            function setActiveTool(tool) {
+                currentTool = tool; controls.enabled = (tool === 'select');
+                ui.toolButtons.forEach(b => b.classList.toggle('active', b.id === `tool-${tool}`));
+            }
+            function onWindowResize() {
+                camera.aspect = ui.container.clientWidth / ui.container.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(ui.container.clientWidth, ui.container.clientHeight);
+            }
+            function onPointerMove(e) {
+                const intersect = getIntersection(e);
+                if (intersect) {
+                    rollOverMesh.position.copy(intersect.point).add(intersect.face.normal);
+                    rollOverMesh.position.divideScalar(TILE_SIZE).floor().multiplyScalar(TILE_SIZE).addScalar(TILE_SIZE / 2);
+                    rollOverMesh.position.y = 0.1;
+                    rollOverMesh.visible = currentTool !== 'select';
+                } else { rollOverMesh.visible = false; }
+            }
+            function onPointerDown(e) {
+                if (currentTool === 'select' || e.button !== 0) return;
+                const intersect = getIntersection(e);
+                if (intersect) {
+                    const x = Math.floor((intersect.point.x + (MAP_SIZE*TILE_SIZE/2))/TILE_SIZE);
+                    const z = Math.floor((intersect.point.z + (MAP_SIZE*TILE_SIZE/2))/TILE_SIZE);
+                    if (isValid(x, z)) handleToolAction(x, z);
+                }
+            }
+            function getIntersection(e) {
+                const rect = renderer.domElement.getBoundingClientRect();
+                mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+                mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObject(planeMesh);
+                return intersects.length > 0 ? intersects[0] : null;
+            }
+            
+            ui.message.close.addEventListener('click', () => ui.message.overlay.classList.add('hidden'));
+            ui.toolButtons.forEach(btn => btn.addEventListener('click', () => setActiveTool(btn.id.replace('tool-', ''))));
+            
+            init();
         });
     </script>
 </body>
 </html>
+
