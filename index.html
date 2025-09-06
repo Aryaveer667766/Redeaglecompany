@@ -11,854 +11,572 @@
     <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
     
-    <!-- Lottie for high-quality animations -->
-    <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
-    
-    <!-- QR Code Scanner library -->
-    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-
-    <!-- ApexCharts for professional graphs -->
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-
     <!-- Tone.js for sound effects -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.min.js"></script>
     
-    <!-- Three.js for 3D logo -->
-    <script type="importmap">
-        { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js" } }
-    </script>
+    <!-- Particles.js for background animation -->
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
 
     <style>
         /* Custom styles for the app */
         body {
             font-family: 'Inter', sans-serif;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-            background-color: #020617; /* Fallback background */
-            overflow-x: hidden; /* Prevent horizontal scroll */
+            -webkit-tap-highlight-color: transparent; /* Disable tap highlight on mobile */
         }
 
-        /* Aurora Background Animation */
-        #aurora-bg {
-            position: fixed;
-            top: 0;
-            left: 0;
+        #particles-js {
+            position: absolute;
             width: 100%;
             height: 100%;
-            z-index: -1;
-            overflow: hidden;
+            z-index: 0;
+        }
+        
+        /* Custom animation for wallet balance flashing */
+        .flash-green { animation: flash-green 0.7s ease-out; }
+        .flash-red { animation: flash-red 0.7s ease-out; }
+
+        @keyframes flash-green {
+            0%, 100% { color: white; }
+            50% { color: #22c55e; } /* green-500 */
         }
 
-        .aurora-shape {
-            position: absolute;
+        @keyframes flash-red {
+            0%, 100% { color: white; }
+            50% { color: #ef4444; } /* red-500 */
+        }
+
+        /* Animation for success checkmark */
+        .checkmark__circle {
+            stroke-dasharray: 166;
+            stroke-dashoffset: 166;
+            stroke-width: 2;
+            stroke-miterlimit: 10;
+            stroke: #4BB543;
+            fill: none;
+            animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+        }
+        .checkmark {
+            width: 80px;
+            height: 80px;
             border-radius: 50%;
-            filter: blur(100px);
-            opacity: 0.3;
-            mix-blend-mode: screen;
+            display: block;
+            stroke-width: 2;
+            stroke: #fff;
+            stroke-miterlimit: 10;
+            margin: 0 auto;
+            box-shadow: inset 0px 0px 0px #4BB543;
+            animation: fill .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both;
         }
-
-        #shape1 {
-            width: 400px; height: 400px; background-color: #be123c;
-            animation: move1 25s infinite alternate;
+        .checkmark__check {
+            transform-origin: 50% 50%;
+            stroke-dasharray: 48;
+            stroke-dashoffset: 48;
+            animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
         }
-        #shape2 {
-            width: 300px; height: 300px; background-color: #4338ca;
-            animation: move2 30s infinite alternate;
-        }
-         #shape3 {
-            width: 350px; height: 350px; background-color: #166534;
-            animation: move3 20s infinite alternate;
-        }
-
-        @keyframes move1 {
-            from { transform: translate(10vw, 20vh) rotate(0deg); }
-            to { transform: translate(70vw, 80vh) rotate(360deg); }
-        }
-        @keyframes move2 {
-            from { transform: translate(80vw, 10vh); }
-            to { transform: translate(20vw, 60vh); }
-        }
-         @keyframes move3 {
-            from { transform: translate(50vw, 90vh); }
-            to { transform: translate(10vw, 10vh); }
-        }
-
-        /* Glassmorphism Card Style */
-        .card {
-            position: relative;
-            background-color: rgba(15, 23, 42, 0.6); /* Slightly more opaque */
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 1.5rem;
-            padding: 1.5rem;
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        @keyframes stroke { 100% { stroke-dashoffset: 0; } }
+        @keyframes scale { 0%, 100% { transform: none; } 50% { transform: scale3d(1.1, 1.1, 1); } }
+        @keyframes fill { 100% { box-shadow: inset 0px 0px 0px 60px #4BB543; } }
+        
+        #camera-view {
+            transform: scaleX(-1);
+            object-fit: cover;
+            width: 100%;
+            height: 100%;
         }
         
-        /* Neon Glow Effect on Hover */
-        .card:hover {
-            transform: translateY(-8px) scale(1.02);
-            box-shadow: 0 0 15px rgba(225, 29, 72, 0.3), 0 0 30px rgba(225, 29, 72, 0.2), 0 0 45px rgba(225, 29, 72, 0.1);
-            border-color: rgba(225, 29, 72, 0.5);
+        .pin-dot {
+            width: 1rem;
+            height: 1rem;
+            border-radius: 50%;
+            background-color: #4b5563;
+            transition: background-color 0.2s;
         }
+        .pin-dot.filled { background-color: #ef4444; }
 
-        /* Page load animations */
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(25px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #1f2937; }
+        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
 
-        .animate-fade-in-up {
-            opacity: 0;
-            animation: fadeInUp 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-        }
+        #notification.show { transform: translate(-50%, 20px); opacity: 1; }
+        #notification.bg-green-500 { background-color: #22c55e; }
         
-        /* Activity log animation */
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateX(-20px); }
-            to { opacity: 1; transform: translateX(0); }
+        .transaction-item {
+            transition: background-color 0.2s;
         }
-        .activity-item {
-            animation: slideIn 0.5s ease-out forwards;
-        }
-
-        /* Number Ticker Animation */
-        .balance-ticker {
-            transition: transform 0.4s ease-out;
-            display: inline-block;
-        }
-        .balance-up {
-            transform: translateY(-100%);
-        }
-        .balance-down {
-            transform: translateY(100%);
-        }
-
-        /* QR Scanner styling */
-        #qr-reader {
-            border-radius: 12px;
-            overflow: hidden;
-            border: 2px solid #334155;
-        }
-        
-        /* Modal Transitions */
-        #payment-modal {
-             transition: opacity 0.3s ease, visibility 0.3s;
-        }
-        #modal-content {
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        #payment-modal.modal-hidden { visibility: hidden; opacity: 0; }
-        #payment-modal.modal-visible { visibility: visible; opacity: 1; }
-        
-        /* Chart tooltip styling */
-        .apexcharts-tooltip {
-            background: #1e293b !important;
-            color: #e2e8f0;
-            border: 1px solid #334155 !important;
-        }
-        .apexcharts-tooltip-title {
-            background: #334155 !important;
-            border-bottom: 1px solid #475569 !important;
-        }
-
-        /* PIN Entry styling */
-        @keyframes shake {
-            10%, 90% { transform: translate3d(-1px, 0, 0); }
-            20%, 80% { transform: translate3d(2px, 0, 0); }
-            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
-            40%, 60% { transform: translate3d(4px, 0, 0); }
-        }
-        #pin-display.shake {
-            animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both;
-        }
-        .pin-dot.filled {
-            background-color: #f43f5e; /* rose-500 */
-            transform: scale(1.1);
-        }
-        .keypad-btn:active {
-            transform: scale(0.95);
-            background-color: #be123c; /* rose-700 */
+        .transaction-item:hover {
+            background-color: #374151; /* gray-700 */
         }
     </style>
 </head>
-<body class="text-white antialiased">
+<body class="bg-black text-white overflow-hidden">
 
-    <div id="aurora-bg">
-        <div id="shape1" class="aurora-shape"></div>
-        <div id="shape2" class="aurora-shape"></div>
-        <div id="shape3" class="aurora-shape"></div>
+    <div id="particles-js"></div>
+
+    <!-- Custom Notification Element -->
+    <div id="notification" class="fixed top-0 left-1/2 -translate-x-1/2 w-11/12 max-w-sm bg-red-500 text-white py-3 px-5 rounded-lg shadow-lg text-center text-base transition-all duration-300 transform -translate-y-20 opacity-0 z-[100]">
+        <span id="notification-message"></span>
     </div>
 
-    <div id="app" class="relative z-10 min-h-screen p-4 sm:p-6 lg:p-8 flex flex-col max-w-4xl mx-auto">
+    <!-- Main mobile-oriented container -->
+    <div id="app-container" class="relative max-w-md mx-auto h-screen bg-gray-900/80 backdrop-blur-xl flex flex-col overflow-hidden">
+
         <!-- Header -->
-        <header class="flex justify-between items-center mb-8 animate-fade-in-up" style="animation-delay: 100ms;">
-            <div class="flex items-center gap-3">
-                <div id="logo-container" class="w-10 h-10"></div>
-                <h1 class="text-xl md:text-2xl font-bold tracking-tight text-slate-200">The Red Eagle Co.</h1>
+        <header class="p-4 flex justify-between items-center border-b border-gray-700/50">
+            <div class="flex items-center space-x-3">
+                <svg class="w-8 h-8 text-red-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm3.89 10.7-3.48 3.48c-.39.39-1.02.39-1.41 0l-1.41-1.41c-.39-.39-.39-1.02 0-1.41l3.48-3.48c.39-.39 1.02-.39 1.41 0l1.41 1.41c.39.39.39 1.02 0 1.41zM11 8c0 .55-.45 1-1 1s-1-.45-1-1 .45-1 1-1 1 .45 1 1zm7-1c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" fill="currentColor"/></svg>
+                <h1 class="text-xl font-bold tracking-tighter">The Red Eagle Co.</h1>
             </div>
-            <div class="text-right">
-                <p id="greeting" class="text-sm md:text-base text-slate-400">Hi Aryaveer, Good Morning!</p>
-                <div class="flex items-center justify-end gap-2 mt-1">
-                    <span id="market-status-indicator" class="h-2.5 w-2.5 rounded-full bg-gray-500 transition-colors"></span>
-                    <p id="market-status" class="text-xs font-semibold uppercase tracking-wider text-slate-300">Market Closed</p>
-                </div>
-            </div>
+            <div class="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center font-bold text-gray-900">A</div>
         </header>
 
         <!-- Main Content -->
-        <main class="flex-grow">
-            <!-- Wallet Balance Card -->
-            <div class="card mb-8 animate-fade-in-up" style="animation-delay: 200ms;">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-slate-400 text-sm font-medium mb-2">Total Wallet Balance</p>
-                        <div class="flex items-end gap-3">
-                            <div class="text-4xl md:text-5xl font-extrabold text-slate-50 tracking-tight transition-colors duration-500 h-[48px] overflow-hidden" style="line-height: 48px;">
-                                <span id="wallet-balance-ticker" class="balance-ticker">₹52,987.00</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div id="sparkline-container" class="mt-2">
-                        <div id="sparkline-chart"></div>
-                    </div>
-                </div>
+        <main class="flex-1 p-4 overflow-y-auto space-y-6">
+            <!-- Greeting -->
+            <div class="text-left">
+                <h2 id="greeting" class="text-3xl font-bold">Good Morning, Aryaveer</h2>
+                <p class="text-gray-400">Here's your market summary.</p>
             </div>
 
-            <!-- Portfolio Snapshot -->
-            <div class="card mb-8 animate-fade-in-up" style="animation-delay: 300ms;">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-lg font-semibold text-slate-200">Portfolio Snapshot</h2>
-                </div>
-                <div class="grid grid-cols-2 gap-4 mb-6 text-center">
+            <!-- Dashboard Cards -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="col-span-2 bg-gradient-to-br from-red-600 to-red-800 p-6 rounded-2xl shadow-lg flex flex-col justify-between">
                     <div>
-                        <p class="text-sm text-slate-400">Today's P&L</p>
-                        <p id="todays-pnl" class="text-2xl font-bold text-slate-400 transition-colors duration-500">₹0.00</p>
-                    </div>
-                    <div>
-                        <p class="text-sm text-slate-400">Total P&L</p>
-                        <p id="total-pnl" class="text-2xl font-bold text-slate-400 transition-colors duration-500">₹0.00</p>
+                        <p class="text-sm text-red-200 uppercase font-semibold">Wallet Balance</p>
+                        <p class="text-4xl font-bold tracking-tighter mt-1">₹<span id="wallet-balance">52,980.00</span></p>
                     </div>
                 </div>
-                <div>
-                    <p class="text-xs text-slate-400 mb-2 text-center font-medium">Weekly Performance</p>
-                    <div id="pnl-candlestick-chart" class="w-full h-48 -mb-4"></div>
+                <div class="bg-gray-800/50 p-4 rounded-2xl">
+                    <p class="text-sm text-gray-400 font-medium">Market Status</p>
+                    <div id="market-status-indicator" class="mt-2 flex items-center space-x-2">
+                        <span id="market-status-dot" class="w-3 h-3 rounded-full bg-gray-500"></span>
+                        <span id="market-status-text" class="text-lg font-bold">Checking...</span>
+                    </div>
+                </div>
+                <div class="bg-gray-800/50 p-4 rounded-2xl">
+                    <p class="text-sm text-gray-400 font-medium">Portfolio</p>
+                    <p class="text-lg font-bold mt-2 text-green-400">+ ₹1,240.50</p>
                 </div>
             </div>
-
-
-            <!-- Actions -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="card animate-fade-in-up" style="animation-delay: 400ms;">
-                    <div>
-                        <h2 class="text-lg font-semibold text-slate-200 mb-1">UPI Payments</h2>
-                        <p class="text-slate-400 text-sm mb-6">Scan any QR code to pay instantly from your wallet.</p>
-                    </div>
-                    <button id="pay-btn" class="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-3 px-4 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg shadow-rose-900/40 mt-auto">
-                        Scan QR & Pay
-                    </button>
+            
+            <div class="pt-4">
+                 <button id="pay-button" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-4 rounded-xl shadow-lg shadow-red-900/50 transition-transform transform active:scale-95 flex items-center justify-center space-x-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
+                    <span>Pay with UPI</span>
+                </button>
+            </div>
+            
+            <!-- Transaction History -->
+            <div class="space-y-3">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-lg font-bold text-gray-200">Recent Transactions</h3>
+                    <button id="clear-history" class="text-xs text-red-400 hover:text-red-300 font-semibold">Clear History</button>
                 </div>
-                
-                <div class="card animate-fade-in-up" style="animation-delay: 500ms;">
-                     <h2 class="text-lg font-semibold text-slate-200 mb-1">Recent Activity</h2>
-                     <p class="text-slate-400 text-sm mb-6">Live portfolio updates will appear here when the market is open.</p>
-                     <div id="activity-log" class="space-y-3 text-sm">
-                        <p class="text-slate-500 italic">No recent activity.</p>
-                     </div>
+                <div id="transaction-list" class="space-y-2 max-h-48 overflow-y-auto pr-2">
+                    <!-- Transactions will be injected here -->
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- UPI Payment Modal -->
-    <div id="payment-modal" class="modal-hidden fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-        <div id="modal-content" class="bg-slate-800/80 backdrop-blur-xl border border-slate-700 w-full max-w-md rounded-2xl p-6 shadow-2xl text-center relative transform scale-95">
-             <button id="close-modal-btn" class="absolute top-2 right-2 text-slate-400 hover:text-white transition-colors h-10 w-10 flex items-center justify-center text-2xl font-bold">&times;</button>
-            
-            <div id="scanner-view">
-                <h2 class="text-xl font-bold mb-2">Scan UPI QR Code</h2>
-                <p class="text-slate-400 mb-4 text-sm">Hold the QR code within the frame.</p>
-                <div id="qr-reader" class="w-full mx-auto"></div>
-                <p id="scanner-error" class="text-red-400 text-sm mt-2 hidden"></p>
+    <!-- PIN Modal -->
+    <div id="pin-modal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 hidden"><div class="bg-gray-800 rounded-2xl p-6 w-80 text-center space-y-4 transform transition-all scale-95 opacity-0"><h3 class="text-xl font-bold">Enter Your PIN</h3><p class="text-gray-400 text-sm">Enter your 4-digit security PIN to proceed.</p><div id="pin-dots" class="flex justify-center space-x-4 my-4"><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div></div><div id="pin-error" class="text-red-400 text-sm h-5">&nbsp;</div><div class="grid grid-cols-3 gap-4"><button class="pin-key text-2xl p-4 bg-gray-700 rounded-lg active:bg-gray-600">1</button><button class="pin-key text-2xl p-4 bg-gray-700 rounded-lg active:bg-gray-600">2</button><button class="pin-key text-2xl p-4 bg-gray-700 rounded-lg active:bg-gray-600">3</button><button class="pin-key text-2xl p-4 bg-gray-700 rounded-lg active:bg-gray-600">4</button><button class="pin-key text-2xl p-4 bg-gray-700 rounded-lg active:bg-gray-600">5</button><button class="pin-key text-2xl p-4 bg-gray-700 rounded-lg active:bg-gray-600">6</button><button class="pin-key text-2xl p-4 bg-gray-700 rounded-lg active:bg-gray-600">7</button><button class="pin-key text-2xl p-4 bg-gray-700 rounded-lg active:bg-gray-600">8</button><button class="pin-key text-2xl p-4 bg-gray-700 rounded-lg active:bg-gray-600">9</button><button id="cancel-pin" class="text-lg p-4 text-gray-400 rounded-lg active:bg-gray-600">Cancel</button><button class="pin-key text-2xl p-4 bg-gray-700 rounded-lg active:bg-gray-600">0</button><button id="backspace-pin" class="p-4 bg-gray-700 rounded-lg active:bg-gray-600 flex justify-center items-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 002.828 0L21 12M3 12l6.414-6.414a2 2 0 012.828 0L21 12" /></svg></button></div></div></div>
+    
+    <!-- UPI Modal -->
+    <div id="upi-modal" class="fixed inset-0 bg-black bg-opacity-80 flex items-end justify-center z-50 hidden"><div id="upi-modal-content" class="bg-gray-800 rounded-t-2xl w-full max-w-md p-6 transform transition-transform translate-y-full"><h3 class="text-xl font-bold text-center">Scan & Pay</h3><div class="w-full h-48 bg-gray-900 rounded-lg mt-4 overflow-hidden relative flex items-center justify-center"><video id="camera-view" autoplay playsinline></video><div class="absolute inset-0 border-4 border-dashed border-gray-500 rounded-lg m-4"></div><div id="scanner-line" class="absolute h-1 w-full bg-red-500 opacity-50" style="animation: scan 2s infinite linear;"></div></div><style>@keyframes scan { 0% { top: 0; } 50% { top: 100%; } 100% { top: 0; } }</style><div class="mt-4 space-y-4"><div><label for="upi-id" class="text-sm text-gray-400">UPI ID</label><input type="text" id="upi-id" class="w-full bg-gray-700 p-3 rounded-lg mt-1 border border-gray-600 focus:ring-2 focus:ring-red-500 focus:outline-none" placeholder="user@bank"></div><div><label for="upi-name" class="text-sm text-gray-400">Name</label><input type="text" id="upi-name" class="w-full bg-gray-700 p-3 rounded-lg mt-1 border border-gray-600 focus:ring-2 focus:ring-red-500 focus:outline-none" placeholder="Recipient Name" readonly></div><div><label for="upi-amount" class="text-sm text-gray-400">Amount</label><input type="number" id="upi-amount" class="w-full bg-gray-700 p-3 rounded-lg mt-1 border border-gray-600 focus:ring-2 focus:ring-red-500 focus:outline-none" placeholder="₹0.00"></div><div class="flex space-x-2"><button id="cancel-upi" class="w-1/3 bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 rounded-lg transition-transform transform active:scale-95">Cancel</button><button id="process-payment" class="w-2/3 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg transition-transform transform active:scale-95">Pay Now</button></div></div></div></div>
+    
+    <!-- Success Modal with Receipt -->
+    <div id="success-modal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 hidden">
+        <div class="bg-gray-800 rounded-2xl p-6 w-80 text-center space-y-4 transform transition-all scale-95 opacity-0">
+             <div class="w-full">
+                <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52"><circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none"/><path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/></svg>
+             </div>
+            <h3 class="text-2xl font-bold">Payment Successful!</h3>
+            <div id="receipt" class="text-left text-sm bg-gray-900/50 p-4 rounded-lg space-y-2 mt-4">
+                <!-- Receipt details will be injected here -->
             </div>
+            <button id="close-success" class="mt-4 w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg">Done</button>
+        </div>
+    </div>
 
-            <div id="details-view" class="hidden">
-                 <h2 class="text-xl font-bold mb-2">Confirm Payment</h2>
-                 <p class="text-slate-400 mb-6 text-sm">You are paying:</p>
-                 <div class="bg-slate-700/50 rounded-xl p-4 mb-4 text-left">
-                     <p class="text-xs text-slate-400">NAME</p>
-                     <p id="payee-name" class="font-semibold text-lg"></p>
-                     <p class="text-xs text-slate-400 mt-2">UPI ID</p>
-                     <p id="payee-upi" class="font-mono text-sm"></p>
-                 </div>
-                 <div class="relative">
-                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-bold text-slate-400">₹</span>
-                    <input type="number" id="amount-input" placeholder="0.00" class="w-full bg-slate-900 border-2 border-slate-600 focus:border-rose-500 focus:ring-0 rounded-lg text-center text-3xl font-bold py-3 transition-colors">
-                 </div>
-                 <p id="amount-error" class="text-red-400 text-sm mt-2 hidden">Invalid amount.</p>
-                 <button id="confirm-pay-btn" class="w-full mt-6 bg-rose-600 hover:bg-rose-700 text-white font-bold py-3 px-4 rounded-xl transition-transform transform hover:scale-105">Pay Now</button>
-            </div>
-
-            <div id="pin-view" class="hidden">
-                <button id="back-to-details-btn" class="absolute top-3 left-3 text-slate-400 hover:text-white transition-colors h-10 w-10 flex items-center justify-center text-2xl font-bold rounded-full hover:bg-slate-700/50">&larr;</button>
-                <h2 class="text-xl font-bold mb-4">Enter Security PIN</h2>
-                <div id="pin-display" class="flex justify-center gap-4 my-6">
-                    <div class="pin-dot h-4 w-4 bg-slate-600 rounded-full transition-all duration-200"></div>
-                    <div class="pin-dot h-4 w-4 bg-slate-600 rounded-full transition-all duration-200"></div>
-                    <div class="pin-dot h-4 w-4 bg-slate-600 rounded-full transition-all duration-200"></div>
-                    <div class="pin-dot h-4 w-4 bg-slate-600 rounded-full transition-all duration-200"></div>
-                </div>
-                <p id="pin-error" class="text-red-400 text-sm h-5 mb-2"></p>
-                <div id="pin-keypad" class="grid grid-cols-3 gap-4 text-2xl font-bold">
-                    <button data-key="1" class="keypad-btn bg-slate-700/50 hover:bg-slate-700 rounded-full p-4 aspect-square transition-colors">1</button>
-                    <button data-key="2" class="keypad-btn bg-slate-700/50 hover:bg-slate-700 rounded-full p-4 aspect-square transition-colors">2</button>
-                    <button data-key="3" class="keypad-btn bg-slate-700/50 hover:bg-slate-700 rounded-full p-4 aspect-square transition-colors">3</button>
-                    <button data-key="4" class="keypad-btn bg-slate-700/50 hover:bg-slate-700 rounded-full p-4 aspect-square transition-colors">4</button>
-                    <button data-key="5" class="keypad-btn bg-slate-700/50 hover:bg-slate-700 rounded-full p-4 aspect-square transition-colors">5</button>
-                    <button data-key="6" class="keypad-btn bg-slate-700/50 hover:bg-slate-700 rounded-full p-4 aspect-square transition-colors">6</button>
-                    <button data-key="7" class="keypad-btn bg-slate-700/50 hover:bg-slate-700 rounded-full p-4 aspect-square transition-colors">7</button>
-                    <button data-key="8" class="keypad-btn bg-slate-700/50 hover:bg-slate-700 rounded-full p-4 aspect-square transition-colors">8</button>
-                    <button data-key="9" class="keypad-btn bg-slate-700/50 hover:bg-slate-700 rounded-full p-4 aspect-square transition-colors">9</button>
-                    <div class="aspect-square"></div> <!-- empty cell -->
-                    <button data-key="0" class="keypad-btn bg-slate-700/50 hover:bg-slate-700 rounded-full p-4 aspect-square transition-colors">0</button>
-                    <button data-key="del" class="keypad-btn bg-slate-700/50 hover:bg-slate-700 rounded-full p-4 aspect-square transition-colors flex justify-center items-center">
-                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="pointer-events-none"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path><line x1="18" y1="9" x2="12" y2="15"></line><line x1="12" y1="9" x2="18" y2="15"></line></svg>
-                    </button>
-                </div>
-            </div>
-
-            <div id="confirmation-view" class="hidden">
-                <lottie-player id="success-animation" src="https://lottie.host/83282298-fb0d-45f9-8a3a-a88a75e38d4c/zqn2n5i1eN.json" background="transparent" speed="1" style="width: 250px; height: 250px; margin: -20px auto;"></lottie-player>
-                <h2 class="text-2xl font-bold text-green-400 -mt-8">Payment Successful!</h2>
-                <div class="bg-slate-700/50 rounded-xl p-4 my-6 text-left text-sm">
-                    <div class="flex justify-between items-center mb-3">
-                        <span class="text-slate-400">To:</span>
-                        <span id="success-payee-name" class="font-semibold text-base text-slate-200"></span>
-                    </div>
-                    <div class="flex justify-between items-center mb-3">
-                        <span class="text-slate-400">UPI ID:</span>
-                        <span id="success-payee-upi" class="font-mono text-slate-300"></span>
-                    </div>
-                    <div class="flex justify-between items-center border-t border-slate-600 pt-3 mt-3">
-                        <span class="text-slate-400">UTR:</span>
-                        <span id="success-utr" class="font-mono text-slate-300"></span>
-                    </div>
-                </div>
-                <p class="text-slate-400 text-xs">A confirmation has been saved to your activity log.</p>
-                <button id="done-btn" class="w-full mt-6 bg-slate-600 hover:bg-slate-700 text-white font-bold py-3 px-4 rounded-xl transition">Done</button>
-            </div>
-
-            <div id="loading-view" class="hidden">
-                <lottie-player src="https://lottie.host/e6942fd4-245c-4f27-9923-864c23562b8b/W8U0k237s5.json" background="transparent" speed="1" style="width: 200px; height: 200px; margin: auto;" loop autoplay></lottie-player>
-                <h2 id="loading-text" class="text-xl font-semibold text-slate-300 transition-opacity duration-300">Securing Transaction...</h2>
+    <!-- Confirmation Modal -->
+    <div id="confirm-modal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[60] hidden">
+        <div class="bg-gray-800 rounded-2xl p-6 w-80 text-center space-y-4 transform transition-all scale-95 opacity-0">
+            <h3 id="confirm-title" class="text-xl font-bold">Are you sure?</h3>
+            <p id="confirm-message" class="text-gray-400 text-sm">This action cannot be undone.</p>
+            <div class="flex space-x-4 pt-4">
+                <button id="confirm-cancel-btn" class="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 rounded-lg">Cancel</button>
+                <button id="confirm-ok-btn" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg">Confirm</button>
             </div>
         </div>
     </div>
 
 
-    <script type="module">
-        import * as THREE from 'three';
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- DOM Elements ---
+        const walletBalanceEl = document.getElementById('wallet-balance');
+        const marketStatusDotEl = document.getElementById('market-status-dot');
+        const marketStatusTextEl = document.getElementById('market-status-text');
+        const transactionListEl = document.getElementById('transaction-list');
+        const clearHistoryBtn = document.getElementById('clear-history');
+        const successModal = document.getElementById('success-modal');
+        const receiptEl = document.getElementById('receipt');
+        const closeSuccessBtn = document.getElementById('close-success');
+        const greetingEl = document.getElementById('greeting');
+        const payButton = document.getElementById('pay-button');
+        const pinModal = document.getElementById('pin-modal');
+        const pinModalContent = pinModal.querySelector('div');
+        const pinDots = document.getElementById('pin-dots').children;
+        const pinError = document.getElementById('pin-error');
+        const pinKeys = document.querySelectorAll('.pin-key');
+        const cancelPinBtn = document.getElementById('cancel-pin');
+        const backspacePinBtn = document.getElementById('backspace-pin');
+        const upiModal = document.getElementById('upi-modal');
+        const upiModalContent = document.getElementById('upi-modal-content');
+        const cameraView = document.getElementById('camera-view');
+        const notification = document.getElementById('notification');
+        const notificationMessage = document.getElementById('notification-message');
+        const confirmModal = document.getElementById('confirm-modal');
+        const confirmOkBtn = document.getElementById('confirm-ok-btn');
+        const confirmCancelBtn = document.getElementById('confirm-cancel-btn');
+        const confirmMessageEl = document.getElementById('confirm-message');
+        
+        // --- State ---
+        let walletBalance = 52980;
+        let isMarketOpen = false;
+        let walletInterval;
+        const TRANSACTIONS_KEY = 'redEagleTransactions';
+        let currentPin = '';
+        const correctPin = '2580';
+        let cameraStream = null;
+        let isAudioReady = false;
+        let paymentSuccessSound = null;
+        let errorSound = null;
 
-        document.addEventListener('DOMContentLoaded', () => {
-            // --- STATE & ELEMENTS ---
-            const initialInvestedValue = 52987.00;
-            let walletBalance = 52987.00;
-            let todaysPnl = 0;
-            let enteredPin = '';
-            let currentPayeeName = '';
-            let currentPayeeUpi = '';
-            let html5QrCode = null;
-            let simulationInterval = null; 
-            let sparklineChart, pnlChart;
-            let isStoppingScanner = false;
+        // --- Particles.js Init ---
+        particlesJS('particles-js', {
+            particles: {
+                number: { value: 30, density: { enable: true, value_area: 800 } },
+                color: { value: '#ef4444' },
+                shape: { type: 'circle' },
+                opacity: { value: 0.3, random: true },
+                size: { value: 3, random: true },
+                line_linked: { enable: true, distance: 150, color: '#ef4444', opacity: 0.2, width: 1 },
+                move: { enable: true, speed: 1, direction: 'none', random: false, straight: false, out_mode: 'out' }
+            },
+            interactivity: { detect_on: 'canvas', events: { onhover: { enable: false }, onclick: { enable: false } } }
+        });
+
+        // --- Functions ---
+        
+        async function initAudio() {
+            if (isAudioReady) return;
+            try {
+                await Tone.start();
+                paymentSuccessSound = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.005, decay: 0.1, sustain: 0.3, release: 1 } }).toDestination();
+                errorSound = new Tone.Synth({ oscillator: { type: 'triangle' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 } }).toDestination();
+                isAudioReady = true;
+            } catch (e) {
+                console.error("Could not start audio context:", e);
+            }
+        }
+
+        function showNotification(message, isError = false) {
+            notificationMessage.textContent = message;
+            notification.classList.remove('bg-red-500', 'bg-green-500');
+            notification.classList.add(isError ? 'bg-red-500' : 'bg-green-500');
+            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        function updateGreeting() {
+            const hour = new Date().getHours();
+            let greetingText = 'Good Morning, Aryaveer';
+            if (hour >= 12 && hour < 17) {
+                greetingText = 'Good Afternoon, Aryaveer';
+            } else if (hour >= 17) {
+                greetingText = 'Good Evening, Aryaveer';
+            }
+            greetingEl.textContent = greetingText;
+        }
+
+        function updateMarketStatus() {
+            const now = new Date();
+            const day = now.getDay();
+            const hour = now.getHours();
+            const minutes = now.getMinutes();
+            const isWeekday = day >= 1 && day <= 5;
+            const marketOpenTime = hour > 9 || (hour === 9 && minutes >= 15);
+            const marketCloseTime = hour < 15 || (hour === 15 && minutes < 30);
+            const currentlyOpen = isWeekday && marketOpenTime && marketCloseTime;
             
-            // Default data for first-time use
-            let weeklyPnlData = [
-                { x: new Date('2025-09-01').getTime(), y: [52850.15, 52980.60, 52600.90, 52636.55] },
-                { x: new Date('2025-09-02').getTime(), y: [52630.10, 53250.75, 52580.20, 53066.65] },
-                { x: new Date('2025-09-03').getTime(), y: [53060.00, 53100.80, 52850.00, 52956.65] },
-                { x: new Date('2025-09-04').getTime(), y: [52960.25, 53750.10, 52950.50, 53606.40] },
-                { x: new Date('2025-09-05').getTime(), y: [53600.90, 53880.00, 53500.25, 53826.70] },
-                { x: new Date().setHours(0,0,0,0), y: [initialInvestedValue, initialInvestedValue, initialInvestedValue, initialInvestedValue] }
-            ];
+            if (currentlyOpen !== isMarketOpen) {
+                isMarketOpen = currentlyOpen;
+                if (isMarketOpen) {
+                    marketStatusTextEl.textContent = 'Open';
+                    marketStatusDotEl.classList.remove('bg-red-500');
+                    marketStatusDotEl.classList.add('bg-green-500', 'animate-pulse');
+                    startWalletSimulation();
+                } else {
+                    marketStatusTextEl.textContent = 'Closed';
+                    marketStatusDotEl.classList.remove('bg-green-500', 'animate-pulse');
+                    marketStatusDotEl.classList.add('bg-red-500');
+                    stopWalletSimulation();
+                }
+            }
+        }
 
-            // --- ELEMENTS ---
-            const greetingEl = document.getElementById('greeting');
-            const marketStatusEl = document.getElementById('market-status');
-            const marketStatusIndicatorEl = document.getElementById('market-status-indicator');
-            const walletBalanceTickerEl = document.getElementById('wallet-balance-ticker');
-            const activityLogEl = document.getElementById('activity-log');
-            const todaysPnlEl = document.getElementById('todays-pnl');
-            const totalPnlEl = document.getElementById('total-pnl');
-            const modalElements = {
-                paymentModal: document.getElementById('payment-modal'),
-                modalContent: document.getElementById('modal-content'),
-                payBtn: document.getElementById('pay-btn'),
-                closeModalBtn: document.getElementById('close-modal-btn'),
-                scannerView: document.getElementById('scanner-view'),
-                detailsView: document.getElementById('details-view'),
-                confirmationView: document.getElementById('confirmation-view'),
-                loadingView: document.getElementById('loading-view'),
-                payeeNameEl: document.getElementById('payee-name'),
-                payeeUpiEl: document.getElementById('payee-upi'),
-                amountInput: document.getElementById('amount-input'),
-                amountError: document.getElementById('amount-error'),
-                confirmPayBtn: document.getElementById('confirm-pay-btn'),
-                doneBtn: document.getElementById('done-btn'),
-                successAnimation: document.getElementById('success-animation'),
-                pinView: document.getElementById('pin-view'),
-                pinDisplay: document.getElementById('pin-display'),
-                pinKeypad: document.getElementById('pin-keypad'),
-                pinError: document.getElementById('pin-error'),
-                backToDetailsBtn: document.getElementById('back-to-details-btn'),
-                loadingText: document.getElementById('loading-text'),
-                successPayeeName: document.getElementById('success-payee-name'),
-                successPayeeUpi: document.getElementById('success-payee-upi'),
-                successUtr: document.getElementById('success-utr'),
+        function startWalletSimulation() {
+            if (walletInterval) return;
+            walletInterval = setInterval(() => {
+                const change = (Math.random() * 100 - 50);
+                walletBalance += change;
+                if (walletBalance < 0) walletBalance = 0;
+                walletBalanceEl.textContent = walletBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                const flashClass = change > 0 ? 'flash-green' : 'flash-red';
+                walletBalanceEl.parentElement.classList.add(flashClass);
+                setTimeout(() => walletBalanceEl.parentElement.classList.remove(flashClass), 700);
+            }, 3000);
+        }
+
+        function stopWalletSimulation() {
+            clearInterval(walletInterval);
+            walletInterval = null;
+        }
+
+        function getTransactions() {
+            return JSON.parse(localStorage.getItem(TRANSACTIONS_KEY)) || [];
+        }
+
+        function saveTransaction(transaction) {
+            const transactions = getTransactions();
+            transactions.unshift(transaction);
+            localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(transactions));
+        }
+        
+        function renderTransactions() {
+            const transactions = getTransactions();
+            transactionListEl.innerHTML = '';
+            if (transactions.length === 0) {
+                transactionListEl.innerHTML = `<p class="text-gray-500 text-sm text-center py-4">No recent transactions.</p>`;
+                return;
+            }
+            transactions.forEach(tx => {
+                const txEl = document.createElement('div');
+                txEl.className = 'transaction-item bg-gray-800/50 p-3 rounded-lg flex items-center justify-between';
+                txEl.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <div class="bg-red-500/20 p-2 rounded-full">
+                           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.707-10.293a1 1 0 00-1.414-1.414l-3 3a1 1 0 001.414 1.414L10 9.414l1.293 1.293a1 1 0 001.414-1.414l-2-2z" clip-rule="evenodd" /></svg>
+                        </div>
+                        <div>
+                            <p class="font-semibold text-white">${tx.name}</p>
+                            <p class="text-xs text-gray-400">${new Date(tx.date).toLocaleString()}</p>
+                        </div>
+                    </div>
+                    <p class="font-bold text-red-400">- ₹${tx.amount.toLocaleString('en-IN')}</p>
+                `;
+                transactionListEl.appendChild(txEl);
+            });
+        }
+        
+        function updatePinDots() {
+            for (let i = 0; i < pinDots.length; i++) {
+                if (i < currentPin.length) {
+                    pinDots[i].classList.add('filled');
+                } else {
+                    pinDots[i].classList.remove('filled');
+                }
+            }
+        }
+        
+        function resetPin() {
+            currentPin = '';
+            pinError.innerHTML = '&nbsp;';
+            updatePinDots();
+        }
+        
+        function handlePinKey(key) {
+            if (currentPin.length < 4) {
+                currentPin += key;
+                updatePinDots();
+                if (currentPin.length === 4) {
+                    verifyPin();
+                }
+            }
+        }
+        
+        function handleBackspace() {
+            currentPin = currentPin.slice(0, -1);
+            pinError.innerHTML = '&nbsp;';
+            updatePinDots();
+        }
+        
+        function verifyPin() {
+            if (currentPin === correctPin) {
+                closePinModal();
+                setTimeout(openUpiModal, 300);
+            } else {
+                pinError.textContent = 'Incorrect PIN. Try again.';
+                if (isAudioReady) errorSound.triggerAttackRelease("C3", "8n");
+                pinModalContent.classList.add('animate-shake');
+                setTimeout(() => {
+                    pinModalContent.classList.remove('animate-shake');
+                    resetPin();
+                }, 800);
+            }
+        }
+        
+        function openPinModal() {
+            resetPin();
+            pinModal.classList.remove('hidden');
+            setTimeout(() => {
+                pinModalContent.classList.remove('scale-95', 'opacity-0');
+            }, 10);
+        }
+        
+        function closePinModal() {
+            pinModalContent.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                pinModal.classList.add('hidden');
+            }, 300);
+        }
+        
+        async function openUpiModal() {
+            upiModal.classList.remove('hidden');
+            document.getElementById('upi-id').value = '';
+            document.getElementById('upi-name').value = '';
+            document.getElementById('upi-amount').value = '';
+            setTimeout(() => {
+                upiModalContent.classList.remove('translate-y-full');
+            }, 10);
+            try {
+                cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                cameraView.srcObject = cameraStream;
+                setTimeout(simulateQrScan, 3000);
+            } catch (err) {
+                console.error("Error accessing camera:", err);
+                showNotification("Could not access camera. Grant permission.", true);
+            }
+        }
+        
+        const closeUpiModal = () => {
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+                cameraStream = null;
+            }
+            upiModalContent.classList.add('translate-y-full');
+            setTimeout(() => {
+                upiModal.classList.add('hidden');
+            }, 300);
+        };
+        
+        function simulateQrScan() {
+            if (!document.getElementById('upi-id').value) {
+                document.getElementById('upi-id').value = 'aryaveer-chauhan@okhdfcbank';
+                document.getElementById('upi-name').value = 'Aryaveer Chauhan';
+                if (isAudioReady) {
+                    const pingSound = new Tone.Player("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA").toDestination();
+                    pingSound.autostart = true;
+                }
+            }
+        }
+        
+        function handlePayment() {
+            const amountInput = document.getElementById('upi-amount');
+            const nameInput = document.getElementById('upi-name');
+            const idInput = document.getElementById('upi-id');
+            const amount = parseFloat(amountInput.value);
+            const name = nameInput.value;
+            const upiId = idInput.value;
+            
+            if (isNaN(amount) || amount <= 0) {
+                showNotification("Please enter a valid amount.", true);
+                if (isAudioReady) errorSound.triggerAttackRelease("C3", "8n");
+                return;
+            }
+            if (amount > walletBalance) {
+                showNotification("Insufficient wallet balance.", true);
+                if (isAudioReady) errorSound.triggerAttackRelease("C3", "8n");
+                return;
+            }
+            
+            walletBalance -= amount;
+            walletBalanceEl.textContent = walletBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            const utr = `UTR${Date.now()}${Math.floor(Math.random()*1000)}`;
+            const transaction = { id: utr, name, upiId, amount, date: new Date().toISOString() };
+            
+            saveTransaction(transaction);
+            renderTransactions();
+            closeUpiModal();
+            setTimeout(() => showSuccess(transaction), 300);
+        }
+        
+        function showSuccess(transaction) {
+            receiptEl.innerHTML = `
+                <div class="flex justify-between"><span class="text-gray-400">To:</span> <strong class="text-white">${transaction.name}</strong></div>
+                <div class="flex justify-between"><span class="text-gray-400">UPI ID:</span> <strong class="text-white">${transaction.upiId}</strong></div>
+                <div class="flex justify-between"><span class="text-gray-400">Amount:</span> <strong class="text-white">₹${transaction.amount.toLocaleString('en-IN')}</strong></div>
+                <div class="flex justify-between pt-2 border-t border-gray-700 mt-2"><span class="text-gray-400">UTR:</span> <strong class="text-white text-xs">${transaction.id}</strong></div>
+            `;
+            successModal.classList.remove('hidden');
+            setTimeout(() => successModal.querySelector('div').classList.remove('scale-95', 'opacity-0'), 10);
+            if (isAudioReady) paymentSuccessSound.triggerAttackRelease("C5", "8n", Tone.now());
+        }
+
+        function closeSuccess() {
+            const modalContent = successModal.querySelector('div');
+            modalContent.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => successModal.classList.add('hidden'), 300);
+        }
+
+        function showConfirm(message, onConfirm) {
+            confirmMessageEl.textContent = message;
+            confirmModal.classList.remove('hidden');
+            setTimeout(() => confirmModal.querySelector('div').classList.remove('scale-95', 'opacity-0'), 10);
+            
+            const close = () => {
+                confirmModal.querySelector('div').classList.add('scale-95', 'opacity-0');
+                setTimeout(() => confirmModal.classList.add('hidden'), 300);
             };
-
-            // --- 3D LOGO SETUP ---
-            const scene = new THREE.Scene();
-            const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
-            const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-            const logoContainer = document.getElementById('logo-container');
-            renderer.setSize(40, 40);
-            logoContainer.appendChild(renderer.domElement);
             
-            const geometry = new THREE.IcosahedronGeometry(0.8, 0);
-            const material = new THREE.MeshStandardMaterial({
-                color: 0xe11d48,
-                metalness: 0.6,
-                roughness: 0.3
-            });
-            const logo = new THREE.Mesh(geometry, material);
-            scene.add(logo);
-
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-            scene.add(ambientLight);
-            const pointLight = new THREE.PointLight(0xffffff, 1);
-            pointLight.position.set(5, 5, 5);
-            scene.add(pointLight);
+            const confirmAndClose = () => {
+                onConfirm();
+                close();
+            };
             
-            camera.position.z = 2;
+            confirmOkBtn.addEventListener('click', confirmAndClose, { once: true });
+            confirmCancelBtn.addEventListener('click', close, { once: true });
+        }
 
-            function animateLogo() {
-                requestAnimationFrame(animateLogo);
-                logo.rotation.x += 0.005;
-                logo.rotation.y += 0.005;
-                renderer.render(scene, camera);
-            }
-            animateLogo();
-
-
-            // --- CHART SETUP ---
-            function initCharts() {
-                const sparklineData = weeklyPnlData.map(d => d.y[3]);
-                if (sparklineData[sparklineData.length-1] !== walletBalance) {
-                     sparklineData[sparklineData.length-1] = walletBalance;
-                }
-                
-                const sparklineOptions = {
-                    series: [{ data: sparklineData }],
-                    chart: { type: 'area', height: 60, width: 120, sparkline: { enabled: true } },
-                    stroke: { curve: 'smooth', width: 2 },
-                    fill: {
-                        type: 'gradient',
-                        gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.1, }
-                    },
-                    colors: [todaysPnl >= 0 ? '#4ade80' : '#f87171'],
-                    tooltip: { enabled: false }
-                };
-                sparklineChart = new ApexCharts(document.querySelector("#sparkline-chart"), sparklineOptions);
-                sparklineChart.render();
-                
-                const pnlChartOptions = {
-                    series: [{ data: weeklyPnlData }],
-                    chart: { type: 'candlestick', height: '100%', toolbar: { show: false }, background: 'transparent' },
-                    xaxis: { type: 'datetime', labels: { style: { colors: '#94a3b8' } }, axisBorder: { show: false }, axisTicks: { show: false } },
-                    yaxis: { labels: { show: false }, grid: { show: false } },
-                    grid: { show: true, borderColor: 'rgba(148, 163, 184, 0.1)', padding: { left: 0, right: 0 } },
-                    plotOptions: {
-                        candlestick: {
-                            colors: { upward: '#22c55e', downward: '#ef4444' },
-                            wick: { useFillColor: true }
-                        }
-                    },
-                    tooltip: { theme: 'dark' }
-                };
-                pnlChart = new ApexCharts(document.querySelector("#pnl-candlestick-chart"), pnlChartOptions);
-                pnlChart.render();
-            }
-
-            // --- LOCAL STORAGE FUNCTIONS ---
-            function saveState() {
-                const state = {
-                    walletBalance: walletBalance,
-                    todaysPnl: todaysPnl,
-                    weeklyPnlData: weeklyPnlData,
-                    activityLogHTML: activityLogEl.innerHTML,
-                    lastSavedDate: new Date().toISOString()
-                };
-                localStorage.setItem('redEagleState', JSON.stringify(state));
-            }
-
-            function loadState() {
-                const savedStateJSON = localStorage.getItem('redEagleState');
-                if (!savedStateJSON) return;
-
-                const savedState = JSON.parse(savedStateJSON);
-                const lastSaved = new Date(savedState.lastSavedDate).toDateString();
-                const today = new Date().toDateString();
-
-                walletBalance = savedState.walletBalance;
-                weeklyPnlData = savedState.weeklyPnlData;
-
-                if (lastSaved === today) {
-                    todaysPnl = savedState.todaysPnl;
-                    if (savedState.activityLogHTML) activityLogEl.innerHTML = savedState.activityLogHTML;
-                } else {
-                    todaysPnl = 0;
-                    const lastClose = weeklyPnlData[weeklyPnlData.length - 1].y[3];
-                    weeklyPnlData.push({
-                        x: new Date().setHours(0,0,0,0),
-                        y: [lastClose, lastClose, lastClose, lastClose]
-                    });
-                    if (weeklyPnlData.length > 7) weeklyPnlData.shift();
-                }
-
-                walletBalanceTickerEl.textContent = `₹${walletBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                updatePnlUI();
-            }
-
-            // --- UI & LOGIC FUNCTIONS ---
-            function updatePnlUI() {
-                const totalPnl = walletBalance - initialInvestedValue;
-                todaysPnlEl.textContent = `₹${todaysPnl.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                totalPnlEl.textContent = `₹${totalPnl.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                
-                [todaysPnlEl, totalPnlEl].forEach(el => {
-                    const val = el === todaysPnlEl ? todaysPnl : totalPnl;
-                    el.classList.toggle('text-green-400', val >= 0);
-                    el.classList.toggle('text-red-400', val < 0);
-                });
-            }
-
-            function animateBalance(newBalance) {
-                const newSpan = document.createElement('span');
-                newSpan.textContent = `₹${newBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                newSpan.className = 'balance-ticker';
-                const isGain = newBalance > walletBalance;
-                walletBalanceTickerEl.classList.add(isGain ? 'balance-down' : 'balance-up');
-                
-                setTimeout(() => {
-                    walletBalanceTickerEl.innerHTML = '';
-                    walletBalanceTickerEl.appendChild(newSpan);
-                    walletBalanceTickerEl.classList.remove('balance-down', 'balance-up');
-                }, 400);
-            }
-
-            function updateDashboard() {
-                const now = new Date();
-                const istOffset = 5.5 * 60 * 60 * 1000;
-                const istTime = new Date(now.getTime() + istOffset);
-                const hour = istTime.getUTCHours();
-                const day = istTime.getUTCDay();
-
-                if (hour < 12) greetingEl.textContent = "Hi Aryaveer, Good Morning!";
-                else if (hour < 17) greetingEl.textContent = "Hi Aryaveer, Good Afternoon!";
-                else greetingEl.textContent = "Hi Aryaveer, Good Evening!";
-
-                const minutes = istTime.getUTCMinutes();
-                const timeInMinutes = hour * 60 + minutes;
-                const marketOpen = (day >= 1 && day <= 5) && (timeInMinutes >= (9 * 60 + 15) && timeInMinutes < (15 * 60 + 30));
-
-                if (marketOpen) {
-                    marketStatusEl.textContent = "Market Open";
-                    marketStatusIndicatorEl.classList.remove('bg-gray-500');
-                    marketStatusIndicatorEl.classList.add('bg-green-500', 'animate-pulse');
-                    if (!simulationInterval) {
-                        if(activityLogEl.querySelector('.italic')) activityLogEl.innerHTML = '';
-                        simulationInterval = setInterval(autoSimulateBalance, 2500);
-                    }
-                } else {
-                    marketStatusEl.textContent = "Market Closed";
-                    marketStatusIndicatorEl.classList.add('bg-gray-500');
-                    marketStatusIndicatorEl.classList.remove('bg-green-500', 'animate-pulse');
-                    if (simulationInterval) {
-                        clearInterval(simulationInterval);
-                        simulationInterval = null;
-                        if(!activityLogEl.hasChildNodes() || activityLogEl.querySelector('.italic')) {
-                             activityLogEl.innerHTML = '<p class="text-slate-500 italic">Market is closed. No new activity.</p>';
-                        }
-                    }
-                }
-            }
-            
-            function updateBalance(newBalance, change) {
-                animateBalance(newBalance);
-                walletBalance = newBalance;
-                todaysPnl += change;
-                
-                let todayData = weeklyPnlData[weeklyPnlData.length - 1].y;
-                todayData[3] = walletBalance; // Close price
-                if (walletBalance > todayData[1]) todayData[1] = walletBalance; // High
-                if (walletBalance < todayData[2]) todayData[2] = walletBalance; // Low
-
-                sparklineChart.updateSeries([{ data: weeklyPnlData.map(d => d.y[3]) }]);
-                sparklineChart.updateOptions({ colors: [todaysPnl >= 0 ? '#4ade80' : '#f87171']});
-                pnlChart.updateSeries([{ data: weeklyPnlData }]);
-
-                updatePnlUI();
-
-                if (change !== 0) {
-                    if (activityLogEl.querySelector('.italic')) activityLogEl.innerHTML = '';
-                    const now = new Date();
-                    const timeString = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-                    const logEntry = document.createElement('div');
-                    logEntry.className = 'activity-item flex justify-between items-center';
-                    const changeType = change > 0 ? 'Portfolio Gain' : 'Portfolio Loss';
-                    const textColor = change > 0 ? 'text-green-400' : 'text-red-400';
-                    logEntry.innerHTML = `<div><span class="font-semibold">${changeType}</span><span class="text-xs text-slate-400 ml-2">${timeString}</span></div><span class="font-semibold ${textColor}">${change > 0 ? '+' : ''}₹${Math.abs(change).toFixed(2)}</span>`;
-                    activityLogEl.prepend(logEntry);
-                    
-                    while (activityLogEl.children.length > 5) activityLogEl.removeChild(activityLogEl.lastChild);
-                }
-                
-                saveState();
-            }
-            
-            function addPaymentToActivityLog(amount, payee) {
-                if (activityLogEl.querySelector('.italic')) activityLogEl.innerHTML = '';
-                const now = new Date();
-                const timeString = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-                const logEntry = document.createElement('div');
-                logEntry.className = 'activity-item flex justify-between items-center';
-                logEntry.innerHTML = `<div><span class="font-semibold">Paid to ${payee}</span><span class="text-xs text-slate-400 ml-2">${timeString}</span></div><span class="font-semibold text-amber-400">-₹${amount.toFixed(2)}</span>`;
-                activityLogEl.prepend(logEntry);
-                
-                while (activityLogEl.children.length > 5) activityLogEl.removeChild(activityLogEl.lastChild);
-                saveState();
-            }
-
-            function autoSimulateBalance() {
-                const change = (Math.random() - 0.49) * 400;
-                updateBalance(walletBalance + change, change);
-            }
-
-            // --- MODAL & PAYMENT LOGIC ---
-            function openModal() {
-                modalElements.paymentModal.classList.remove('modal-hidden');
-                modalElements.paymentModal.classList.add('modal-visible');
-                setTimeout(() => modalElements.modalContent.classList.remove('scale-95'), 10);
-                startScanner();
-            }
-            function closeModal() {
-                modalElements.modalContent.classList.add('scale-95');
-                modalElements.paymentModal.classList.remove('modal-visible');
-                modalElements.paymentModal.classList.add('modal-hidden');
-                setTimeout(() => { stopScanner(); resetModalViews(); }, 300);
-            }
-            function resetModalViews() {
-                modalElements.scannerView.style.display = 'block';
-                modalElements.detailsView.style.display = 'none';
-                modalElements.confirmationView.style.display = 'none';
-                modalElements.loadingView.style.display = 'none';
-                modalElements.pinView.style.display = 'none';
-                modalElements.amountInput.value = '';
-                modalElements.amountError.classList.add('hidden');
-                document.getElementById('scanner-error').classList.add('hidden');
-                enteredPin = '';
-                updatePinDisplay();
-                modalElements.pinError.textContent = '';
-            }
-             function startScanner() {
-                if (html5QrCode && html5QrCode.isScanning) return;
-                if (!html5QrCode) html5QrCode = new Html5Qrcode("qr-reader");
-                const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-                html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure)
-                    .catch(() => {
-                        const scannerError = document.getElementById('scanner-error');
-                        scannerError.textContent = "Could not start camera.";
-                        scannerError.classList.remove('hidden');
-                    });
-            }
-            async function stopScanner() {
-                if (html5QrCode && html5QrCode.isScanning && !isStoppingScanner) {
-                    isStoppingScanner = true;
-                    try {
-                        await html5QrCode.stop();
-                    } catch (err) {
-                        console.error("QR scanner stop failed.", err);
-                    } finally {
-                        isStoppingScanner = false;
-                    }
-                }
-            }
-            async function onScanSuccess(decodedText) {
-                await stopScanner();
-                try {
-                    const url = new URL(decodedText);
-                    if (url.protocol !== 'upi:') throw new Error("Not a valid UPI QR code.");
-                    const params = url.searchParams;
-                    const upiId = params.get('pa');
-                    if (!upiId) throw new Error("UPI ID not found in QR code.");
-                    
-                    modalElements.payeeNameEl.textContent = decodeURIComponent(params.get('pn') || 'N/A');
-                    modalElements.payeeUpiEl.textContent = upiId;
-                    modalElements.scannerView.style.display = 'none';
-                    modalElements.detailsView.style.display = 'block';
-                } catch (error) {
-                    const scannerError = document.getElementById('scanner-error');
-                    scannerError.textContent = error.message;
-                    scannerError.classList.remove('hidden');
-                    setTimeout(startScanner, 2000);
-                }
-            }
-            function onScanFailure(error) { /* intentionally blank */ }
-            
-            function showPinView() {
-                const amount = parseFloat(modalElements.amountInput.value);
-                if (isNaN(amount) || amount <= 0 || amount > walletBalance) {
-                    modalElements.amountError.textContent = amount > walletBalance ? "Insufficient balance." : "Invalid amount.";
-                    modalElements.amountError.classList.remove('hidden');
-                    return;
-                }
-                modalElements.amountError.classList.add('hidden');
-                currentPayeeName = modalElements.payeeNameEl.textContent;
-                currentPayeeUpi = modalElements.payeeUpiEl.textContent;
-                modalElements.detailsView.style.display = 'none';
-                modalElements.pinView.style.display = 'block';
-            }
-
-            function updatePinDisplay() {
-                const dots = modalElements.pinDisplay.children;
-                for (let i = 0; i < dots.length; i++) {
-                    dots[i].classList.toggle('filled', i < enteredPin.length);
-                }
-            }
-
-            function handlePinKeyPress(key) {
-                if (key === 'del') {
-                    enteredPin = enteredPin.slice(0, -1);
-                } else if (enteredPin.length < 4) {
-                    enteredPin += key;
-                }
-                
-                updatePinDisplay();
-
-                if (enteredPin.length === 4) {
-                    checkPin();
-                }
-            }
-
-            function checkPin() {
-                const correctPin = '2580';
-                modalElements.pinKeypad.style.pointerEvents = 'none';
-
-                setTimeout(() => {
-                    if (enteredPin === correctPin) {
-                        finalizePayment();
-                    } else {
-                        modalElements.pinError.textContent = 'Incorrect PIN. Please try again.';
-                        modalElements.pinDisplay.classList.add('shake');
-                        
-                        setTimeout(() => {
-                            enteredPin = '';
-                            updatePinDisplay();
-                            modalElements.pinDisplay.classList.remove('shake');
-                            modalElements.pinError.textContent = '';
-                            modalElements.pinKeypad.style.pointerEvents = 'auto';
-                        }, 1000);
-                    }
-                }, 200);
-            }
-
-            function finalizePayment() {
-                modalElements.pinView.style.display = 'none';
-                modalElements.loadingView.style.display = 'block';
-
-                const loadingSteps = ["Connecting to bank...", "Encrypting details...", "Verifying PIN...", "Processing payment..."];
-                let step = 0;
-                modalElements.loadingText.textContent = loadingSteps[0];
-
-                const loadingInterval = setInterval(() => {
-                    step++;
-                    if (step < loadingSteps.length) {
-                        modalElements.loadingText.classList.add('opacity-0');
-                        setTimeout(() => {
-                            modalElements.loadingText.textContent = loadingSteps[step];
-                            modalElements.loadingText.classList.remove('opacity-0');
-                        }, 300);
-                    }
-                }, 1000);
-
-                setTimeout(() => {
-                    clearInterval(loadingInterval);
-                    const amount = parseFloat(modalElements.amountInput.value);
-                    const newBalance = walletBalance - amount;
-                    updateBalance(newBalance, 0); 
-                    
-                    const utr = `T${new Date().getTime()}${Math.floor(Math.random() * 90)}`;
-                    modalElements.successPayeeName.textContent = currentPayeeName;
-                    modalElements.successPayeeUpi.textContent = currentPayeeUpi;
-                    modalElements.successUtr.textContent = utr;
-                    addPaymentToActivityLog(amount, currentPayeeName);
-
-                    // Play confirmation sound
-                    if (window.Tone) {
-                        Tone.start(); // Required for user-initiated audio
-                        const synth = new Tone.PolySynth(Tone.Synth).toDestination();
-                        const now = Tone.now();
-                        // Play a pleasant C major 7 arpeggio
-                        synth.triggerAttackRelease("C5", "8n", now);
-                        synth.triggerAttackRelease("E5", "8n", now + 0.1);
-                        synth.triggerAttackRelease("G5", "8n", now + 0.2);
-                        synth.triggerAttackRelease("B5", "8n", now + 0.3);
-                    }
-                    
-                    modalElements.loadingView.style.display = 'none';
-                    modalElements.confirmationView.style.display = 'block';
-                    modalElements.successAnimation.seek(0);
-                    modalElements.successAnimation.play();
-                }, 4500);
-            }
-
-            // --- EVENT LISTENERS ---
-            modalElements.payBtn.addEventListener('click', openModal);
-            modalElements.closeModalBtn.addEventListener('click', closeModal);
-            modalElements.doneBtn.addEventListener('click', closeModal);
-            modalElements.confirmPayBtn.addEventListener('click', showPinView);
-            modalElements.paymentModal.addEventListener('click', (e) => {
-                if(e.target === modalElements.paymentModal) closeModal();
-            });
-            modalElements.backToDetailsBtn.addEventListener('click', () => {
-                modalElements.pinView.style.display = 'none';
-                modalElements.detailsView.style.display = 'block';
-                enteredPin = '';
-                updatePinDisplay();
-            });
-            modalElements.pinKeypad.addEventListener('click', (e) => {
-                const button = e.target.closest('.keypad-btn');
-                if (button) {
-                    handlePinKeyPress(button.dataset.key);
-                }
-            });
-
-            // --- INITIALIZATION ---
-            loadState();
-            initCharts();
-            updateDashboard();
-            setInterval(updateDashboard, 60000);
-            window.addEventListener('resize', () => {
-                if(pnlChart) pnlChart.destroy();
-                if(sparklineChart) sparklineChart.destroy();
-                initCharts();
+        // --- Event Listeners ---
+        payButton.addEventListener('click', () => { initAudio(); openPinModal(); });
+        pinKeys.forEach(key => key.addEventListener('click', () => handlePinKey(key.textContent)));
+        backspacePinBtn.addEventListener('click', handleBackspace);
+        cancelPinBtn.addEventListener('click', closePinModal);
+        document.getElementById('cancel-upi').addEventListener('click', closeUpiModal);
+        document.getElementById('process-payment').addEventListener('click', handlePayment);
+        closeSuccessBtn.addEventListener('click', closeSuccess);
+        clearHistoryBtn.addEventListener('click', () => {
+            showConfirm('Are you sure you want to clear all transaction history?', () => {
+                localStorage.removeItem(TRANSACTIONS_KEY);
+                renderTransactions();
+                showNotification("Transaction history cleared.", false);
             });
         });
+        
+        // --- Initialisation ---
+        updateGreeting();
+        updateMarketStatus();
+        renderTransactions();
+        setInterval(updateMarketStatus, 60000);
+        document.head.insertAdjacentHTML("beforeend", `<style>@keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } } .animate-shake { animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both; }</style>`);
+    });
     </script>
-
 </body>
 </html>
 
