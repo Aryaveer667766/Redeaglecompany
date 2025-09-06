@@ -3,1346 +3,620 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Red Eagle</title>
+    <title>The Red Eagle Company</title>
     
+    <!-- Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://unpkg.com/html5-qrcode"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Lottie for high-quality animations -->
+    <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+    
+    <!-- QR Code Scanner library -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
+    <!-- ApexCharts for professional graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    
+    <!-- Three.js for 3D logo -->
+    <script type="importmap">
+        { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js" } }
+    </script>
 
     <style>
-        /* Custom Styles & Aurora Background */
-        :root {
-            --accent-color: 217, 94%, 57%; /* Default Blue */
-            --accent-color-rgb: 59, 130, 246;
-        }
-
+        /* Custom styles for the app */
         body {
-            background-color: #0c0a09;
-            color: #f2f2f2;
-            overflow-x: hidden;
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            background-color: #020617; /* Fallback background */
+            overflow-x: hidden; /* Prevent horizontal scroll */
         }
 
-        .aurora-background {
+        /* Aurora Background Animation */
+        #aurora-bg {
             position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             z-index: -1;
-            opacity: 0.5;
+            overflow: hidden;
+        }
+
+        .aurora-shape {
+            position: absolute;
+            border-radius: 50%;
             filter: blur(100px);
-            pointer-events: none;
+            opacity: 0.3;
+            mix-blend-mode: screen;
         }
 
-        .aurora-shape1 {
-            position: absolute;
-            height: 400px; width: 400px;
-            background: radial-gradient(circle, rgba(var(--accent-color-rgb), 0.5) 0%, rgba(var(--accent-color-rgb), 0) 70%);
-            animation: move1 20s infinite alternate;
+        #shape1 {
+            width: 400px; height: 400px; background-color: #be123c;
+            animation: move1 25s infinite alternate;
         }
-
-        .aurora-shape2 {
-            position: absolute;
-            height: 500px; width: 500px;
-            background: radial-gradient(circle, rgba(168, 85, 247, 0.4) 0%, rgba(168, 85, 247, 0) 70%);
-            animation: move2 25s infinite alternate;
+        #shape2 {
+            width: 300px; height: 300px; background-color: #4338ca;
+            animation: move2 30s infinite alternate;
         }
-
-        .aurora-shape3 {
-            position: absolute;
-            height: 300px; width: 300px;
-            background: radial-gradient(circle, rgba(234, 179, 8, 0.3) 0%, rgba(234, 179, 8, 0) 70%);
-            animation: move3 15s infinite alternate;
+         #shape3 {
+            width: 350px; height: 350px; background-color: #166534;
+            animation: move3 20s infinite alternate;
         }
 
         @keyframes move1 {
             from { transform: translate(10vw, 20vh) rotate(0deg); }
-            to { transform: translate(50vw, 60vh) rotate(360deg); }
+            to { transform: translate(70vw, 80vh) rotate(360deg); }
         }
         @keyframes move2 {
-            from { transform: translate(80vw, 10vh) rotate(0deg); }
-            to { transform: translate(30vw, 80vh) rotate(-360deg); }
+            from { transform: translate(80vw, 10vh); }
+            to { transform: translate(20vw, 60vh); }
         }
-        @keyframes move3 {
-            from { transform: translate(40vw, 90vh) rotate(0deg); }
-            to { transform: translate(70vw, 5vh) rotate(180deg); }
+         @keyframes move3 {
+            from { transform: translate(50vw, 90vh); }
+            to { transform: translate(10vw, 10vh); }
         }
-        
-        .glass-card {
-            background-color: rgba(31, 41, 55, 0.4);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
+
+        /* Glassmorphism Card Style */
+        .card {
+            position: relative;
+            background-color: rgba(15, 23, 42, 0.6); /* Slightly more opaque */
             border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 1rem;
-        }
-
-        .nav-link.active {
-            background-color: hsla(var(--accent-color), 0.2);
-            color: hsla(var(--accent-color), 1);
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
         
-        .pin-dot {
-            width: 1rem; height: 1rem;
-            border-radius: 50%;
-            border: 2px solid #6b7280;
-            transition: background-color 0.2s;
-        }
-        .pin-dot.filled {
-            background-color: hsl(var(--accent-color));
-            border-color: hsl(var(--accent-color));
+        /* Neon Glow Effect on Hover */
+        .card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 0 15px rgba(225, 29, 72, 0.3), 0 0 30px rgba(225, 29, 72, 0.2), 0 0 45px rgba(225, 29, 72, 0.1);
+            border-color: rgba(225, 29, 72, 0.5);
         }
 
-        .modal {
-            display: none;
+        /* Page load animations */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(25px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-fade-in-up {
             opacity: 0;
-            transition: opacity 0.3s ease;
+            animation: fadeInUp 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
         }
-        .modal.active {
-            display: flex;
-            opacity: 1;
+        
+        /* Activity log animation */
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
         }
-
-        /* Chart.js tooltip custom styles */
-        .chartjs-tooltip {
-            background: rgba(31, 41, 55, 0.8) !important;
-            border-radius: 0.5rem !important;
-            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        .activity-item {
+            animation: slideIn 0.5s ease-out forwards;
         }
 
-        /* Hide scrollbar but allow scrolling */
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        /* Number Ticker Animation */
+        .balance-ticker {
+            transition: transform 0.4s ease-out;
+            display: inline-block;
+        }
+        .balance-up {
+            transform: translateY(-100%);
+        }
+        .balance-down {
+            transform: translateY(100%);
+        }
 
-        /* QR Scanner Styling */
-        #qr-reader video {
-            width: 100% !important;
-            height: auto !important;
-            border-radius: 1rem;
+        /* QR Scanner styling */
+        #qr-reader {
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid #334155;
         }
-        #qr-reader-results {
-            display: none;
+        
+        /* Modal Transitions */
+        #payment-modal {
+             transition: opacity 0.3s ease, visibility 0.3s;
         }
+        #modal-content {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        #payment-modal.modal-hidden { visibility: hidden; opacity: 0; }
+        #payment-modal.modal-visible { visibility: visible; opacity: 1; }
+        
+        /* Chart tooltip styling */
+        .apexcharts-tooltip {
+            background: #1e293b !important;
+            color: #e2e8f0;
+            border: 1px solid #334155 !important;
+        }
+        .apexcharts-tooltip-title {
+            background: #334155 !important;
+            border-bottom: 1px solid #475569 !important;
+        }
+
     </style>
 </head>
-<body class="font-sans">
+<body class="text-white antialiased">
 
-    <div class="aurora-background">
-        <div class="aurora-shape1"></div>
-        <div class="aurora-shape2"></div>
-        <div class="aurora-shape3"></div>
+    <div id="aurora-bg">
+        <div id="shape1" class="aurora-shape"></div>
+        <div id="shape2" class="aurora-shape"></div>
+        <div id="shape3" class="aurora-shape"></div>
     </div>
 
-    <div id="lock-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-stone-950/80 backdrop-blur-md">
-        <div class="text-center">
-            <h1 class="text-3xl font-bold tracking-tighter text-white mb-2">The Red Eagle</h1>
-            <p id="lock-screen-message" class="text-gray-400 mb-6">Create a PIN to secure your account</p>
-            <div id="pin-dots" class="flex justify-center space-x-4 mb-8">
-                <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+    <div id="app" class="relative z-10 min-h-screen p-4 sm:p-6 lg:p-8 flex flex-col max-w-4xl mx-auto">
+        <!-- Header -->
+        <header class="flex justify-between items-center mb-8 animate-fade-in-up" style="animation-delay: 100ms;">
+            <div class="flex items-center gap-3">
+                <div id="logo-container" class="w-10 h-10"></div>
+                <h1 class="text-xl md:text-2xl font-bold tracking-tight text-slate-200">The Red Eagle Co.</h1>
             </div>
-        </div>
-        <div id="keypad" class="grid grid-cols-3 gap-4 w-64">
+            <div class="text-right">
+                <p id="greeting" class="text-sm md:text-base text-slate-400">Hi Aryaveer, Good Morning!</p>
+                <div class="flex items-center justify-end gap-2 mt-1">
+                    <span id="market-status-indicator" class="h-2.5 w-2.5 rounded-full bg-gray-500 transition-colors"></span>
+                    <p id="market-status" class="text-xs font-semibold uppercase tracking-wider text-slate-300">Market Closed</p>
+                </div>
             </div>
-    </div>
+        </header>
 
-    <div id="app" class="hidden h-screen w-screen md:grid md:grid-cols-[240px_1fr]">
-
-        <aside class="hidden md:flex flex-col bg-stone-900/50 border-r border-stone-800 p-4">
-            <div class="text-2xl font-bold tracking-tighter mb-8 flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-500"><path d="m14 11-4 4 4 4"/><path d="M20 11h-8"/></svg>
-                The Red Eagle
-            </div>
-            <nav id="desktop-nav" class="flex flex-col space-y-2">
-                <a href="#dashboard" class="nav-link flex items-center gap-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-stone-700/50 transition-colors" data-page="dashboard"><i data-lucide="layout-dashboard"></i> Dashboard</a>
-                <a href="#markets" class="nav-link flex items-center gap-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-stone-700/50 transition-colors" data-page="markets"><i data-lucide="candlestick-chart"></i> Markets</a>
-                <a href="#portfolio" class="nav-link flex items-center gap-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-stone-700/50 transition-colors" data-page="portfolio"><i data-lucide="briefcase"></i> Portfolio</a>
-                <a href="#settings" class="nav-link flex items-center gap-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-stone-700/50 transition-colors" data-page="settings"><i data-lucide="settings"></i> Settings</a>
-            </nav>
-            <button id="pay-button-desktop" class="mt-auto w-full flex items-center justify-center gap-2 bg-blue-600 text-white font-semibold py-3 rounded-lg hover:bg-blue-700 transition-colors">
-                <i data-lucide="send"></i> Pay with UPI
-            </button>
-        </aside>
-
-        <main class="overflow-y-auto pb-24 md:pb-4">
-            <header class="p-4 flex md:hidden justify-between items-center sticky top-0 z-10 glass-card rounded-none">
-                <div class="text-xl font-bold tracking-tighter text-white">The Red Eagle</div>
-                <div class="relative">
-                    <button id="notification-bell">
-                        <i data-lucide="bell"></i>
-                        <div id="notification-dot" class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full hidden"></div>
-                    </button>
-                    <div id="notification-panel" class="hidden absolute right-0 mt-2 w-72 glass-card p-4 shadow-lg z-20">
-                        <h3 class="font-semibold mb-2">Notifications</h3>
-                        <div id="notification-list" class="text-sm text-gray-300 space-y-2 max-h-60 overflow-y-auto"></div>
+        <!-- Main Content -->
+        <main class="flex-grow">
+            <!-- Wallet Balance Card -->
+            <div class="card mb-8 animate-fade-in-up" style="animation-delay: 200ms;">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-slate-400 text-sm font-medium mb-2">Total Wallet Balance</p>
+                        <div class="flex items-end gap-3">
+                            <div class="text-4xl md:text-5xl font-extrabold text-slate-50 tracking-tight transition-colors duration-500 h-[48px] overflow-hidden" style="line-height: 48px;">
+                                <span id="wallet-balance-ticker" class="balance-ticker">₹52,987.00</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="sparkline-container" class="mt-2">
+                        <div id="sparkline-chart"></div>
                     </div>
                 </div>
-            </header>
-            
-            <div id="content" class="p-4 md:p-8">
-                <div id="page-dashboard" class="page">
-                    <h1 id="greeting" class="text-3xl font-bold text-white mb-6">Hi, User</h1>
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-                        <div class="glass-card p-4 flex flex-col justify-between">
-                            <p class="text-gray-400">Available Balance</p>
-                            <p id="balance-value" class="text-2xl font-semibold text-white mt-2">$0.00</p>
-                        </div>
-                        <div class="glass-card p-4 flex flex-col justify-between">
-                            <p class="text-gray-400">Portfolio Value</p>
-                            <p id="portfolio-value" class="text-2xl font-semibold text-white mt-2">$0.00</p>
-                        </div>
-                        <div class="glass-card p-4 flex flex-col justify-between">
-                            <p class="text-gray-400">Today's P/L</p>
-                            <p id="profit-loss-value" class="text-2xl font-semibold mt-2">$0.00</p>
-                        </div>
+            </div>
+
+            <!-- Portfolio Snapshot -->
+            <div class="card mb-8 animate-fade-in-up" style="animation-delay: 300ms;">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-semibold text-slate-200">Portfolio Snapshot</h2>
+                </div>
+                <div class="grid grid-cols-2 gap-4 mb-6 text-center">
+                    <div>
+                        <p class="text-sm text-slate-400">Today's P&L</p>
+                        <p id="todays-pnl" class="text-2xl font-bold text-slate-400 transition-colors duration-500">₹0.00</p>
                     </div>
-                    <div class="grid grid-cols-1 xl:grid-cols-5 gap-6 mb-6">
-                        <div class="xl:col-span-3 glass-card p-6">
-                            <h2 class="text-xl font-semibold text-white mb-4">Portfolio History</h2>
-                            <canvas id="portfolio-chart"></canvas>
-                        </div>
-                        <div class="xl:col-span-2 glass-card p-6">
-                             <h2 class="text-xl font-semibold text-white mb-4">Asset Distribution</h2>
-                            <canvas id="asset-chart"></canvas>
-                        </div>
+                    <div>
+                        <p class="text-sm text-slate-400">Total P&L</p>
+                        <p id="total-pnl" class="text-2xl font-bold text-slate-400 transition-colors duration-500">₹0.00</p>
                     </div>
-                     <div class="glass-card p-6">
-                        <h2 class="text-xl font-semibold text-white mb-4">Recent Transactions</h2>
-                        <div id="transactions-list" class="space-y-4 max-h-80 overflow-y-auto no-scrollbar">
-                           </div>
+                </div>
+                <div>
+                    <p class="text-xs text-slate-400 mb-2 text-center font-medium">Weekly Performance</p>
+                    <div id="pnl-candlestick-chart" class="w-full h-48 -mb-4"></div>
+                </div>
+            </div>
+
+
+            <!-- Actions -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="card animate-fade-in-up" style="animation-delay: 400ms;">
+                    <div>
+                        <h2 class="text-lg font-semibold text-slate-200 mb-1">UPI Payments</h2>
+                        <p class="text-slate-400 text-sm mb-6">Scan any QR code to pay instantly from your wallet.</p>
                     </div>
+                    <button id="pay-btn" class="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-3 px-4 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg shadow-rose-900/40 mt-auto">
+                        Scan QR & Pay
+                    </button>
                 </div>
                 
-                <div id="page-markets" class="page hidden">
-                     <h1 class="text-3xl font-bold text-white mb-6">Markets</h1>
-                     <div id="stock-list" class="space-y-3">
-                         </div>
-                </div>
-
-                <div id="page-portfolio" class="page hidden">
-                     <h1 class="text-3xl font-bold text-white mb-6">My Portfolio</h1>
-                     <div id="portfolio-list" class="space-y-4">
-                         </div>
-                </div>
-
-                <div id="page-settings" class="page hidden">
-                    <h1 class="text-3xl font-bold text-white mb-6">Settings</h1>
-                    <div class="space-y-6 max-w-md">
-                        <div class="glass-card p-6">
-                            <label for="display-name" class="block font-medium text-gray-300 mb-2">Display Name</label>
-                            <input type="text" id="display-name" class="w-full bg-stone-800 border border-stone-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        </div>
-                        <div class="glass-card p-6">
-                            <h3 class="font-medium text-gray-300 mb-4">Theme Color</h3>
-                            <div id="theme-selector" class="flex space-x-4">
-                                </div>
-                        </div>
-                        <div class="glass-card p-6 flex justify-between items-center">
-                            <span class="font-medium text-gray-300">Sound Effects</span>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" id="sound-toggle" class="sr-only peer">
-                                <div class="w-11 h-6 bg-stone-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                            </label>
-                        </div>
-                    </div>
+                <div class="card animate-fade-in-up" style="animation-delay: 500ms;">
+                     <h2 class="text-lg font-semibold text-slate-200 mb-1">Recent Activity</h2>
+                     <p class="text-slate-400 text-sm mb-6">Live portfolio updates will appear here when the market is open.</p>
+                     <div id="activity-log" class="space-y-3 text-sm">
+                        <p class="text-slate-500 italic">No recent activity.</p>
+                     </div>
                 </div>
             </div>
         </main>
-
-        <nav id="mobile-nav" class="md:hidden fixed bottom-0 left-0 right-0 glass-card border-t border-stone-800 flex justify-around p-2">
-            <a href="#dashboard" class="nav-link flex flex-col items-center text-gray-400 p-2 rounded-lg w-1/5" data-page="dashboard"><i data-lucide="layout-dashboard"></i><span class="text-xs mt-1">Home</span></a>
-            <a href="#markets" class="nav-link flex flex-col items-center text-gray-400 p-2 rounded-lg w-1/5" data-page="markets"><i data-lucide="candlestick-chart"></i><span class="text-xs mt-1">Markets</span></a>
-            <button id="pay-button-mobile" class="flex items-center justify-center bg-blue-600 text-white rounded-full w-14 h-14 -mt-8 shadow-lg shadow-blue-900/50">
-                <i data-lucide="send" class="w-6 h-6"></i>
-            </button>
-            <a href="#portfolio" class="nav-link flex flex-col items-center text-gray-400 p-2 rounded-lg w-1/5" data-page="portfolio"><i data-lucide="briefcase"></i><span class="text-xs mt-1">Portfolio</span></a>
-            <a href="#settings" class="nav-link flex flex-col items-center text-gray-400 p-2 rounded-lg w-1/5" data-page="settings"><i data-lucide="settings"></i><span class="text-xs mt-1">Settings</span></a>
-        </nav>
     </div>
 
-    <div id="trade-modal" class="modal fixed inset-0 z-40 bg-black/70 items-center justify-center p-4">
-        <div class="glass-card w-full max-w-md p-6 rounded-2xl relative">
-            <button id="close-trade-modal" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i data-lucide="x"></i></button>
-            <h2 id="trade-modal-title" class="text-2xl font-bold mb-4">Trade Stock</h2>
-            <div class="flex border-b border-stone-700 mb-4">
-                <button id="buy-tab" class="py-2 px-4 font-semibold text-white border-b-2 border-blue-500">Buy</button>
-                <button id="sell-tab" class="py-2 px-4 font-semibold text-gray-500">Sell</button>
+    <!-- UPI Payment Modal (structure remains same) -->
+    <div id="payment-modal" class="modal-hidden fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div id="modal-content" class="bg-slate-800/80 backdrop-blur-xl border border-slate-700 w-full max-w-md rounded-2xl p-6 shadow-2xl text-center relative transform scale-95">
+             <button id="close-modal-btn" class="absolute top-2 right-2 text-slate-400 hover:text-white transition-colors h-10 w-10 flex items-center justify-center text-2xl font-bold">&times;</button>
+            <div id="scanner-view">
+                <h2 class="text-xl font-bold mb-2">Scan UPI QR Code</h2>
+                <p class="text-slate-400 mb-4 text-sm">Hold the QR code within the frame.</p>
+                <div id="qr-reader" class="w-full mx-auto"></div>
+                <p id="scanner-error" class="text-red-400 text-sm mt-2 hidden"></p>
             </div>
-            <div>
-                <p class="text-sm text-gray-400">Current Price: <span id="trade-modal-price" class="font-semibold text-white"></span></p>
-                <p class="text-sm text-gray-400">Available to trade: <span id="trade-modal-available" class="font-semibold text-white"></span></p>
-                <div class="mt-4">
-                    <label for="shares-input" class="block text-sm font-medium text-gray-300 mb-1">Shares</label>
-                    <input type="number" id="shares-input" min="1" class="w-full bg-stone-800 border border-stone-700 rounded-lg px-3 py-2 text-white" placeholder="0">
-                </div>
-                <div class="mt-4 text-center">
-                    <p class="text-gray-400">Total</p>
-                    <p id="trade-total" class="text-3xl font-bold">$0.00</p>
-                </div>
-                <button id="confirm-trade-button" class="mt-6 w-full bg-blue-600 text-white font-semibold py-3 rounded-lg hover:bg-blue-700 transition-colors">Confirm Purchase</button>
+            <div id="details-view" class="hidden">
+                 <h2 class="text-xl font-bold mb-2">Confirm Payment</h2>
+                 <p class="text-slate-400 mb-6 text-sm">You are paying:</p>
+                 <div class="bg-slate-700/50 rounded-xl p-4 mb-4 text-left">
+                     <p class="text-xs text-slate-400">NAME</p>
+                     <p id="payee-name" class="font-semibold text-lg"></p>
+                     <p class="text-xs text-slate-400 mt-2">UPI ID</p>
+                     <p id="payee-upi" class="font-mono text-sm"></p>
+                 </div>
+                 <div class="relative">
+                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-bold text-slate-400">₹</span>
+                    <input type="number" id="amount-input" placeholder="0.00" class="w-full bg-slate-900 border-2 border-slate-600 focus:border-rose-500 focus:ring-0 rounded-lg text-center text-3xl font-bold py-3 transition-colors">
+                 </div>
+                 <p id="amount-error" class="text-red-400 text-sm mt-2 hidden">Invalid amount.</p>
+                 <button id="confirm-pay-btn" class="w-full mt-6 bg-rose-600 hover:bg-rose-700 text-white font-bold py-3 px-4 rounded-xl transition-transform transform hover:scale-105">Pay Now</button>
+            </div>
+            <div id="confirmation-view" class="hidden">
+                <lottie-player id="success-animation" src="https://assets10.lottiefiles.com/packages/lf20_jbrw3hcz.json" background="transparent" speed="1" style="width: 200px; height: 200px; margin: auto;"></lottie-player>
+                <h2 class="text-2xl font-bold text-green-400 mt-4">Payment Successful!</h2>
+                <p class="text-slate-300">Your transaction has been completed.</p>
+                <button id="done-btn" class="w-full mt-8 bg-slate-600 hover:bg-slate-700 text-white font-bold py-3 px-4 rounded-xl transition">Done</button>
+            </div>
+            <div id="loading-view" class="hidden">
+                <lottie-player src="https://assets8.lottiefiles.com/packages/lf20_74x6T0.json" background="transparent" speed="1" style="width: 200px; height: 200px; margin: auto;" loop autoplay></lottie-player>
+                <h2 class="text-xl font-semibold text-slate-300 animate-pulse">Processing Payment...</h2>
             </div>
         </div>
     </div>
-    
-    <div id="upi-modal" class="modal fixed inset-0 z-40 bg-black/70 items-end justify-center md:items-center">
-         <div class="glass-card w-full max-w-md p-6 rounded-t-2xl md:rounded-2xl relative transition-transform duration-300 transform translate-y-full md:translate-y-0 opacity-0" id="upi-modal-content">
-            <button id="close-upi-modal" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i data-lucide="x"></i></button>
+
+
+    <script type="module">
+        import * as THREE from 'three';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- STATE & ELEMENTS ---
+            const initialInvestedValue = 52987.00;
+            let walletBalance = 52987.00;
+            let todaysPnl = 0;
+            let html5QrCode = null;
+            let simulationInterval = null; 
+            let sparklineChart, pnlChart;
             
-            <div id="upi-step-1">
-                <h2 class="text-2xl font-bold mb-6">Send Money</h2>
-                <div class="space-y-4">
-                    <button id="scan-qr-button" class="w-full flex items-center justify-between p-4 rounded-lg bg-stone-700/50 hover:bg-stone-600/50">
-                        <span class="font-semibold">Scan any UPI QR</span>
-                        <i data-lucide="qr-code"></i>
-                    </button>
-                     <button id="enter-upi-id-button" class="w-full flex items-center justify-between p-4 rounded-lg bg-stone-700/50 hover:bg-stone-600/50">
-                        <span class="font-semibold">Enter UPI ID</span>
-                        <i data-lucide="at-sign"></i>
-                    </button>
-                </div>
-                <div id="recent-payees-section" class="mt-8 hidden">
-                    <h3 class="font-semibold text-gray-300 mb-3">Recent Payees</h3>
-                    <div id="recent-payees-list" class="space-y-2"></div>
-                </div>
-            </div>
+            // Dummy historical candlestick data
+            let weeklyPnlData = [
+                { x: new Date('2025-09-01').getTime(), y: [52850.15, 52980.60, 52600.90, 52636.55] },
+                { x: new Date('2025-09-02').getTime(), y: [52630.10, 53250.75, 52580.20, 53066.65] },
+                { x: new Date('2025-09-03').getTime(), y: [53060.00, 53100.80, 52850.00, 52956.65] },
+                { x: new Date('2025-09-04').getTime(), y: [52960.25, 53750.10, 52950.50, 53606.40] },
+                { x: new Date('2025-09-05').getTime(), y: [53600.90, 53880.00, 53500.25, 53826.70] },
+                { x: new Date('2025-09-06').getTime(), y: [initialInvestedValue, initialInvestedValue, initialInvestedValue, initialInvestedValue] }
+            ];
 
-            <div id="upi-step-2-scan" class="hidden">
-                <button class="back-to-upi-choice mb-4 text-sm flex items-center gap-1 text-gray-400 hover:text-white"><i data-lucide="arrow-left" class="w-4 h-4"></i> Back</button>
-                <h2 class="text-2xl font-bold mb-4">Scan QR Code</h2>
-                <div id="qr-reader" class="w-full aspect-square bg-stone-900 rounded-2xl overflow-hidden"></div>
-                <p id="qr-status" class="text-center text-sm text-gray-400 mt-4">Place a QR code inside the frame</p>
-            </div>
-
-            <div id="upi-step-2-manual" class="hidden">
-                 <button class="back-to-upi-choice mb-4 text-sm flex items-center gap-1 text-gray-400 hover:text-white"><i data-lucide="arrow-left" class="w-4 h-4"></i> Back</button>
-                 <h2 class="text-2xl font-bold mb-4">Enter UPI ID</h2>
-                 <div class="flex gap-2">
-                    <input type="text" id="upi-id-input" placeholder="someone@bank" class="flex-grow bg-stone-800 border border-stone-700 rounded-lg px-3 py-2 text-white">
-                    <button id="verify-upi-id" class="bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg">Verify</button>
-                 </div>
-                 <p id="upi-verify-status" class="text-sm mt-2 h-4"></p>
-            </div>
-
-            <div id="upi-step-3" class="hidden">
-                <h2 class="text-2xl font-bold mb-2">Paying</h2>
-                <div class="flex items-center gap-3 bg-stone-800/50 p-3 rounded-lg mb-6">
-                    <div class="w-10 h-10 rounded-full bg-purple-500 flex items-center justify-center font-bold text-white text-lg" id="payee-initial">P</div>
-                    <div>
-                        <p id="payee-name" class="font-semibold text-white">Recipient Name</p>
-                        <p id="payee-upi-id" class="text-sm text-gray-400">upi@id</p>
-                    </div>
-                </div>
-                <div class="text-center">
-                    <input type="number" id="payment-amount-input" class="bg-transparent text-5xl font-bold text-white w-full text-center outline-none" placeholder="$0">
-                    <button id="confirm-payment-button" class="mt-8 w-full bg-blue-600 text-white font-semibold py-3 rounded-lg hover:bg-blue-700 transition-colors">Pay</button>
-                </div>
-            </div>
-
-            <div id="upi-step-4-success" class="hidden text-center py-8">
-                <div class="w-20 h-20 mx-auto bg-green-500/20 rounded-full flex items-center justify-center mb-4">
-                    <i data-lucide="check-circle-2" class="w-12 h-12 text-green-400"></i>
-                </div>
-                <h2 class="text-2xl font-bold text-white mb-2">Payment Successful!</h2>
-                <p class="text-4xl font-bold text-white mb-4" id="success-amount"></p>
-                <p class="text-gray-400">to <span id="success-payee-name" class="font-semibold text-gray-300"></span></p>
-                <p class="text-xs text-gray-500 mt-6">Transaction ID: <span id="success-txn-id"></span></p>
-                 <button id="payment-done-button" class="mt-8 w-full bg-stone-700 text-white font-semibold py-3 rounded-lg hover:bg-stone-600 transition-colors">Done</button>
-            </div>
-         </div>
-    </div>
-
-
-    <script>
-    document.addEventListener('DOMContentLoaded', () => {
-
-        // =========================================================================
-        // === STATE MANAGEMENT & INITIALIZATION =================================
-        // =========================================================================
-        
-        const THEMES = [
-            { name: 'Blue', accent: '217, 94%, 57%', accentRgb: '59, 130, 246' },
-            { name: 'Green', accent: '142, 71%, 45%', accentRgb: '52, 211, 153' },
-            { name: 'Purple', accent: '262, 84%, 60%', accentRgb: '139, 92, 246' },
-            { name: 'Yellow', accent: '43, 96%, 56%', accentRgb: '234, 179, 8' }
-        ];
-
-        const INITIAL_STOCKS = [
-            { ticker: 'APXD', name: 'Apex Dynamics', price: 154.32, history: [], trend: 0 },
-            { ticker: 'NVCR', name: 'Nova Core Inc.', price: 278.91, history: [], trend: 0 },
-            { ticker: 'CYBG', name: 'Cyber Guard', price: 88.50, history: [], trend: 0 },
-            { ticker: 'SOLX', name: 'Solaris Energy', price: 412.67, history: [], trend: 0 },
-            { ticker: 'EQNM', name: 'Equinox Media', price: 112.10, history: [], trend: 0 },
-            { ticker: 'VRTX', name: 'Vortex Motors', price: 330.45, history: [], trend: 0 },
-        ];
-
-        const DEFAULT_STATE = {
-            user: {
-                pin: null,
-                name: 'Aryaveer',
-                balance: 25000,
-                recentPayees: [],
-            },
-            portfolio: {
-                stocks: {}, // e.g. { APXD: { shares: 10, avgPrice: 150.00 } }
-                history: [{ time: Date.now(), value: 0 }],
-            },
-            stocks: INITIAL_STOCKS,
-            transactions: [],
-            notifications: [],
-            settings: {
-                theme: 'Blue',
-                soundEnabled: true,
-            },
-        };
-
-        let appState = {};
-        
-        let portfolioChart, assetChart, marketSparklines = {};
-        let marketInterval;
-        let html5QrCode;
-        let currentTrade = { stock: null, type: 'buy' };
-        let currentPayment = { name: null, upiId: null, amount: null };
-        
-        const loadState = () => {
-            const savedState = localStorage.getItem('redEagleState');
-            if (savedState) {
-                appState = JSON.parse(savedState);
-                // Ensure default keys exist if state is old
-                appState.user = { ...DEFAULT_STATE.user, ...appState.user };
-                appState.portfolio = { ...DEFAULT_STATE.portfolio, ...appState.portfolio };
-                appState.stocks = appState.stocks && appState.stocks.length === INITIAL_STOCKS.length ? appState.stocks : INITIAL_STOCKS;
-                appState.transactions = appState.transactions || [];
-                appState.notifications = appState.notifications || [];
-                appState.settings = { ...DEFAULT_STATE.settings, ...appState.settings };
-            } else {
-                appState = JSON.parse(JSON.stringify(DEFAULT_STATE)); // Deep copy
-            }
-        };
-
-        const saveState = () => {
-            localStorage.setItem('redEagleState', JSON.stringify(appState));
-        };
-
-        const initApp = () => {
-            loadState();
-            if (appState.user.pin) {
-                setupLockScreen('enter');
-            } else {
-                setupLockScreen('create');
-            }
-            lucide.createIcons();
-        };
-
-        const unlockApp = () => {
-            document.getElementById('lock-screen').style.display = 'none';
-            document.getElementById('app').classList.remove('hidden');
-            
-            setupNavigation();
-            setupDashboard();
-            setupMarkets();
-            setupPortfolio();
-            setupSettings();
-            setupNotifications();
-            setupPaymentModal();
-            
-            startMarketSimulation();
-            
-            handleRouteChange();
-        };
-        
-        initApp();
-        
-        // =========================================================================
-        // === FEATURE 1: SECURITY LOCK SCREEN =====================================
-        // =========================================================================
-
-        let pinEntry = '';
-        let pinConfirm = '';
-        let lockScreenState = 'create'; // 'create', 'confirm', 'enter'
-
-        const setupLockScreen = (mode) => {
-            lockScreenState = mode;
-            const messageEl = document.getElementById('lock-screen-message');
-            if (mode === 'create') messageEl.textContent = 'Create a 4-digit PIN to secure your account';
-            if (mode === 'confirm') messageEl.textContent = 'Confirm your PIN';
-            if (mode === 'enter') messageEl.textContent = 'Enter your PIN to unlock';
-            
-            const keypad = document.getElementById('keypad');
-            keypad.innerHTML = '';
-            const keys = ['1','2','3','4','5','6','7','8','9','','0','del'];
-            keys.forEach(key => {
-                const keyEl = document.createElement('button');
-                keyEl.className = "text-2xl font-semibold text-white p-4 rounded-full hover:bg-stone-700/50 transition-colors";
-                if (key === '') {
-                    keyEl.disabled = true;
-                } else if (key === 'del') {
-                    keyEl.innerHTML = `<i data-lucide="delete" class="mx-auto"></i>`;
-                    keyEl.onclick = () => handlePinInput('del');
-                } else {
-                    keyEl.textContent = key;
-                    keyEl.onclick = () => handlePinInput(key);
-                }
-                keypad.appendChild(keyEl);
-            });
-            lucide.createIcons();
-        };
-
-        const handlePinInput = (key) => {
-            if (key === 'del') {
-                pinEntry = pinEntry.slice(0, -1);
-            } else if (pinEntry.length < 4) {
-                pinEntry += key;
-            }
-            updatePinDots();
-
-            if (pinEntry.length === 4) {
-                setTimeout(processPin, 200);
-            }
-        };
-        
-        const processPin = () => {
-            if (lockScreenState === 'create') {
-                pinConfirm = pinEntry;
-                pinEntry = '';
-                updatePinDots();
-                setupLockScreen('confirm');
-            } else if (lockScreenState === 'confirm') {
-                if (pinEntry === pinConfirm) {
-                    appState.user.pin = pinEntry;
-                    saveState();
-                    unlockApp();
-                } else {
-                    document.getElementById('lock-screen-message').textContent = 'PINs do not match. Please try again.';
-                    pinEntry = '';
-                    pinConfirm = '';
-                    updatePinDots();
-                    setTimeout(() => setupLockScreen('create'), 1500);
-                }
-            } else if (lockScreenState === 'enter') {
-                if (pinEntry === appState.user.pin) {
-                    unlockApp();
-                } else {
-                    document.getElementById('lock-screen-message').textContent = 'Incorrect PIN. Please try again.';
-                    const pinDots = document.getElementById('pin-dots');
-                    pinDots.classList.add('animate-shake'); // You'd need a shake animation for this
-                    pinEntry = '';
-                    updatePinDots();
-                    setTimeout(() => {
-                        pinDots.classList.remove('animate-shake');
-                        document.getElementById('lock-screen-message').textContent = 'Enter your PIN to unlock';
-                    }, 1500);
-                }
-            }
-        };
-
-        const updatePinDots = () => {
-            const dots = document.querySelectorAll('#pin-dots .pin-dot');
-            dots.forEach((dot, index) => {
-                if (index < pinEntry.length) {
-                    dot.classList.add('filled');
-                } else {
-                    dot.classList.remove('filled');
-                }
-            });
-        };
-
-        // =========================================================================
-        // === FEATURE 2: MULTI-PAGE NAVIGATION (ROUTER) ===========================
-        // =========================================================================
-
-        const setupNavigation = () => {
-            window.addEventListener('hashchange', handleRouteChange);
-            
-            // Set initial active link
-            const initialHash = window.location.hash || '#dashboard';
-            document.querySelectorAll(`.nav-link[href="${initialHash}"]`).forEach(link => link.classList.add('active'));
-        };
-
-        const handleRouteChange = () => {
-            const hash = window.location.hash || '#dashboard';
-            const pageId = 'page-' + hash.substring(1);
-
-            document.querySelectorAll('.page').forEach(page => page.classList.add('hidden'));
-            const activePage = document.getElementById(pageId);
-            if (activePage) {
-                activePage.classList.remove('hidden');
-            } else {
-                 document.getElementById('page-dashboard').classList.remove('hidden'); // Fallback
-            }
-
-            document.querySelectorAll('.nav-link').forEach(link => {
-                link.classList.remove('active');
-                if (link.getAttribute('href') === hash) {
-                    link.classList.add('active');
-                }
-            });
-        };
-        
-        // =========================================================================
-        // === UTILITY & FORMATTING FUNCTIONS ======================================
-        // =========================================================================
-
-        const formatCurrency = (value) => {
-            return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
-        };
-        
-        const formatChange = (value) => {
-            const color = value >= 0 ? 'text-green-400' : 'text-red-400';
-            const sign = value >= 0 ? '+' : '';
-            return `<span class="${color}">${sign}${formatCurrency(value)}</span>`;
-        };
-        
-        const addTransaction = (type, amount, details) => {
-            const transaction = {
-                id: `txn_${Date.now()}${Math.random().toString(36).substr(2, 5)}`,
-                type, // 'BUY', 'SELL', 'PAYMENT'
-                amount, // Positive for sell/deposit, negative for buy/payment
-                details,
-                timestamp: new Date().toISOString(),
+            // --- ELEMENTS ---
+            const greetingEl = document.getElementById('greeting');
+            const marketStatusEl = document.getElementById('market-status');
+            const marketStatusIndicatorEl = document.getElementById('market-status-indicator');
+            const walletBalanceTickerEl = document.getElementById('wallet-balance-ticker');
+            const activityLogEl = document.getElementById('activity-log');
+            const todaysPnlEl = document.getElementById('todays-pnl');
+            const totalPnlEl = document.getElementById('total-pnl');
+            const modalElements = { /* same as before */
+                paymentModal: document.getElementById('payment-modal'),
+                modalContent: document.getElementById('modal-content'),
+                payBtn: document.getElementById('pay-btn'),
+                closeModalBtn: document.getElementById('close-modal-btn'),
+                scannerView: document.getElementById('scanner-view'),
+                detailsView: document.getElementById('details-view'),
+                confirmationView: document.getElementById('confirmation-view'),
+                loadingView: document.getElementById('loading-view'),
+                payeeNameEl: document.getElementById('payee-name'),
+                payeeUpiEl: document.getElementById('payee-upi'),
+                amountInput: document.getElementById('amount-input'),
+                amountError: document.getElementById('amount-error'),
+                confirmPayBtn: document.getElementById('confirm-pay-btn'),
+                doneBtn: document.getElementById('done-btn'),
+                successAnimation: document.getElementById('success-animation')
             };
-            appState.transactions.unshift(transaction);
-            if (appState.transactions.length > 50) {
-                appState.transactions.pop();
-            }
-            renderTransactions();
-        };
 
-        const addNotification = (message) => {
-            appState.notifications.unshift({ message, read: false, timestamp: new Date().toISOString() });
-             if (appState.notifications.length > 20) {
-                appState.notifications.pop();
-            }
-            updateNotificationUI();
-        };
+            // --- 3D LOGO SETUP ---
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            const logoContainer = document.getElementById('logo-container');
+            renderer.setSize(40, 40);
+            logoContainer.appendChild(renderer.domElement);
+            
+            const geometry = new THREE.IcosahedronGeometry(0.8, 0);
+            const material = new THREE.MeshStandardMaterial({
+                color: 0xe11d48,
+                metalness: 0.6,
+                roughness: 0.3
+            });
+            const logo = new THREE.Mesh(geometry, material);
+            scene.add(logo);
 
-        const playSound = (note = "E5") => {
-            if (appState.settings.soundEnabled) {
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+            const pointLight = new THREE.PointLight(0xffffff, 1);
+            pointLight.position.set(5, 5, 5);
+            scene.add(pointLight);
+            
+            camera.position.z = 2;
+
+            function animateLogo() {
+                requestAnimationFrame(animateLogo);
+                logo.rotation.x += 0.005;
+                logo.rotation.y += 0.005;
+                renderer.render(scene, camera);
+            }
+            animateLogo();
+
+
+            // --- CHART SETUP ---
+            function initCharts() {
+                // Sparkline Chart
+                const sparklineOptions = {
+                    series: [{ data: weeklyPnlData.map(d => d.y[3]).slice(0, -1).concat([walletBalance]) }],
+                    chart: { type: 'area', height: 60, width: 120, sparkline: { enabled: true } },
+                    stroke: { curve: 'smooth', width: 2 },
+                    fill: {
+                        type: 'gradient',
+                        gradient: {
+                            shadeIntensity: 1,
+                            opacityFrom: 0.4,
+                            opacityTo: 0.1,
+                        }
+                    },
+                    colors: ['#4ade80'],
+                    tooltip: { enabled: false }
+                };
+                sparklineChart = new ApexCharts(document.querySelector("#sparkline-chart"), sparklineOptions);
+                sparklineChart.render();
+                
+                // P&L Candlestick Chart
+                const pnlChartOptions = {
+                    series: [{ data: weeklyPnlData }],
+                    chart: { type: 'candlestick', height: '100%', toolbar: { show: false }, background: 'transparent' },
+                    xaxis: { type: 'datetime', labels: { style: { colors: '#94a3b8' } }, axisBorder: { show: false }, axisTicks: { show: false } },
+                    yaxis: { labels: { show: false }, grid: { show: false } },
+                    grid: { show: true, borderColor: 'rgba(148, 163, 184, 0.1)', padding: { left: 0, right: 0 } },
+                    plotOptions: {
+                        candlestick: {
+                            colors: { upward: '#22c55e', downward: '#ef4444' },
+                            wick: { useFillColor: true }
+                        }
+                    },
+                    tooltip: { theme: 'dark' }
+                };
+                pnlChart = new ApexCharts(document.querySelector("#pnl-candlestick-chart"), pnlChartOptions);
+                pnlChart.render();
+            }
+
+            // --- FUNCTIONS ---
+            function animateBalance(newBalance) {
+                const oldText = `₹${walletBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                const newText = `₹${newBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                
+                const newSpan = document.createElement('span');
+                newSpan.textContent = newText;
+                newSpan.className = 'balance-ticker';
+
+                const isGain = newBalance > walletBalance;
+                walletBalanceTickerEl.classList.add(isGain ? 'balance-down' : 'balance-up');
+                
+                setTimeout(() => {
+                    walletBalanceTickerEl.innerHTML = '';
+                    walletBalanceTickerEl.appendChild(newSpan);
+                    walletBalanceTickerEl.classList.remove('balance-down', 'balance-up');
+                }, 400);
+            }
+
+            function updateDashboard() {
+                const now = new Date();
+                const istOffset = 5.5 * 60 * 60 * 1000;
+                const istTime = new Date(now.getTime() + istOffset);
+                const hour = istTime.getUTCHours();
+                const day = istTime.getUTCDay();
+
+                if (hour < 12) greetingEl.textContent = "Hi Aryaveer, Good Morning!";
+                else if (hour < 17) greetingEl.textContent = "Hi Aryaveer, Good Afternoon!";
+                else greetingEl.textContent = "Hi Aryaveer, Good Evening!";
+
+                const minutes = istTime.getUTCMinutes();
+                const timeInMinutes = hour * 60 + minutes;
+                const marketOpen = (day >= 1 && day <= 5) && (timeInMinutes >= (9 * 60 + 15) && timeInMinutes < (15 * 60 + 30));
+
+                if (marketOpen) {
+                    marketStatusEl.textContent = "Market Open";
+                    marketStatusIndicatorEl.classList.remove('bg-gray-500');
+                    marketStatusIndicatorEl.classList.add('bg-green-500', 'animate-pulse');
+                    if (!simulationInterval) {
+                        if(activityLogEl.querySelector('.italic')) activityLogEl.innerHTML = '';
+                        simulationInterval = setInterval(autoSimulateBalance, 2500);
+                    }
+                } else {
+                    marketStatusEl.textContent = "Market Closed";
+                    marketStatusIndicatorEl.classList.add('bg-gray-500');
+                    marketStatusIndicatorEl.classList.remove('bg-green-500', 'animate-pulse');
+                    if (simulationInterval) {
+                        clearInterval(simulationInterval);
+                        simulationInterval = null;
+                        activityLogEl.innerHTML = '<p class="text-slate-500 italic">Market is closed. No new activity.</p>';
+                    }
+                }
+            }
+            
+            function updateBalance(newBalance, change) {
+                animateBalance(newBalance);
+                walletBalance = newBalance;
+                todaysPnl += change;
+                
+                // Update today's candlestick data
+                let todayData = weeklyPnlData[weeklyPnlData.length - 1].y;
+                todayData[3] = walletBalance; // Close price
+                if (walletBalance > todayData[1]) todayData[1] = walletBalance; // High
+                if (walletBalance < todayData[2]) todayData[2] = walletBalance; // Low
+
+                // Update charts
+                sparklineChart.updateSeries([{ data: weeklyPnlData.map(d => d.y[3]) }]);
+                sparklineChart.updateOptions({ colors: [todaysPnl >= 0 ? '#4ade80' : '#f87171']});
+                pnlChart.updateSeries([{ data: weeklyPnlData }]);
+
+                // Update P&L metrics
+                const totalPnl = walletBalance - initialInvestedValue;
+                todaysPnlEl.textContent = `₹${todaysPnl.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                totalPnlEl.textContent = `₹${totalPnl.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                
+                [todaysPnlEl, totalPnlEl].forEach(el => {
+                    const val = el === todaysPnlEl ? todaysPnl : totalPnl;
+                    el.classList.toggle('text-green-400', val > 0);
+                    el.classList.toggle('text-red-400', val < 0);
+                    el.classList.toggle('text-slate-400', val === 0);
+                });
+
+                if (change !== 0) {
+                    if (activityLogEl.querySelector('.italic')) activityLogEl.innerHTML = '';
+                    const now = new Date();
+                    const timeString = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+                    const logEntry = document.createElement('div');
+                    logEntry.className = 'activity-item flex justify-between items-center';
+                    const changeType = change > 0 ? 'Portfolio Gain' : 'Portfolio Loss';
+                    const textColor = change > 0 ? 'text-green-400' : 'text-red-400';
+                    logEntry.innerHTML = `<div><span class="font-semibold">${changeType}</span><span class="text-xs text-slate-400 ml-2">${timeString}</span></div><span class="font-semibold ${textColor}">${change > 0 ? '+' : ''}₹${Math.abs(change).toFixed(2)}</span>`;
+                    activityLogEl.prepend(logEntry);
+                    
+                    while (activityLogEl.children.length > 5) activityLogEl.removeChild(activityLogEl.lastChild);
+                }
+            }
+
+            function autoSimulateBalance() {
+                const change = (Math.random() - 0.49) * 400; // More volatile changes
+                updateBalance(walletBalance + change, change);
+            }
+
+            // --- MODAL & PAYMENT LOGIC (remains largely the same) ---
+            function openModal() {
+                modalElements.paymentModal.classList.remove('modal-hidden');
+                modalElements.paymentModal.classList.add('modal-visible');
+                setTimeout(() => modalElements.modalContent.classList.remove('scale-95'), 10);
+                startScanner();
+            }
+            function closeModal() {
+                modalElements.modalContent.classList.add('scale-95');
+                modalElements.paymentModal.classList.remove('modal-visible');
+                modalElements.paymentModal.classList.add('modal-hidden');
+                setTimeout(() => { stopScanner(); resetModalViews(); }, 300);
+            }
+            function resetModalViews() {
+                modalElements.scannerView.style.display = 'block';
+                modalElements.detailsView.style.display = 'none';
+                modalElements.confirmationView.style.display = 'none';
+                modalElements.loadingView.style.display = 'none';
+                modalElements.amountInput.value = '';
+                modalElements.amountError.classList.add('hidden');
+                document.getElementById('scanner-error').classList.add('hidden');
+            }
+            function startScanner() {
+                if (!html5QrCode) {
+                    html5QrCode = new Html5Qrcode("qr-reader");
+                }
+                const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+                html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure)
+                    .catch(err => {
+                        document.getElementById('scanner-error').textContent = "Could not start camera.";
+                        document.getElementById('scanner-error').classList.remove('hidden');
+                    });
+            }
+            function stopScanner() {
+                if (html5QrCode && html5QrCode.isScanning) {
+                    html5QrCode.stop().catch(err => console.error("QR scanner stop failed.", err));
+                }
+            }
+            function onScanSuccess(decodedText) {
+                stopScanner();
                 try {
-                    const synth = new Tone.Synth().toDestination();
-                    synth.triggerAttackRelease(note, "8n");
-                } catch (e) {
-                    console.error("Tone.js error:", e);
-                }
-            }
-        };
-
-        // =========================================================================
-        // === FEATURE 3: DYNAMIC DASHBOARD ========================================
-        // =========================================================================
-
-        const setupDashboard = () => {
-            updateDashboard();
-            initCharts();
-            renderTransactions();
-        };
-
-        const updateDashboard = () => {
-            const portfolioValue = calculatePortfolioValue();
-            const totalValue = appState.user.balance + portfolioValue;
-            
-            // Calculate today's P/L
-            const startOfDayValue = appState.portfolio.history[0]?.value || 0;
-            const profitLoss = portfolioValue - startOfDayValue;
-
-            document.getElementById('greeting').textContent = `Hi, ${appState.user.name}`;
-            document.getElementById('balance-value').textContent = formatCurrency(appState.user.balance);
-            document.getElementById('portfolio-value').textContent = formatCurrency(portfolioValue);
-            document.getElementById('profit-loss-value').innerHTML = formatChange(profitLoss);
-
-            // Update charts
-            if (assetChart) {
-                assetChart.data.datasets[0].data = [appState.user.balance, portfolioValue];
-                assetChart.update();
-            }
-            if (portfolioChart && appState.portfolio.history.length > 1) {
-                const latestHistory = appState.portfolio.history[appState.portfolio.history.length - 1];
-                if (portfolioChart.data.labels.length === 0 || portfolioChart.data.labels[portfolioChart.data.labels.length - 1] < latestHistory.time) {
-                    portfolioChart.data.labels.push(latestHistory.time);
-                    portfolioChart.data.datasets[0].data.push(latestHistory.value);
-                    if (portfolioChart.data.labels.length > 30) {
-                        portfolioChart.data.labels.shift();
-                        portfolioChart.data.datasets[0].data.shift();
-                    }
-                    portfolioChart.update('none');
-                }
-            }
-        };
-        
-        const renderTransactions = () => {
-            const list = document.getElementById('transactions-list');
-            if(appState.transactions.length === 0) {
-                list.innerHTML = '<p class="text-gray-500 text-center">No transactions yet.</p>';
-                return;
-            }
-            list.innerHTML = appState.transactions.map(tx => {
-                const isDebit = tx.amount < 0;
-                const icon = {
-                    'BUY': '<i data-lucide="arrow-down-left" class="text-red-400"></i>',
-                    'SELL': '<i data-lucide="arrow-up-right" class="text-green-400"></i>',
-                    'PAYMENT': '<i data-lucide="send" class="text-blue-400"></i>'
-                }[tx.type];
-                
-                return `
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-4">
-                            <div class="w-10 h-10 rounded-full bg-stone-800 flex items-center justify-center">${icon}</div>
-                            <div>
-                                <p class="font-semibold text-white">${tx.details}</p>
-                                <p class="text-sm text-gray-400">${new Date(tx.timestamp).toLocaleString()}</p>
-                            </div>
-                        </div>
-                        <p class="font-semibold ${isDebit ? 'text-red-400' : 'text-green-400'}">${formatCurrency(tx.amount)}</p>
-                    </div>
-                `;
-            }).join('');
-            lucide.createIcons();
-        };
-
-        const initCharts = () => {
-            Chart.defaults.color = '#9ca3af';
-            Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.1)';
-            
-            // Portfolio Line Chart
-            const portfolioCtx = document.getElementById('portfolio-chart').getContext('2d');
-            const accentRgb = getComputedStyle(document.documentElement).getPropertyValue('--accent-color-rgb');
-            const gradient = portfolioCtx.createLinearGradient(0, 0, 0, 300);
-            gradient.addColorStop(0, `rgba(${accentRgb}, 0.5)`);
-            gradient.addColorStop(1, `rgba(${accentRgb}, 0)`);
-
-            portfolioChart = new Chart(portfolioCtx, {
-                type: 'line',
-                data: {
-                    labels: appState.portfolio.history.map(p => p.time),
-                    datasets: [{
-                        label: 'Portfolio Value',
-                        data: appState.portfolio.history.map(p => p.value),
-                        borderColor: `rgba(${accentRgb}, 1)`,
-                        backgroundColor: gradient,
-                        fill: true,
-                        tension: 0.4,
-                        pointRadius: 0,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: { type: 'time', time: { unit: 'minute' }, grid: { display: false }, ticks: { display: false } },
-                        y: { grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { callback: value => formatCurrency(value) } }
-                    },
-                    plugins: { legend: { display: false } }
-                }
-            });
-
-            // Asset Doughnut Chart
-            const assetCtx = document.getElementById('asset-chart').getContext('2d');
-            assetChart = new Chart(assetCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Cash', 'Stocks'],
-                    datasets: [{
-                        data: [appState.user.balance, calculatePortfolioValue()],
-                        backgroundColor: [`rgba(${accentRgb}, 0.8)`, `rgba(168, 85, 247, 0.8)`],
-                        borderColor: 'transparent',
-                        borderWidth: 4,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    cutout: '70%',
-                    plugins: {
-                        legend: { position: 'bottom', labels: { boxWidth: 12, padding: 20 } }
-                    }
-                }
-            });
-        };
-
-        // =========================================================================
-        // === FEATURE 4: MOCK STOCK MARKET & TRADING ==============================
-        // =========================================================================
-
-        const setupMarkets = () => {
-            renderStockList();
-            initSparklines();
-            setupTradeModal();
-        };
-
-        const calculatePortfolioValue = () => {
-            let total = 0;
-            for (const ticker in appState.portfolio.stocks) {
-                const holding = appState.portfolio.stocks[ticker];
-                const stockData = appState.stocks.find(s => s.ticker === ticker);
-                if (stockData) {
-                    total += holding.shares * stockData.price;
-                }
-            }
-            return total;
-        };
-
-        const startMarketSimulation = () => {
-            marketInterval = setInterval(() => {
-                appState.stocks.forEach(stock => {
-                    const changePercent = (Math.random() - 0.49) * 0.015; // Small random fluctuation
-                    const changeAmount = stock.price * changePercent;
-                    stock.price += changeAmount;
-                    stock.price = Math.max(10, stock.price); // Floor price
-                    stock.trend = changeAmount;
-                    
-                    stock.history.push(stock.price);
-                    if (stock.history.length > 20) stock.history.shift();
-                });
-                
-                // Update portfolio history
-                const currentPortfolioValue = calculatePortfolioValue();
-                appState.portfolio.history.push({ time: Date.now(), value: currentPortfolioValue });
-                if (appState.portfolio.history.length > 100) appState.portfolio.history.shift();
-                
-                // Update UI elements
-                updateStockList();
-                updateDashboard();
-                updatePortfolioList();
-
-                saveState();
-            }, 2500);
-        };
-
-        const renderStockList = () => {
-            const listEl = document.getElementById('stock-list');
-            listEl.innerHTML = appState.stocks.map(stock => `
-                <div class="glass-card p-4 flex items-center justify-between">
-                    <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 rounded-full bg-stone-800 flex items-center justify-center font-bold text-lg text-white">${stock.ticker[0]}</div>
-                        <div>
-                            <p class="font-semibold text-white">${stock.ticker}</p>
-                            <p class="text-sm text-gray-400">${stock.name}</p>
-                        </div>
-                    </div>
-                    <div class="w-24 h-12 mr-4">
-                        <canvas id="sparkline-${stock.ticker}"></canvas>
-                    </div>
-                    <div class="text-right w-28">
-                        <p class="font-semibold text-white stock-price" data-ticker="${stock.ticker}">${formatCurrency(stock.price)}</p>
-                        <p class="text-sm stock-change" data-ticker="${stock.ticker}">${formatChange(0)}</p>
-                    </div>
-                    <button class="trade-button ml-4 bg-blue-600/80 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg" data-ticker="${stock.ticker}">Trade</button>
-                </div>
-            `).join('');
-            
-            document.querySelectorAll('.trade-button').forEach(btn => btn.addEventListener('click', openTradeModal));
-        };
-        
-        const updateStockList = () => {
-            appState.stocks.forEach(stock => {
-                const priceEl = document.querySelector(`.stock-price[data-ticker="${stock.ticker}"]`);
-                const changeEl = document.querySelector(`.stock-change[data-ticker="${stock.ticker}"]`);
-                if (priceEl) priceEl.textContent = formatCurrency(stock.price);
-                if (changeEl) changeEl.innerHTML = formatChange(stock.trend);
-
-                const sparkline = marketSparklines[stock.ticker];
-                if (sparkline) {
-                    sparkline.data.datasets[0].data = stock.history;
-                    sparkline.data.datasets[0].borderColor = stock.trend >= 0 ? '#4ade80' : '#f87171';
-                    sparkline.update('none');
-                }
-            });
-        };
-        
-        const initSparklines = () => {
-            appState.stocks.forEach(stock => {
-                const ctx = document.getElementById(`sparkline-${stock.ticker}`).getContext('2d');
-                marketSparklines[stock.ticker] = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: Array(20).fill(''),
-                        datasets: [{
-                            data: stock.history,
-                            borderColor: '#9ca3af',
-                            borderWidth: 2,
-                        }]
-                    },
-                    options: {
-                        responsive: true, maintainAspectRatio: false,
-                        scales: { x: { display: false }, y: { display: false } },
-                        plugins: { legend: { display: false }, tooltip: { enabled: false } },
-                        elements: { point: { radius: 0 } },
-                    }
-                });
-            });
-        };
-
-        const setupTradeModal = () => {
-            document.getElementById('close-trade-modal').addEventListener('click', () => toggleModal('trade-modal', false));
-            document.getElementById('buy-tab').addEventListener('click', () => setTradeType('buy'));
-            document.getElementById('sell-tab').addEventListener('click', () => setTradeType('sell'));
-            document.getElementById('shares-input').addEventListener('input', updateTradeTotal);
-            document.getElementById('confirm-trade-button').addEventListener('click', executeTrade);
-        };
-        
-        const openTradeModal = (e) => {
-            const ticker = e.currentTarget.dataset.ticker;
-            currentTrade.stock = appState.stocks.find(s => s.ticker === ticker);
-            if (!currentTrade.stock) return;
-            
-            document.getElementById('trade-modal-title').textContent = `Trade ${currentTrade.stock.ticker}`;
-            setTradeType('buy');
-            toggleModal('trade-modal', true);
-        };
-
-        const setTradeType = (type) => {
-            currentTrade.type = type;
-            const buyTab = document.getElementById('buy-tab');
-            const sellTab = document.getElementById('sell-tab');
-            const confirmBtn = document.getElementById('confirm-trade-button');
-            const availableEl = document.getElementById('trade-modal-available');
-
-            if (type === 'buy') {
-                buyTab.classList.add('border-blue-500', 'text-white');
-                buyTab.classList.remove('text-gray-500');
-                sellTab.classList.remove('border-blue-500', 'text-white');
-                sellTab.classList.add('text-gray-500');
-                confirmBtn.textContent = 'Confirm Purchase';
-                confirmBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
-                confirmBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
-                availableEl.textContent = formatCurrency(appState.user.balance);
-            } else {
-                sellTab.classList.add('border-blue-500', 'text-white');
-                sellTab.classList.remove('text-gray-500');
-                buyTab.classList.remove('border-blue-500', 'text-white');
-                buyTab.classList.add('text-gray-500');
-                confirmBtn.textContent = 'Confirm Sale';
-                confirmBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
-                confirmBtn.classList.add('bg-red-600', 'hover:bg-red-700');
-                const ownedShares = appState.portfolio.stocks[currentTrade.stock.ticker]?.shares || 0;
-                availableEl.textContent = `${ownedShares} shares`;
-            }
-            document.getElementById('shares-input').value = '';
-            updateTradeTotal();
-        };
-
-        const updateTradeTotal = () => {
-            const shares = parseFloat(document.getElementById('shares-input').value) || 0;
-            const price = currentTrade.stock.price;
-            document.getElementById('trade-modal-price').textContent = formatCurrency(price);
-            document.getElementById('trade-total').textContent = formatCurrency(shares * price);
-        };
-        
-        const executeTrade = () => {
-            const shares = parseInt(document.getElementById('shares-input').value);
-            if (!shares || shares <= 0) return;
-
-            const stock = currentTrade.stock;
-            const totalCost = shares * stock.price;
-
-            if (currentTrade.type === 'buy') {
-                if (appState.user.balance >= totalCost) {
-                    appState.user.balance -= totalCost;
-                    const existing = appState.portfolio.stocks[stock.ticker];
-                    if (existing) {
-                        const newTotalShares = existing.shares + shares;
-                        const newTotalCost = (existing.avgPrice * existing.shares) + totalCost;
-                        existing.avgPrice = newTotalCost / newTotalShares;
-                        existing.shares = newTotalShares;
-                    } else {
-                        appState.portfolio.stocks[stock.ticker] = { shares: shares, avgPrice: stock.price };
-                    }
-                    addTransaction('BUY', -totalCost, `${shares} shares of ${stock.ticker}`);
-                    addNotification(`Successfully bought ${shares} shares of ${stock.ticker}.`);
-                    playSound("C5");
-                } else {
-                    alert("Insufficient funds."); return;
-                }
-            } else { // Sell
-                const holding = appState.portfolio.stocks[stock.ticker];
-                if (holding && holding.shares >= shares) {
-                    appState.user.balance += totalCost;
-                    holding.shares -= shares;
-                    if (holding.shares === 0) {
-                        delete appState.portfolio.stocks[stock.ticker];
-                    }
-                    addTransaction('SELL', totalCost, `${shares} shares of ${stock.ticker}`);
-                    addNotification(`Successfully sold ${shares} shares of ${stock.ticker}.`);
-                    playSound("G5");
-                } else {
-                    alert("You don't own enough shares."); return;
-                }
-            }
-            
-            saveState();
-            updateAllUI();
-            toggleModal('trade-modal', false);
-        };
-
-        const setupPortfolio = () => {
-            renderPortfolioList();
-        };
-
-        const renderPortfolioList = () => {
-            const listEl = document.getElementById('portfolio-list');
-            const portfolioStocks = Object.keys(appState.portfolio.stocks);
-
-            if(portfolioStocks.length === 0) {
-                listEl.innerHTML = '<div class="glass-card text-center p-8"><p class="text-gray-400">Your portfolio is empty.</p><p class="text-gray-500 mt-2">Visit the Markets page to start trading.</p></div>';
-                return;
-            }
-            
-            listEl.innerHTML = portfolioStocks.map(ticker => {
-                const holding = appState.portfolio.stocks[ticker];
-                const stockData = appState.stocks.find(s => s.ticker === ticker);
-                if (!stockData) return '';
-
-                const currentValue = holding.shares * stockData.price;
-                const totalCost = holding.shares * holding.avgPrice;
-                const gainLoss = currentValue - totalCost;
-
-                return `
-                    <div class="glass-card p-4">
-                        <div class="flex items-center justify-between mb-3">
-                             <div class="flex items-center gap-4">
-                                <div class="w-12 h-12 rounded-full bg-stone-800 flex items-center justify-center font-bold text-lg text-white">${ticker[0]}</div>
-                                <div>
-                                    <p class="font-semibold text-white">${ticker}</p>
-                                    <p class="text-sm text-gray-400">${holding.shares} shares</p>
-                                </div>
-                            </div>
-                            <div class="text-right">
-                                <p class="font-semibold text-white">${formatCurrency(currentValue)}</p>
-                                <p class="text-sm">${formatChange(gainLoss)}</p>
-                            </div>
-                        </div>
-                        <div class="text-xs text-gray-400 flex justify-between pt-2 border-t border-stone-800">
-                            <span>Avg. Cost: ${formatCurrency(holding.avgPrice)}</span>
-                            <span>Current Price: ${formatCurrency(stockData.price)}</span>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        };
-        
-        const updatePortfolioList = () => {
-            if (document.getElementById('page-portfolio').classList.contains('hidden')) return;
-            renderPortfolioList();
-        };
-
-        // =========================================================================
-        // === FEATURE 5: ADVANCED UPI PAYMENT SIMULATION ==========================
-        // =========================================================================
-
-        const setupPaymentModal = () => {
-            document.getElementById('pay-button-desktop').addEventListener('click', () => openUpiModal());
-            document.getElementById('pay-button-mobile').addEventListener('click', () => openUpiModal());
-            document.getElementById('close-upi-modal').addEventListener('click', () => closeUpiModal());
-
-            // Step 1
-            document.getElementById('scan-qr-button').addEventListener('click', () => showUpiStep('2-scan'));
-            document.getElementById('enter-upi-id-button').addEventListener('click', () => showUpiStep('2-manual'));
-            
-            // Step 2
-            document.querySelectorAll('.back-to-upi-choice').forEach(btn => btn.addEventListener('click', () => showUpiStep(1)));
-            document.getElementById('verify-upi-id').addEventListener('click', verifyUpiId);
-            
-            // Step 3
-            document.getElementById('confirm-payment-button').addEventListener('click', executePayment);
-
-            // Step 4
-            document.getElementById('payment-done-button').addEventListener('click', () => closeUpiModal());
-        };
-
-        const openUpiModal = () => {
-            showUpiStep(1);
-            renderRecentPayees();
-            document.getElementById('upi-modal').classList.add('active');
-            setTimeout(() => {
-                document.getElementById('upi-modal-content').classList.remove('translate-y-full', 'opacity-0');
-            }, 10);
-        };
-
-        const closeUpiModal = () => {
-            if (html5QrCode && html5QrCode.isScanning) {
-                html5QrCode.stop().catch(err => console.error("QR stop error", err));
-            }
-            const modalContent = document.getElementById('upi-modal-content');
-            modalContent.classList.add('translate-y-full', 'opacity-0');
-            setTimeout(() => {
-                 document.getElementById('upi-modal').classList.remove('active');
-                 modalContent.classList.remove('translate-y-full', 'opacity-0'); // reset for next open
-            }, 300);
-        };
-
-        const showUpiStep = (step) => {
-            ['1', '2-scan', '2-manual', '3', '4-success'].forEach(s => {
-                document.getElementById(`upi-step-${s}`).classList.add('hidden');
-            });
-            document.getElementById(`upi-step-${step}`).classList.remove('hidden');
-
-            if (step === '2-scan') {
-                startQrScanner();
-            } else if (html5QrCode && html5QrCode.isScanning) {
-                html5QrCode.stop().catch(err => console.error("QR stop error", err));
-            }
-        };
-
-        const startQrScanner = () => {
-            document.getElementById('qr-status').textContent = "Requesting camera access...";
-            if (!html5QrCode) {
-                 html5QrCode = new Html5Qrcode("qr-reader");
-            }
-           
-            const qrCodeSuccessCallback = (decodedText, decodedResult) => {
-                document.getElementById('qr-status').textContent = "QR Code detected!";
-                playSound("C4");
-                html5QrCode.stop();
-                handleQrScan(decodedText);
-            };
-            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-            html5QrCode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback)
-                .then(() => {
-                    document.getElementById('qr-status').textContent = "Place a QR code inside the frame";
-                })
-                .catch(err => {
-                    document.getElementById('qr-status').textContent = "Camera permission denied or not available.";
-                    console.error(err);
-                });
-        };
-        
-        const handleQrScan = (qrData) => {
-            try {
-                // Example UPI QR format: upi://pay?pa=recipient@bank&pn=Recipient%20Name&am=100.00
-                const url = new URL(qrData);
-                if (url.protocol === 'upi:') {
+                    const url = new URL(decodedText);
+                    if (url.protocol !== 'upi:') throw new Error("Not a valid UPI QR code.");
                     const params = url.searchParams;
-                    currentPayment.upiId = params.get('pa');
-                    currentPayment.name = params.get('pn') || 'Unknown';
-                    currentPayment.amount = params.get('am');
+                    const upiId = params.get('pa');
+                    if (!upiId) throw new Error("UPI ID not found in QR code.");
                     
-                    if(currentPayment.upiId) {
-                        goToPaymentConfirmation();
-                    } else {
-                        throw new Error('Invalid UPI QR');
-                    }
+                    modalElements.payeeNameEl.textContent = decodeURIComponent(params.get('pn') || 'N/A');
+                    modalElements.payeeUpiEl.textContent = upiId;
+                    modalElements.scannerView.style.display = 'none';
+                    modalElements.detailsView.style.display = 'block';
+                } catch (error) {
+                    document.getElementById('scanner-error').textContent = error.message;
+                    document.getElementById('scanner-error').classList.remove('hidden');
+                    setTimeout(startScanner, 2000);
                 }
-            } catch (e) {
-                alert("Could not parse UPI QR code. Data: " + qrData);
-                showUpiStep(1);
             }
-        };
-        
-        const verifyUpiId = () => {
-            const upiId = document.getElementById('upi-id-input').value;
-            if (!upiId || !upiId.includes('@')) {
-                alert("Please enter a valid UPI ID."); return;
-            }
-            
-            const statusEl = document.getElementById('upi-verify-status');
-            statusEl.textContent = 'Verifying...';
-            statusEl.classList.remove('text-green-400', 'text-red-400');
-            
-            // Simulate API call
-            setTimeout(() => {
-                // Mock a name based on the UPI ID
-                const name = upiId.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                statusEl.textContent = `Verified: ${name}`;
-                statusEl.classList.add('text-green-400');
-                
-                currentPayment.upiId = upiId;
-                currentPayment.name = name;
-                
-                setTimeout(goToPaymentConfirmation, 1000);
+            function onScanFailure(error) { /* intentionally blank */ }
+            function processPayment() {
+                const amount = parseFloat(modalElements.amountInput.value);
+                if (isNaN(amount) || amount <= 0 || amount > walletBalance) {
+                    modalElements.amountError.textContent = amount > walletBalance ? "Insufficient balance." : "Invalid amount.";
+                    modalElements.amountError.classList.remove('hidden');
+                    return;
+                }
+                modalElements.amountError.classList.add('hidden');
+                modalElements.detailsView.style.display = 'none';
+                modalElements.loadingView.style.display = 'block';
 
-            }, 1500);
-        };
-        
-        const goToPaymentConfirmation = () => {
-            document.getElementById('payee-name').textContent = currentPayment.name;
-            document.getElementById('payee-upi-id').textContent = currentPayment.upiId;
-            document.getElementById('payee-initial').textContent = currentPayment.name[0].toUpperCase();
-            
-            const amountInput = document.getElementById('payment-amount-input');
-            if (currentPayment.amount) {
-                amountInput.value = currentPayment.amount;
-                amountInput.disabled = true;
-            } else {
-                amountInput.value = '';
-                amountInput.placeholder = '$0';
-                amountInput.disabled = false;
-            }
-            showUpiStep(3);
-        };
-        
-        const executePayment = () => {
-            const amount = parseFloat(document.getElementById('payment-amount-input').value);
-            if (!amount || amount <= 0) {
-                alert("Please enter a valid amount."); return;
-            }
-            if (amount > appState.user.balance) {
-                alert("Insufficient balance."); return;
+                setTimeout(() => {
+                    const newBalance = walletBalance - amount;
+                    animateBalance(newBalance);
+                    walletBalance = newBalance;
+                    
+                    modalElements.loadingView.style.display = 'none';
+                    modalElements.confirmationView.style.display = 'block';
+                    modalElements.successAnimation.seek(0);
+                    modalElements.successAnimation.play();
+                }, 2000);
             }
 
-            appState.user.balance -= amount;
-            addTransaction('PAYMENT', -amount, `To: ${currentPayment.name}`);
-            addNotification(`Payment of ${formatCurrency(amount)} to ${currentPayment.name} was successful.`);
-            
-            // Save recent payee
-            const existingPayee = appState.user.recentPayees.find(p => p.upiId === currentPayment.upiId);
-            if (!existingPayee) {
-                appState.user.recentPayees.unshift({ name: currentPayment.name, upiId: currentPayment.upiId });
-                if (appState.user.recentPayees.length > 5) appState.user.recentPayees.pop();
-            }
-
-            saveState();
-            playSound("E6");
-            
-            document.getElementById('success-amount').textContent = formatCurrency(amount);
-            document.getElementById('success-payee-name').textContent = currentPayment.name;
-            document.getElementById('success-txn-id').textContent = `TRE${Date.now()}`;
-            showUpiStep('4-success');
-            
-            updateDashboard();
-        };
-
-        const renderRecentPayees = () => {
-            const section = document.getElementById('recent-payees-section');
-            const list = document.getElementById('recent-payees-list');
-
-            if (appState.user.recentPayees.length === 0) {
-                section.classList.add('hidden');
-                return;
-            }
-
-            section.classList.remove('hidden');
-            list.innerHTML = appState.user.recentPayees.map(payee => `
-                <button class="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-stone-700/50 recent-payee-btn" data-name="${payee.name}" data-upi-id="${payee.upiId}">
-                    <div class="w-10 h-10 rounded-full bg-purple-500 flex items-center justify-center font-bold text-white text-lg">${payee.name[0].toUpperCase()}</div>
-                    <div>
-                        <p class="font-semibold text-white text-left">${payee.name}</p>
-                        <p class="text-sm text-gray-400 text-left">${payee.upiId}</p>
-                    </div>
-                </button>
-            `).join('');
-
-            document.querySelectorAll('.recent-payee-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const target = e.currentTarget;
-                    currentPayment.name = target.dataset.name;
-                    currentPayment.upiId = target.dataset.upiId;
-                    currentPayment.amount = null; // Reset amount for manual entry
-                    goToPaymentConfirmation();
-                });
-            });
-        };
-
-        // =========================================================================
-        // === FEATURE 6: SETTINGS & NOTIFICATIONS =================================
-        // =========================================================================
-
-        const setupSettings = () => {
-            // Display Name
-            const nameInput = document.getElementById('display-name');
-            nameInput.value = appState.user.name;
-            nameInput.addEventListener('change', (e) => {
-                appState.user.name = e.target.value;
-                document.getElementById('greeting').textContent = `Hi, ${appState.user.name}`;
-                saveState();
+            // --- EVENT LISTENERS ---
+            modalElements.payBtn.addEventListener('click', openModal);
+            modalElements.closeModalBtn.addEventListener('click', closeModal);
+            modalElements.doneBtn.addEventListener('click', closeModal);
+            modalElements.confirmPayBtn.addEventListener('click', processPayment);
+            modalElements.paymentModal.addEventListener('click', (e) => {
+                if(e.target === modalElements.paymentModal) closeModal();
             });
 
-            // Theme Selector
-            const themeSelector = document.getElementById('theme-selector');
-            themeSelector.innerHTML = THEMES.map(theme => `
-                <button class="theme-btn w-10 h-10 rounded-full" style="background-color: hsl(${theme.accent});" data-theme-name="${theme.name}"></button>
-            `).join('');
-            document.querySelectorAll('.theme-btn').forEach(btn => btn.addEventListener('click', (e) => {
-                setTheme(e.currentTarget.dataset.themeName);
-            }));
-
-            // Sound Toggle
-            const soundToggle = document.getElementById('sound-toggle');
-            soundToggle.checked = appState.settings.soundEnabled;
-            soundToggle.addEventListener('change', (e) => {
-                appState.settings.soundEnabled = e.target.checked;
-                saveState();
-            });
-
-            setTheme(appState.settings.theme, true); // Apply initial theme without saving
-        };
-        
-        const setTheme = (themeName, isInitial = false) => {
-            const theme = THEMES.find(t => t.name === themeName);
-            if (!theme) return;
-            
-            document.documentElement.style.setProperty('--accent-color', theme.accent);
-            document.documentElement.style.setProperty('--accent-color-rgb', theme.accentRgb);
-            
-            appState.settings.theme = themeName;
-            
-            // Re-initialize charts to apply new colors
-            if (portfolioChart) portfolioChart.destroy();
-            if (assetChart) assetChart.destroy();
+            // --- INITIALIZATION ---
             initCharts();
-            
-            if (!isInitial) saveState();
-        };
-        
-        const setupNotifications = () => {
-            const bell = document.getElementById('notification-bell');
-            const panel = document.getElementById('notification-panel');
-
-            bell.addEventListener('click', () => {
-                panel.classList.toggle('hidden');
-                if(!panel.classList.contains('hidden')) {
-                    appState.notifications.forEach(n => n.read = true);
-                    saveState();
-                    updateNotificationUI();
-                }
-            });
-            
-            document.addEventListener('click', (e) => {
-                if (!bell.contains(e.target) && !panel.contains(e.target)) {
-                    panel.classList.add('hidden');
-                }
-            });
-
-            updateNotificationUI();
-        };
-
-        const updateNotificationUI = () => {
-            const dot = document.getElementById('notification-dot');
-            const list = document.getElementById('notification-list');
-            
-            const unreadCount = appState.notifications.filter(n => !n.read).length;
-            dot.classList.toggle('hidden', unreadCount === 0);
-
-            if (appState.notifications.length === 0) {
-                list.innerHTML = '<p class="text-gray-500">No new notifications.</p>';
-                return;
-            }
-
-            list.innerHTML = appState.notifications.map(n => `
-                <div class="border-b border-stone-700/50 pb-2">
-                    <p>${n.message}</p>
-                    <p class="text-xs text-gray-500 mt-1">${new Date(n.timestamp).toLocaleTimeString()}</p>
-                </div>
-            `).join('');
-        };
-        
-        // =========================================================================
-        // === GLOBAL UI UPDATE HELPER =============================================
-        // =========================================================================
-
-        const updateAllUI = () => {
             updateDashboard();
-            renderTransactions();
-            renderPortfolioList();
-            renderStockList();
-            updateStockList();
-        };
-        
-        const toggleModal = (modalId, show) => {
-            const modal = document.getElementById(modalId);
-            if (show) {
-                modal.classList.add('active');
-            } else {
-                modal.classList.remove('active');
-            }
-        };
-
-    }); // End DOMContentLoaded
+            setInterval(updateDashboard, 60000);
+            window.addEventListener('resize', () => {
+                pnlChart.destroy();
+                sparklineChart.destroy();
+                initCharts();
+            });
+        });
     </script>
+
 </body>
 </html>
+
