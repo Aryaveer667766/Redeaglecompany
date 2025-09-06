@@ -161,6 +161,24 @@
             border-bottom: 1px solid #475569 !important;
         }
 
+        /* PIN Input styling */
+        .pin-input {
+            width: 45px;
+            height: 50px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border-radius: 0.5rem;
+            background-color: #1e293b;
+            border: 2px solid #475569;
+            color: #f1f5f9;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .pin-input:focus {
+            outline: none;
+            border-color: #e11d48;
+            box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.3);
+        }
     </style>
 </head>
 <body class="text-white antialiased">
@@ -242,16 +260,16 @@
                 
                 <div class="card animate-fade-in-up" style="animation-delay: 500ms;">
                      <h2 class="text-lg font-semibold text-slate-200 mb-1">Recent Activity</h2>
-                     <p class="text-slate-400 text-sm mb-6">Live portfolio updates will appear here when the market is open.</p>
+                     <p class="text-slate-400 text-sm mb-6">Portfolio updates and transactions will appear here.</p>
                      <div id="activity-log" class="space-y-3 text-sm">
-                        <p class="text-slate-500 italic">No recent activity.</p>
+                         <p class="text-slate-500 italic">No recent activity.</p>
                      </div>
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- UPI Payment Modal (structure remains same) -->
+    <!-- UPI Payment Modal -->
     <div id="payment-modal" class="modal-hidden fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
         <div id="modal-content" class="bg-slate-800/80 backdrop-blur-xl border border-slate-700 w-full max-w-md rounded-2xl p-6 shadow-2xl text-center relative transform scale-95">
              <button id="close-modal-btn" class="absolute top-2 right-2 text-slate-400 hover:text-white transition-colors h-10 w-10 flex items-center justify-center text-2xl font-bold">&times;</button>
@@ -271,21 +289,50 @@
                      <p id="payee-upi" class="font-mono text-sm"></p>
                  </div>
                  <div class="relative">
-                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-bold text-slate-400">₹</span>
-                    <input type="number" id="amount-input" placeholder="0.00" class="w-full bg-slate-900 border-2 border-slate-600 focus:border-rose-500 focus:ring-0 rounded-lg text-center text-3xl font-bold py-3 transition-colors">
+                     <span class="absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-bold text-slate-400">₹</span>
+                     <input type="number" id="amount-input" placeholder="0.00" class="w-full bg-slate-900 border-2 border-slate-600 focus:border-rose-500 focus:ring-0 rounded-lg text-center text-3xl font-bold py-3 transition-colors">
                  </div>
                  <p id="amount-error" class="text-red-400 text-sm mt-2 hidden">Invalid amount.</p>
                  <button id="confirm-pay-btn" class="w-full mt-6 bg-rose-600 hover:bg-rose-700 text-white font-bold py-3 px-4 rounded-xl transition-transform transform hover:scale-105">Pay Now</button>
             </div>
-            <div id="confirmation-view" class="hidden">
-                <lottie-player id="success-animation" src="https://assets10.lottiefiles.com/packages/lf20_jbrw3hcz.json" background="transparent" speed="1" style="width: 200px; height: 200px; margin: auto;"></lottie-player>
-                <h2 class="text-2xl font-bold text-green-400 mt-4">Payment Successful!</h2>
-                <p class="text-slate-300">Your transaction has been completed.</p>
-                <button id="done-btn" class="w-full mt-8 bg-slate-600 hover:bg-slate-700 text-white font-bold py-3 px-4 rounded-xl transition">Done</button>
+            <div id="pin-view" class="hidden">
+                <h2 class="text-xl font-bold mb-2">Enter Your PIN</h2>
+                <p class="text-slate-400 mb-6 text-sm">Enter your 4-digit PIN to authorize this transaction.</p>
+                <div id="pin-inputs" class="flex justify-center gap-3 mb-4">
+                    <input type="password" class="pin-input" maxlength="1" pattern="[0-9]*" inputmode="numeric">
+                    <input type="password" class="pin-input" maxlength="1" pattern="[0-9]*" inputmode="numeric">
+                    <input type="password" class="pin-input" maxlength="1" pattern="[0-9]*" inputmode="numeric">
+                    <input type="password" class="pin-input" maxlength="1" pattern="[0-9]*" inputmode="numeric">
+                </div>
+                <p id="pin-error" class="text-red-400 text-sm hidden">Incorrect PIN. Please try again.</p>
+                <button id="verify-pin-btn" class="w-full mt-6 bg-rose-600 hover:bg-rose-700 text-white font-bold py-3 px-4 rounded-xl transition-transform transform hover:scale-105">Verify & Pay</button>
             </div>
             <div id="loading-view" class="hidden">
-                <lottie-player src="https://assets8.lottiefiles.com/packages/lf20_74x6T0.json" background="transparent" speed="1" style="width: 200px; height: 200px; margin: auto;" loop autoplay></lottie-player>
+                <lottie-player src="https://assets3.lottiefiles.com/packages/lf20_gjmecwoc.json" background="transparent" speed="1" style="width: 200px; height: 200px; margin: auto;" loop autoplay></lottie-player>
                 <h2 class="text-xl font-semibold text-slate-300 animate-pulse">Processing Payment...</h2>
+            </div>
+            <div id="confirmation-view" class="hidden">
+                <lottie-player id="success-animation" src="https://assets10.lottiefiles.com/packages/lf20_jbrw3hcz.json" background="transparent" speed="1" style="width: 150px; height: 150px; margin: auto;"></lottie-player>
+                <h2 class="text-2xl font-bold text-green-400 mt-2">Payment Successful!</h2>
+                <div class="bg-slate-700/50 rounded-xl p-4 my-4 text-left text-sm space-y-2">
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">Amount:</span>
+                        <span id="confirm-amount" class="font-bold"></span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">To:</span>
+                        <span id="confirm-payee-name" class="font-semibold"></span>
+                    </div>
+                     <div class="flex justify-between">
+                        <span class="text-slate-400">UPI ID:</span>
+                        <span id="confirm-payee-upi" class="font-mono text-xs"></span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">UTR:</span>
+                        <span id="confirm-utr" class="font-mono text-xs"></span>
+                    </div>
+                </div>
+                <button id="done-btn" class="w-full mt-6 bg-slate-600 hover:bg-slate-700 text-white font-bold py-3 px-4 rounded-xl transition">Done</button>
             </div>
         </div>
     </div>
@@ -295,15 +342,17 @@
         import * as THREE from 'three';
 
         document.addEventListener('DOMContentLoaded', () => {
-            // --- STATE & ELEMENTS ---
+            // --- STATE & CONSTANTS ---
+            const CORRECT_PIN = "2580";
             const initialInvestedValue = 52987.00;
             let walletBalance = 52987.00;
             let todaysPnl = 0;
+            let transactions = [];
             let html5QrCode = null;
             let simulationInterval = null; 
             let sparklineChart, pnlChart;
             
-            // Dummy historical candlestick data
+            // --- DUMMY DATA ---
             let weeklyPnlData = [
                 { x: new Date('2025-09-01').getTime(), y: [52850.15, 52980.60, 52600.90, 52636.55] },
                 { x: new Date('2025-09-02').getTime(), y: [52630.10, 53250.75, 52580.20, 53066.65] },
@@ -321,13 +370,14 @@
             const activityLogEl = document.getElementById('activity-log');
             const todaysPnlEl = document.getElementById('todays-pnl');
             const totalPnlEl = document.getElementById('total-pnl');
-            const modalElements = { /* same as before */
+            const modalElements = {
                 paymentModal: document.getElementById('payment-modal'),
                 modalContent: document.getElementById('modal-content'),
                 payBtn: document.getElementById('pay-btn'),
                 closeModalBtn: document.getElementById('close-modal-btn'),
                 scannerView: document.getElementById('scanner-view'),
                 detailsView: document.getElementById('details-view'),
+                pinView: document.getElementById('pin-view'),
                 confirmationView: document.getElementById('confirmation-view'),
                 loadingView: document.getElementById('loading-view'),
                 payeeNameEl: document.getElementById('payee-name'),
@@ -335,8 +385,16 @@
                 amountInput: document.getElementById('amount-input'),
                 amountError: document.getElementById('amount-error'),
                 confirmPayBtn: document.getElementById('confirm-pay-btn'),
+                pinInputs: document.querySelectorAll('.pin-input'),
+                pinError: document.getElementById('pin-error'),
+                verifyPinBtn: document.getElementById('verify-pin-btn'),
                 doneBtn: document.getElementById('done-btn'),
-                successAnimation: document.getElementById('success-animation')
+                successAnimation: document.getElementById('success-animation'),
+                // Confirmation screen elements
+                confirmAmount: document.getElementById('confirm-amount'),
+                confirmPayeeName: document.getElementById('confirm-payee-name'),
+                confirmPayeeUpi: document.getElementById('confirm-payee-upi'),
+                confirmUtr: document.getElementById('confirm-utr'),
             };
 
             // --- 3D LOGO SETUP ---
@@ -349,19 +407,15 @@
             
             const geometry = new THREE.IcosahedronGeometry(0.8, 0);
             const material = new THREE.MeshStandardMaterial({
-                color: 0xe11d48,
-                metalness: 0.6,
-                roughness: 0.3
+                color: 0xe11d48, metalness: 0.6, roughness: 0.3
             });
             const logo = new THREE.Mesh(geometry, material);
             scene.add(logo);
-
             const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
             scene.add(ambientLight);
             const pointLight = new THREE.PointLight(0xffffff, 1);
             pointLight.position.set(5, 5, 5);
             scene.add(pointLight);
-            
             camera.position.z = 2;
 
             function animateLogo() {
@@ -372,57 +426,77 @@
             }
             animateLogo();
 
-
             // --- CHART SETUP ---
             function initCharts() {
-                // Sparkline Chart
                 const sparklineOptions = {
                     series: [{ data: weeklyPnlData.map(d => d.y[3]).slice(0, -1).concat([walletBalance]) }],
                     chart: { type: 'area', height: 60, width: 120, sparkline: { enabled: true } },
                     stroke: { curve: 'smooth', width: 2 },
-                    fill: {
-                        type: 'gradient',
-                        gradient: {
-                            shadeIntensity: 1,
-                            opacityFrom: 0.4,
-                            opacityTo: 0.1,
-                        }
-                    },
+                    fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.1, } },
                     colors: ['#4ade80'],
                     tooltip: { enabled: false }
                 };
                 sparklineChart = new ApexCharts(document.querySelector("#sparkline-chart"), sparklineOptions);
                 sparklineChart.render();
                 
-                // P&L Candlestick Chart
                 const pnlChartOptions = {
                     series: [{ data: weeklyPnlData }],
                     chart: { type: 'candlestick', height: '100%', toolbar: { show: false }, background: 'transparent' },
                     xaxis: { type: 'datetime', labels: { style: { colors: '#94a3b8' } }, axisBorder: { show: false }, axisTicks: { show: false } },
                     yaxis: { labels: { show: false }, grid: { show: false } },
                     grid: { show: true, borderColor: 'rgba(148, 163, 184, 0.1)', padding: { left: 0, right: 0 } },
-                    plotOptions: {
-                        candlestick: {
-                            colors: { upward: '#22c55e', downward: '#ef4444' },
-                            wick: { useFillColor: true }
-                        }
-                    },
+                    plotOptions: { candlestick: { colors: { upward: '#22c55e', downward: '#ef4444' }, wick: { useFillColor: true } } },
                     tooltip: { theme: 'dark' }
                 };
                 pnlChart = new ApexCharts(document.querySelector("#pnl-candlestick-chart"), pnlChartOptions);
                 pnlChart.render();
             }
 
-            // --- FUNCTIONS ---
+            // --- LOCAL STORAGE FUNCTIONS ---
+            function loadTransactions() {
+                const storedTransactions = localStorage.getItem('redEagleTransactions');
+                if (storedTransactions) {
+                    transactions = JSON.parse(storedTransactions);
+                    // Deduct stored transaction amounts from initial balance
+                    const totalSpent = transactions.reduce((sum, tx) => tx.type === 'payment' ? sum + tx.amount : sum, 0);
+                    walletBalance -= totalSpent;
+                }
+            }
+
+            function saveTransactions() {
+                localStorage.setItem('redEagleTransactions', JSON.stringify(transactions));
+            }
+
+            // --- UI/STATE UPDATE FUNCTIONS ---
+            function renderActivityLog() {
+                activityLogEl.innerHTML = '';
+                if(transactions.length === 0 && !simulationInterval) {
+                     activityLogEl.innerHTML = '<p class="text-slate-500 italic">No recent activity.</p>';
+                     return;
+                }
+
+                transactions.sort((a, b) => b.timestamp - a.timestamp).forEach(tx => {
+                     const logEntry = document.createElement('div');
+                     logEntry.className = 'activity-item flex justify-between items-center';
+                     const timeString = new Date(tx.timestamp).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+                    
+                    if (tx.type === 'payment') {
+                         logEntry.innerHTML = `<div><span class="font-semibold">Paid to ${tx.payeeName}</span><span class="text-xs text-slate-400 ml-2">${timeString}</span></div><span class="font-semibold text-amber-400">-₹${tx.amount.toFixed(2)}</span>`;
+                    } else { // Portfolio change
+                         const textColor = tx.change > 0 ? 'text-green-400' : 'text-red-400';
+                         const changeType = tx.change > 0 ? 'Portfolio Gain' : 'Portfolio Loss';
+                         logEntry.innerHTML = `<div><span class="font-semibold">${changeType}</span><span class="text-xs text-slate-400 ml-2">${timeString}</span></div><span class="font-semibold ${textColor}">${tx.change > 0 ? '+' : ''}₹${Math.abs(tx.change).toFixed(2)}</span>`;
+                    }
+                     activityLogEl.appendChild(logEntry);
+                });
+            }
+
             function animateBalance(newBalance) {
-                const oldText = `₹${walletBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
                 const newText = `₹${newBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                
                 const newSpan = document.createElement('span');
                 newSpan.textContent = newText;
                 newSpan.className = 'balance-ticker';
-
-                const isGain = newBalance > walletBalance;
+                const isGain = newBalance > parseFloat(walletBalanceTickerEl.textContent.replace(/[₹,]/g, ''));
                 walletBalanceTickerEl.classList.add(isGain ? 'balance-down' : 'balance-up');
                 
                 setTimeout(() => {
@@ -432,7 +506,7 @@
                 }, 400);
             }
 
-            function updateDashboard() {
+            function updateDashboardState() {
                 const now = new Date();
                 const istOffset = 5.5 * 60 * 60 * 1000;
                 const istTime = new Date(now.getTime() + istOffset);
@@ -452,7 +526,6 @@
                     marketStatusIndicatorEl.classList.remove('bg-gray-500');
                     marketStatusIndicatorEl.classList.add('bg-green-500', 'animate-pulse');
                     if (!simulationInterval) {
-                        if(activityLogEl.querySelector('.italic')) activityLogEl.innerHTML = '';
                         simulationInterval = setInterval(autoSimulateBalance, 2500);
                     }
                 } else {
@@ -462,28 +535,24 @@
                     if (simulationInterval) {
                         clearInterval(simulationInterval);
                         simulationInterval = null;
-                        activityLogEl.innerHTML = '<p class="text-slate-500 italic">Market is closed. No new activity.</p>';
+                        renderActivityLog();
                     }
                 }
             }
             
-            function updateBalance(newBalance, change) {
+            function updatePnlAndCharts(newBalance) {
                 animateBalance(newBalance);
                 walletBalance = newBalance;
-                todaysPnl += change;
                 
-                // Update today's candlestick data
                 let todayData = weeklyPnlData[weeklyPnlData.length - 1].y;
                 todayData[3] = walletBalance; // Close price
                 if (walletBalance > todayData[1]) todayData[1] = walletBalance; // High
                 if (walletBalance < todayData[2]) todayData[2] = walletBalance; // Low
 
-                // Update charts
                 sparklineChart.updateSeries([{ data: weeklyPnlData.map(d => d.y[3]) }]);
                 sparklineChart.updateOptions({ colors: [todaysPnl >= 0 ? '#4ade80' : '#f87171']});
                 pnlChart.updateSeries([{ data: weeklyPnlData }]);
 
-                // Update P&L metrics
                 const totalPnl = walletBalance - initialInvestedValue;
                 todaysPnlEl.textContent = `₹${todaysPnl.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
                 totalPnlEl.textContent = `₹${totalPnl.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -494,49 +563,48 @@
                     el.classList.toggle('text-red-400', val < 0);
                     el.classList.toggle('text-slate-400', val === 0);
                 });
-
-                if (change !== 0) {
-                    if (activityLogEl.querySelector('.italic')) activityLogEl.innerHTML = '';
-                    const now = new Date();
-                    const timeString = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-                    const logEntry = document.createElement('div');
-                    logEntry.className = 'activity-item flex justify-between items-center';
-                    const changeType = change > 0 ? 'Portfolio Gain' : 'Portfolio Loss';
-                    const textColor = change > 0 ? 'text-green-400' : 'text-red-400';
-                    logEntry.innerHTML = `<div><span class="font-semibold">${changeType}</span><span class="text-xs text-slate-400 ml-2">${timeString}</span></div><span class="font-semibold ${textColor}">${change > 0 ? '+' : ''}₹${Math.abs(change).toFixed(2)}</span>`;
-                    activityLogEl.prepend(logEntry);
-                    
-                    while (activityLogEl.children.length > 5) activityLogEl.removeChild(activityLogEl.lastChild);
-                }
             }
 
             function autoSimulateBalance() {
-                const change = (Math.random() - 0.49) * 400; // More volatile changes
-                updateBalance(walletBalance + change, change);
+                const change = (Math.random() - 0.49) * 400;
+                todaysPnl += change;
+                transactions.push({ type: 'portfolio', change: change, timestamp: Date.now() });
+                if(transactions.length > 20) transactions.shift(); // Keep history clean
+                renderActivityLog();
+                updatePnlAndCharts(walletBalance + change);
             }
 
-            // --- MODAL & PAYMENT LOGIC (remains largely the same) ---
+            // --- MODAL & PAYMENT LOGIC ---
             function openModal() {
                 modalElements.paymentModal.classList.remove('modal-hidden');
                 modalElements.paymentModal.classList.add('modal-visible');
                 setTimeout(() => modalElements.modalContent.classList.remove('scale-95'), 10);
                 startScanner();
             }
+
             function closeModal() {
                 modalElements.modalContent.classList.add('scale-95');
                 modalElements.paymentModal.classList.remove('modal-visible');
                 modalElements.paymentModal.classList.add('modal-hidden');
                 setTimeout(() => { stopScanner(); resetModalViews(); }, 300);
             }
+
+            function switchModalView(viewToShow) {
+                ['scannerView', 'detailsView', 'pinView', 'loadingView', 'confirmationView'].forEach(view => {
+                    modalElements[view].style.display = 'none';
+                });
+                modalElements[viewToShow].style.display = 'block';
+            }
+
             function resetModalViews() {
-                modalElements.scannerView.style.display = 'block';
-                modalElements.detailsView.style.display = 'none';
-                modalElements.confirmationView.style.display = 'none';
-                modalElements.loadingView.style.display = 'none';
+                switchModalView('scannerView');
                 modalElements.amountInput.value = '';
                 modalElements.amountError.classList.add('hidden');
+                modalElements.pinError.classList.add('hidden');
+                modalElements.pinInputs.forEach(input => input.value = '');
                 document.getElementById('scanner-error').classList.add('hidden');
             }
+            
             function startScanner() {
                 if (!html5QrCode) {
                     html5QrCode = new Html5Qrcode("qr-reader");
@@ -548,11 +616,13 @@
                         document.getElementById('scanner-error').classList.remove('hidden');
                     });
             }
+            
             function stopScanner() {
                 if (html5QrCode && html5QrCode.isScanning) {
                     html5QrCode.stop().catch(err => console.error("QR scanner stop failed.", err));
                 }
             }
+            
             function onScanSuccess(decodedText) {
                 stopScanner();
                 try {
@@ -564,16 +634,17 @@
                     
                     modalElements.payeeNameEl.textContent = decodeURIComponent(params.get('pn') || 'N/A');
                     modalElements.payeeUpiEl.textContent = upiId;
-                    modalElements.scannerView.style.display = 'none';
-                    modalElements.detailsView.style.display = 'block';
+                    switchModalView('detailsView');
                 } catch (error) {
                     document.getElementById('scanner-error').textContent = error.message;
                     document.getElementById('scanner-error').classList.remove('hidden');
                     setTimeout(startScanner, 2000);
                 }
             }
+            
             function onScanFailure(error) { /* intentionally blank */ }
-            function processPayment() {
+            
+            function initiatePayment() {
                 const amount = parseFloat(modalElements.amountInput.value);
                 if (isNaN(amount) || amount <= 0 || amount > walletBalance) {
                     modalElements.amountError.textContent = amount > walletBalance ? "Insufficient balance." : "Invalid amount.";
@@ -581,34 +652,87 @@
                     return;
                 }
                 modalElements.amountError.classList.add('hidden');
-                modalElements.detailsView.style.display = 'none';
-                modalElements.loadingView.style.display = 'block';
-
-                setTimeout(() => {
-                    const newBalance = walletBalance - amount;
-                    animateBalance(newBalance);
-                    walletBalance = newBalance;
-                    
-                    modalElements.loadingView.style.display = 'none';
-                    modalElements.confirmationView.style.display = 'block';
-                    modalElements.successAnimation.seek(0);
-                    modalElements.successAnimation.play();
-                }, 2000);
+                switchModalView('pinView');
+                modalElements.pinInputs[0].focus();
             }
 
+            function verifyPinAndPay() {
+                let pin = '';
+                modalElements.pinInputs.forEach(input => pin += input.value);
+
+                if(pin !== CORRECT_PIN) {
+                    modalElements.pinError.classList.remove('hidden');
+                    modalElements.pinInputs.forEach(input => input.value = '');
+                    modalElements.pinInputs[0].focus();
+                    return;
+                }
+                
+                modalElements.pinError.classList.add('hidden');
+                switchModalView('loadingView');
+                
+                setTimeout(() => {
+                    const amount = parseFloat(modalElements.amountInput.value);
+                    const newBalance = walletBalance - amount;
+                    const payeeName = modalElements.payeeNameEl.textContent;
+                    const payeeUpi = modalElements.payeeUpiEl.textContent;
+                    const utr = `UTR${Date.now()}${Math.floor(Math.random() * 1000)}`;
+                    
+                    // Update confirmation screen
+                    modalElements.confirmAmount.textContent = `₹${amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                    modalElements.confirmPayeeName.textContent = payeeName;
+                    modalElements.confirmPayeeUpi.textContent = payeeUpi;
+                    modalElements.confirmUtr.textContent = utr;
+
+                    // Update global state and save
+                    const transaction = { type: 'payment', payeeName, payeeUpi, amount, utr, timestamp: Date.now() };
+                    transactions.push(transaction);
+                    saveTransactions();
+                    updatePnlAndCharts(newBalance);
+                    renderActivityLog();
+
+                    switchModalView('confirmationView');
+                    modalElements.successAnimation.seek(0);
+                    modalElements.successAnimation.play();
+                }, 2500);
+            }
+            
             // --- EVENT LISTENERS ---
             modalElements.payBtn.addEventListener('click', openModal);
             modalElements.closeModalBtn.addEventListener('click', closeModal);
             modalElements.doneBtn.addEventListener('click', closeModal);
-            modalElements.confirmPayBtn.addEventListener('click', processPayment);
+            modalElements.confirmPayBtn.addEventListener('click', initiatePayment);
+            modalElements.verifyPinBtn.addEventListener('click', verifyPinAndPay);
             modalElements.paymentModal.addEventListener('click', (e) => {
                 if(e.target === modalElements.paymentModal) closeModal();
             });
 
+            // PIN input auto-focus logic
+            modalElements.pinInputs.forEach((input, index) => {
+                input.addEventListener('keydown', (e) => {
+                    if (e.key >= 0 && e.key <= 9) {
+                        input.value = ''; // clear previous value
+                        setTimeout(() => {
+                           if(index < modalElements.pinInputs.length - 1) {
+                               modalElements.pinInputs[index + 1].focus();
+                           }
+                        }, 10);
+                    } else if (e.key === 'Backspace') {
+                         setTimeout(() => {
+                           if(index > 0) {
+                               modalElements.pinInputs[index - 1].focus();
+                           }
+                        }, 10);
+                    }
+                });
+            });
+
             // --- INITIALIZATION ---
+            loadTransactions();
             initCharts();
-            updateDashboard();
-            setInterval(updateDashboard, 60000);
+            updatePnlAndCharts(walletBalance);
+            updateDashboardState();
+            renderActivityLog();
+            setInterval(updateDashboardState, 60000);
             window.addEventListener('resize', () => {
                 pnlChart.destroy();
                 sparklineChart.destroy();
@@ -619,4 +743,6 @@
 
 </body>
 </html>
+
+
 
