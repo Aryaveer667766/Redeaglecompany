@@ -330,8 +330,8 @@
             </div>
 
             <div id="confirmation-view" class="hidden">
-                <lottie-player id="success-animation" src="https://lottie.host/933a3029-2323-4cea-8611-12255d21a233/yM0n62Jj7G.json" background="transparent" speed="1" style="width: 250px; height: 250px; margin: -20px auto;"></lottie-player>
-                <h2 class="text-2xl font-bold text-green-400">Payment Successful!</h2>
+                <lottie-player id="success-animation" src="https://lottie.host/5a02c332-a5a9-4627-9407-285603780a4c/dEFU6m2w14.json" background="transparent" speed="1" style="width: 250px; height: 250px; margin: -20px auto;"></lottie-player>
+                <h2 class="text-2xl font-bold text-green-400 -mt-8">Payment Successful!</h2>
                 <div class="bg-slate-700/50 rounded-xl p-4 my-6 text-left text-sm">
                     <div class="flex justify-between items-center mb-3">
                         <span class="text-slate-400">To:</span>
@@ -351,7 +351,7 @@
             </div>
 
             <div id="loading-view" class="hidden">
-                <lottie-player src="https://lottie.host/2912c099-53e3-4b89-91b4-7393ab253018/V32uYwRj8k.json" background="transparent" speed="1" style="width: 200px; height: 200px; margin: auto;" loop autoplay></lottie-player>
+                <lottie-player src="https://lottie.host/e6942fd4-245c-4f27-9923-864c23562b8b/W8U0k237s5.json" background="transparent" speed="1" style="width: 200px; height: 200px; margin: auto;" loop autoplay></lottie-player>
                 <h2 id="loading-text" class="text-xl font-semibold text-slate-300 transition-opacity duration-300">Securing Transaction...</h2>
             </div>
         </div>
@@ -800,17 +800,13 @@
                     // Play confirmation sound
                     if (window.Tone) {
                         Tone.start(); // Required for user-initiated audio
-                        const synth = new Tone.Synth().toDestination();
-                        synth.triggerAttackRelease("C5", "8n", Tone.now());
-                        synth.triggerAttackRelease("G5", "8n", Tone.now() + 0.2);
-                    }
-
-                    // Trigger soundbox voice announcement
-                    if ('speechSynthesis' in window) {
-                        const utterance = new SpeechSynthesisUtterance(`sent ${amount.toFixed(2)} rupees from Red Eagle Company.`);
-                        utterance.lang = 'en-IN'; // Set language to Indian English for better accent
-                        utterance.rate = 0.9;
-                        window.speechSynthesis.speak(utterance);
+                        const synth = new Tone.PolySynth(Tone.Synth).toDestination();
+                        const now = Tone.now();
+                        // Play a pleasant C major 7 arpeggio
+                        synth.triggerAttackRelease("C5", "8n", now);
+                        synth.triggerAttackRelease("E5", "8n", now + 0.1);
+                        synth.triggerAttackRelease("G5", "8n", now + 0.2);
+                        synth.triggerAttackRelease("B5", "8n", now + 0.3);
                     }
                     
                     modalElements.loadingView.style.display = 'none';
