@@ -173,11 +173,42 @@
             border: 2px solid #475569;
             color: #f1f5f9;
             transition: border-color 0.2s, box-shadow 0.2s;
+            caret-color: transparent; /* Hide cursor */
         }
-        .pin-input:focus {
+        .pin-input:focus, .pin-input.focused {
             outline: none;
             border-color: #e11d48;
             box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.3);
+        }
+
+        /* Custom Keyboard Styling */
+        #pin-keyboard {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+        .key-btn {
+            background-color: #1e293b;
+            border: none;
+            border-radius: 0.75rem;
+            color: #f1f5f9;
+            font-size: 1.5rem;
+            font-weight: 600;
+            padding: 1rem 0;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
+        }
+        .key-btn:hover {
+            background-color: #334155;
+        }
+        .key-btn:active {
+            background-color: #475569;
+            transform: scale(0.95);
+        }
+        .key-btn.utility {
+            font-size: 1.25rem;
         }
     </style>
 </head>
@@ -297,15 +328,17 @@
             </div>
             <div id="pin-view" class="hidden">
                 <h2 class="text-xl font-bold mb-2">Enter Your PIN</h2>
-                <p class="text-slate-400 mb-6 text-sm">Enter your 4-digit PIN to authorize this transaction.</p>
-                <div id="pin-inputs" class="flex justify-center gap-3 mb-4">
-                    <input type="password" class="pin-input" maxlength="1" pattern="[0-9]*" inputmode="numeric">
-                    <input type="password" class="pin-input" maxlength="1" pattern="[0-9]*" inputmode="numeric">
-                    <input type="password" class="pin-input" maxlength="1" pattern="[0-9]*" inputmode="numeric">
-                    <input type="password" class="pin-input" maxlength="1" pattern="[0-9]*" inputmode="numeric">
+                <p class="text-slate-400 mb-4 text-sm">Enter your 4-digit PIN to authorize this transaction.</p>
+                <div id="pin-inputs" class="flex justify-center gap-3 mb-2">
+                    <input type="password" class="pin-input" maxlength="1" readonly>
+                    <input type="password" class="pin-input" maxlength="1" readonly>
+                    <input type="password" class="pin-input" maxlength="1" readonly>
+                    <input type="password" class="pin-input" maxlength="1" readonly>
                 </div>
-                <p id="pin-error" class="text-red-400 text-sm hidden">Incorrect PIN. Please try again.</p>
-                <button id="verify-pin-btn" class="w-full mt-6 bg-rose-600 hover:bg-rose-700 text-white font-bold py-3 px-4 rounded-xl transition-transform transform hover:scale-105">Verify & Pay</button>
+                <p id="pin-error" class="text-red-400 text-sm h-5"> </p>
+                <div id="pin-keyboard">
+                    <!-- Keyboard will be generated here -->
+                </div>
             </div>
             <div id="loading-view" class="hidden">
                 <lottie-player src="https://assets3.lottiefiles.com/packages/lf20_gjmecwoc.json" background="transparent" speed="1" style="width: 200px; height: 200px; margin: auto;" loop autoplay></lottie-player>
@@ -351,6 +384,7 @@
             let html5QrCode = null;
             let simulationInterval = null; 
             let sparklineChart, pnlChart;
+            let currentPinIndex = 0;
             
             // --- DUMMY DATA ---
             let weeklyPnlData = [
@@ -387,7 +421,7 @@
                 confirmPayBtn: document.getElementById('confirm-pay-btn'),
                 pinInputs: document.querySelectorAll('.pin-input'),
                 pinError: document.getElementById('pin-error'),
-                verifyPinBtn: document.getElementById('verify-pin-btn'),
+                pinKeyboard: document.getElementById('pin-keyboard'),
                 doneBtn: document.getElementById('done-btn'),
                 successAnimation: document.getElementById('success-animation'),
                 // Confirmation screen elements
@@ -450,6 +484,49 @@
                 };
                 pnlChart = new ApexCharts(document.querySelector("#pnl-candlestick-chart"), pnlChartOptions);
                 pnlChart.render();
+            }
+
+            // --- KEYBOARD & PIN LOGIC ---
+            function createKeyboard() {
+                const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', '⌫'];
+                modalElements.pinKeyboard.innerHTML = '';
+                keys.forEach(key => {
+                    const keyBtn = document.createElement('button');
+                    keyBtn.className = 'key-btn';
+                    keyBtn.textContent = key;
+                    keyBtn.dataset.key = key;
+                    if(key === '⌫') keyBtn.classList.add('utility');
+                    if(key === '') keyBtn.style.visibility = 'hidden';
+                    modalElements.pinKeyboard.appendChild(keyBtn);
+                });
+            }
+
+            function handleKeyboardInput(key) {
+                modalElements.pinError.textContent = ' '; // Clear error on new input
+                if (key === '⌫') {
+                    if (modalElements.pinInputs[currentPinIndex].value === '') {
+                         currentPinIndex = Math.max(0, currentPinIndex - 1);
+                    }
+                    modalElements.pinInputs[currentPinIndex].value = '';
+                    updatePinFocus();
+                } else if (!isNaN(parseInt(key))) {
+                    if (currentPinIndex < 4) {
+                        modalElements.pinInputs[currentPinIndex].value = key;
+                        currentPinIndex = Math.min(3, currentPinIndex + 1);
+                        updatePinFocus();
+                    }
+                }
+                
+                const pin = Array.from(modalElements.pinInputs).map(i => i.value).join('');
+                if (pin.length === 4) {
+                    verifyPinAndPay();
+                }
+            }
+            
+            function updatePinFocus() {
+                modalElements.pinInputs.forEach((input, index) => {
+                    input.classList.toggle('focused', index === currentPinIndex);
+                });
             }
 
             // --- LOCAL STORAGE FUNCTIONS ---
@@ -600,8 +677,10 @@
                 switchModalView('scannerView');
                 modalElements.amountInput.value = '';
                 modalElements.amountError.classList.add('hidden');
-                modalElements.pinError.classList.add('hidden');
+                modalElements.pinError.textContent = ' ';
                 modalElements.pinInputs.forEach(input => input.value = '');
+                currentPinIndex = 0;
+                updatePinFocus();
                 document.getElementById('scanner-error').classList.add('hidden');
             }
             
@@ -653,7 +732,8 @@
                 }
                 modalElements.amountError.classList.add('hidden');
                 switchModalView('pinView');
-                modalElements.pinInputs[0].focus();
+                currentPinIndex = 0;
+                updatePinFocus();
             }
 
             function verifyPinAndPay() {
@@ -661,13 +741,14 @@
                 modalElements.pinInputs.forEach(input => pin += input.value);
 
                 if(pin !== CORRECT_PIN) {
-                    modalElements.pinError.classList.remove('hidden');
+                    modalElements.pinError.textContent = 'Incorrect PIN. Please try again.';
                     modalElements.pinInputs.forEach(input => input.value = '');
-                    modalElements.pinInputs[0].focus();
+                    currentPinIndex = 0;
+                    updatePinFocus();
                     return;
                 }
                 
-                modalElements.pinError.classList.add('hidden');
+                modalElements.pinError.textContent = ' ';
                 switchModalView('loadingView');
                 
                 setTimeout(() => {
@@ -693,7 +774,7 @@
                     switchModalView('confirmationView');
                     modalElements.successAnimation.seek(0);
                     modalElements.successAnimation.play();
-                }, 2500);
+                }, 1500);
             }
             
             // --- EVENT LISTENERS ---
@@ -701,32 +782,24 @@
             modalElements.closeModalBtn.addEventListener('click', closeModal);
             modalElements.doneBtn.addEventListener('click', closeModal);
             modalElements.confirmPayBtn.addEventListener('click', initiatePayment);
-            modalElements.verifyPinBtn.addEventListener('click', verifyPinAndPay);
             modalElements.paymentModal.addEventListener('click', (e) => {
                 if(e.target === modalElements.paymentModal) closeModal();
             });
-
-            // PIN input auto-focus logic
+            modalElements.pinKeyboard.addEventListener('click', (e) => {
+                if (e.target.matches('.key-btn')) {
+                    handleKeyboardInput(e.target.dataset.key);
+                }
+            });
             modalElements.pinInputs.forEach((input, index) => {
-                input.addEventListener('keydown', (e) => {
-                    if (e.key >= 0 && e.key <= 9) {
-                        input.value = ''; // clear previous value
-                        setTimeout(() => {
-                           if(index < modalElements.pinInputs.length - 1) {
-                               modalElements.pinInputs[index + 1].focus();
-                           }
-                        }, 10);
-                    } else if (e.key === 'Backspace') {
-                         setTimeout(() => {
-                           if(index > 0) {
-                               modalElements.pinInputs[index - 1].focus();
-                           }
-                        }, 10);
-                    }
+                input.addEventListener('click', () => {
+                    currentPinIndex = index;
+                    updatePinFocus();
                 });
             });
 
+
             // --- INITIALIZATION ---
+            createKeyboard();
             loadTransactions();
             initCharts();
             updatePnlAndCharts(walletBalance);
@@ -743,6 +816,4 @@
 
 </body>
 </html>
-
-
 
