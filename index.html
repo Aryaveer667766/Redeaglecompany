@@ -807,7 +807,7 @@
 
                     // Trigger soundbox voice announcement
                     if ('speechSynthesis' in window) {
-                        const utterance = new SpeechSynthesisUtterance(`Received ${amount.toFixed(2)} rupees on Red Eagle Company.`);
+                        const utterance = new SpeechSynthesisUtterance(`sent ${amount.toFixed(2)} rupees from Red Eagle Company.`);
                         utterance.lang = 'en-IN'; // Set language to Indian English for better accent
                         utterance.rate = 0.9;
                         window.speechSynthesis.speak(utterance);
