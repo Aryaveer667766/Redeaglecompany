@@ -330,7 +330,7 @@
             </div>
 
             <div id="confirmation-view" class="hidden">
-                <lottie-player id="success-animation" src="https://lottie.host/5a02c332-a5a9-4627-9407-285603780a4c/dEFU6m2w14.json" background="transparent" speed="1" style="width: 250px; height: 250px; margin: -20px auto;"></lottie-player>
+                <lottie-player id="success-animation" src="https://lottie.host/83282298-fb0d-45f9-8a3a-a88a75e38d4c/zqn2n5i1eN.json" background="transparent" speed="1" style="width: 250px; height: 250px; margin: -20px auto;"></lottie-player>
                 <h2 class="text-2xl font-bold text-green-400 -mt-8">Payment Successful!</h2>
                 <div class="bg-slate-700/50 rounded-xl p-4 my-6 text-left text-sm">
                     <div class="flex justify-between items-center mb-3">
@@ -372,6 +372,7 @@
             let html5QrCode = null;
             let simulationInterval = null; 
             let sparklineChart, pnlChart;
+            let isStoppingScanner = false;
             
             // Default data for first-time use
             let weeklyPnlData = [
@@ -672,7 +673,8 @@
                 updatePinDisplay();
                 modalElements.pinError.textContent = '';
             }
-            function startScanner() {
+             function startScanner() {
+                if (html5QrCode && html5QrCode.isScanning) return;
                 if (!html5QrCode) html5QrCode = new Html5Qrcode("qr-reader");
                 const config = { fps: 10, qrbox: { width: 250, height: 250 } };
                 html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure)
@@ -682,13 +684,20 @@
                         scannerError.classList.remove('hidden');
                     });
             }
-            function stopScanner() {
-                if (html5QrCode && html5QrCode.isScanning) {
-                    html5QrCode.stop().catch(err => console.error("QR scanner stop failed.", err));
+            async function stopScanner() {
+                if (html5QrCode && html5QrCode.isScanning && !isStoppingScanner) {
+                    isStoppingScanner = true;
+                    try {
+                        await html5QrCode.stop();
+                    } catch (err) {
+                        console.error("QR scanner stop failed.", err);
+                    } finally {
+                        isStoppingScanner = false;
+                    }
                 }
             }
-            function onScanSuccess(decodedText) {
-                stopScanner();
+            async function onScanSuccess(decodedText) {
+                await stopScanner();
                 try {
                     const url = new URL(decodedText);
                     if (url.protocol !== 'upi:') throw new Error("Not a valid UPI QR code.");
