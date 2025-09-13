@@ -5,24 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Red Eagle Company</title>
     
-    <!-- Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
-    <!-- Lottie for high-quality animations -->
     <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
     
-    <!-- QR Code Scanner library -->
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
-    <!-- ApexCharts for professional graphs -->
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     
-    <!-- Three.js for 3D logo -->
     <script type="importmap">
         { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js" } }
     </script>
@@ -101,15 +95,11 @@
             border-color: rgba(225, 29, 72, 0.5);
         }
 
-        /* Page load animations */
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(25px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .animate-fade-in-up {
+        /* NEW: Staggered page load animations */
+        .animate-on-load {
             opacity: 0;
-            animation: fadeInUp 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+            transform: translateY(25px);
+            transition: opacity 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         }
         
         /* Activity log animation */
@@ -140,12 +130,18 @@
             border: 2px solid #334155;
         }
         
-        /* Modal Transitions */
+        /* NEW: Enhanced Modal Transitions */
         #payment-modal {
-             transition: opacity 0.3s ease, visibility 0.3s;
+            transition: opacity 0.4s ease, visibility 0.4s;
         }
         #modal-content {
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.4s;
+            transform: translateY(50px);
+            opacity: 0;
+        }
+        #payment-modal.modal-visible #modal-content {
+            transform: translateY(0);
+            opacity: 1;
         }
         #payment-modal.modal-hidden { visibility: hidden; opacity: 0; }
         #payment-modal.modal-visible { visibility: visible; opacity: 1; }
@@ -210,6 +206,12 @@
         .key-btn.utility {
             font-size: 1.25rem;
         }
+
+        /* NEW: Improved active state for main buttons */
+        #pay-btn:active, #confirm-pay-btn:active, #done-btn:active {
+            transform: scale(0.98) !important;
+            transition: transform 0.1s;
+        }
     </style>
 </head>
 <body class="text-white antialiased">
@@ -221,8 +223,7 @@
     </div>
 
     <div id="app" class="relative z-10 min-h-screen p-4 sm:p-6 lg:p-8 flex flex-col max-w-4xl mx-auto">
-        <!-- Header -->
-        <header class="flex justify-between items-center mb-8 animate-fade-in-up" style="animation-delay: 100ms;">
+        <header class="flex justify-between items-center mb-8 animate-on-load">
             <div class="flex items-center gap-3">
                 <div id="logo-container" class="w-10 h-10"></div>
                 <h1 class="text-xl md:text-2xl font-bold tracking-tight text-slate-200">The Red Eagle Co.</h1>
@@ -236,10 +237,8 @@
             </div>
         </header>
 
-        <!-- Main Content -->
         <main class="flex-grow">
-            <!-- Wallet Balance Card -->
-            <div class="card mb-8 animate-fade-in-up" style="animation-delay: 200ms;">
+            <div class="card mb-8 animate-on-load">
                 <div class="flex justify-between items-start">
                     <div>
                         <p class="text-slate-400 text-sm font-medium mb-2">Total Wallet Balance</p>
@@ -255,8 +254,7 @@
                 </div>
             </div>
 
-            <!-- Portfolio Snapshot -->
-            <div class="card mb-8 animate-fade-in-up" style="animation-delay: 300ms;">
+            <div class="card mb-8 animate-on-load">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-lg font-semibold text-slate-200">Portfolio Snapshot</h2>
                 </div>
@@ -277,9 +275,8 @@
             </div>
 
 
-            <!-- Actions -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="card animate-fade-in-up" style="animation-delay: 400ms;">
+                <div class="card animate-on-load">
                     <div>
                         <h2 class="text-lg font-semibold text-slate-200 mb-1">UPI Payments</h2>
                         <p class="text-slate-400 text-sm mb-6">Scan any QR code to pay instantly from your wallet.</p>
@@ -289,7 +286,7 @@
                     </button>
                 </div>
                 
-                <div class="card animate-fade-in-up" style="animation-delay: 500ms;">
+                <div class="card animate-on-load">
                      <h2 class="text-lg font-semibold text-slate-200 mb-1">Recent Activity</h2>
                      <p class="text-slate-400 text-sm mb-6">Portfolio updates and transactions will appear here.</p>
                      <div id="activity-log" class="space-y-3 text-sm">
@@ -300,9 +297,8 @@
         </main>
     </div>
 
-    <!-- UPI Payment Modal -->
     <div id="payment-modal" class="modal-hidden fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-        <div id="modal-content" class="bg-slate-800/80 backdrop-blur-xl border border-slate-700 w-full max-w-md rounded-2xl p-6 shadow-2xl text-center relative transform scale-95">
+        <div id="modal-content" class="bg-slate-800/80 backdrop-blur-xl border border-slate-700 w-full max-w-md rounded-2xl p-6 shadow-2xl text-center relative">
              <button id="close-modal-btn" class="absolute top-2 right-2 text-slate-400 hover:text-white transition-colors h-10 w-10 flex items-center justify-center text-2xl font-bold">&times;</button>
             <div id="scanner-view">
                 <h2 class="text-xl font-bold mb-2">Scan UPI QR Code</h2>
@@ -337,8 +333,7 @@
                 </div>
                 <p id="pin-error" class="text-red-400 text-sm h-5"> </p>
                 <div id="pin-keyboard">
-                    <!-- Keyboard will be generated here -->
-                </div>
+                    </div>
             </div>
             <div id="loading-view" class="hidden">
                 <lottie-player src="https://assets3.lottiefiles.com/packages/lf20_gjmecwoc.json" background="transparent" speed="1" style="width: 200px; height: 200px; margin: auto;" loop autoplay></lottie-player>
@@ -504,18 +499,17 @@
             function handleKeyboardInput(key) {
                 modalElements.pinError.textContent = ' '; // Clear error on new input
                 if (key === '⌫') {
-                    if (modalElements.pinInputs[currentPinIndex].value === '') {
-                         currentPinIndex = Math.max(0, currentPinIndex - 1);
+                    if (currentPinIndex > 0 && modalElements.pinInputs[currentPinIndex].value === '') {
+                        currentPinIndex--;
                     }
                     modalElements.pinInputs[currentPinIndex].value = '';
-                    updatePinFocus();
                 } else if (!isNaN(parseInt(key))) {
                     if (currentPinIndex < 4) {
                         modalElements.pinInputs[currentPinIndex].value = key;
-                        currentPinIndex = Math.min(3, currentPinIndex + 1);
-                        updatePinFocus();
+                        currentPinIndex++;
                     }
                 }
+                updatePinFocus();
                 
                 const pin = Array.from(modalElements.pinInputs).map(i => i.value).join('');
                 if (pin.length === 4) {
@@ -524,9 +518,13 @@
             }
             
             function updatePinFocus() {
+                let actualIndex = Array.from(modalElements.pinInputs).findIndex(input => input.value === '');
+                if (actualIndex === -1) actualIndex = 3; // Stay on last if full
+
                 modalElements.pinInputs.forEach((input, index) => {
-                    input.classList.toggle('focused', index === currentPinIndex);
+                    input.classList.toggle('focused', index === actualIndex);
                 });
+                currentPinIndex = actualIndex;
             }
 
             // --- LOCAL STORAGE FUNCTIONS ---
@@ -552,7 +550,7 @@
                      return;
                 }
 
-                transactions.sort((a, b) => b.timestamp - a.timestamp).forEach(tx => {
+                transactions.sort((a, b) => b.timestamp - a.timestamp).slice(0, 5).forEach(tx => {
                      const logEntry = document.createElement('div');
                      logEntry.className = 'activity-item flex justify-between items-center';
                      const timeString = new Date(tx.timestamp).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
@@ -585,16 +583,16 @@
 
             function updateDashboardState() {
                 const now = new Date();
-                const istOffset = 5.5 * 60 * 60 * 1000;
-                const istTime = new Date(now.getTime() + istOffset);
-                const hour = istTime.getUTCHours();
-                const day = istTime.getUTCDay();
+                // Simulating IST for demonstration regardless of user's timezone
+                const istTime = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+                const hour = istTime.getHours();
+                const day = istTime.getDay();
 
                 if (hour < 12) greetingEl.textContent = "Hi Aryaveer, Good Morning!";
                 else if (hour < 17) greetingEl.textContent = "Hi Aryaveer, Good Afternoon!";
                 else greetingEl.textContent = "Hi Aryaveer, Good Evening!";
 
-                const minutes = istTime.getUTCMinutes();
+                const minutes = istTime.getMinutes();
                 const timeInMinutes = hour * 60 + minutes;
                 const marketOpen = (day >= 1 && day <= 5) && (timeInMinutes >= (9 * 60 + 15) && timeInMinutes < (15 * 60 + 30));
 
@@ -646,7 +644,6 @@
                 const change = (Math.random() - 0.49) * 400;
                 todaysPnl += change;
                 transactions.push({ type: 'portfolio', change: change, timestamp: Date.now() });
-                if(transactions.length > 20) transactions.shift(); // Keep history clean
                 renderActivityLog();
                 updatePnlAndCharts(walletBalance + change);
             }
@@ -655,15 +652,13 @@
             function openModal() {
                 modalElements.paymentModal.classList.remove('modal-hidden');
                 modalElements.paymentModal.classList.add('modal-visible');
-                setTimeout(() => modalElements.modalContent.classList.remove('scale-95'), 10);
                 startScanner();
             }
 
             function closeModal() {
-                modalElements.modalContent.classList.add('scale-95');
                 modalElements.paymentModal.classList.remove('modal-visible');
                 modalElements.paymentModal.classList.add('modal-hidden');
-                setTimeout(() => { stopScanner(); resetModalViews(); }, 300);
+                setTimeout(() => { stopScanner(); resetModalViews(); }, 400); // Wait for animation
             }
 
             function switchModalView(viewToShow) {
@@ -751,6 +746,7 @@
                 modalElements.pinError.textContent = ' ';
                 switchModalView('loadingView');
                 
+                // Simulate network delay then process the payment
                 setTimeout(() => {
                     const amount = parseFloat(modalElements.amountInput.value);
                     const newBalance = walletBalance - amount;
@@ -790,21 +786,25 @@
                     handleKeyboardInput(e.target.dataset.key);
                 }
             });
-            modalElements.pinInputs.forEach((input, index) => {
-                input.addEventListener('click', () => {
-                    currentPinIndex = index;
-                    updatePinFocus();
-                });
-            });
-
 
             // --- INITIALIZATION ---
+            function initStaggeredAnimations() {
+                const animatedElements = document.querySelectorAll('.animate-on-load');
+                animatedElements.forEach((el, index) => {
+                    setTimeout(() => {
+                        el.style.opacity = '1';
+                        el.style.transform = 'translateY(0)';
+                    }, 150 * (index + 1));
+                });
+            }
+
             createKeyboard();
             loadTransactions();
             initCharts();
             updatePnlAndCharts(walletBalance);
             updateDashboardState();
             renderActivityLog();
+            initStaggeredAnimations();
             setInterval(updateDashboardState, 60000);
             window.addEventListener('resize', () => {
                 pnlChart.destroy();
@@ -816,4 +816,3 @@
 
 </body>
 </html>
-
