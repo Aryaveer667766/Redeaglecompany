@@ -3,816 +3,557 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Red Eagle Company</title>
-    
+    <title>Fit Pulse - Daily Workout Tracker</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
-    
-    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-    
-    <script type="importmap">
-        { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js" } }
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1/plugin/weekday.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1/plugin/weekOfYear.js"></script>
+    <script>
+        dayjs.extend(dayjs_plugin_weekday);
+        dayjs.extend(dayjs_plugin_weekOfYear);
     </script>
-
     <style>
-        /* Custom styles for the app */
+        :root {
+            --brand-indigo: #6366F1;
+            --brand-purple: #8B5CF6;
+            --background-dark: #0a0a0a;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --card-border: rgba(255, 255, 255, 0.1);
+        }
+        html { scroll-behavior: smooth; }
         body {
             font-family: 'Inter', sans-serif;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-            background-color: #020617; /* Fallback background */
-            overflow-x: hidden; /* Prevent horizontal scroll */
+            background-color: var(--background-dark);
+            color: #e5e5e5;
+            -webkit-tap-highlight-color: transparent;
         }
-
-        /* Aurora Background Animation */
-        #aurora-bg {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            overflow: hidden;
+        .main-container {
+            background: radial-gradient(circle at top left, #0a0a0a 0%, #14141e 50%, #0a0a0a 100%);
+            min-height: 100vh;
         }
-
-        .aurora-shape {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(100px);
-            opacity: 0.3;
-            mix-blend-mode: screen;
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--card-border);
+            border-radius: 1rem;
+            transition: all 0.3s ease;
         }
-
-        #shape1 {
-            width: 400px; height: 400px; background-color: #be123c;
-            animation: move1 25s infinite alternate;
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+            border-color: rgba(139, 92, 246, 0.3);
         }
-        #shape2 {
-            width: 300px; height: 300px; background-color: #4338ca;
-            animation: move2 30s infinite alternate;
+        .btn-primary {
+            background: linear-gradient(90deg, var(--brand-indigo), var(--brand-purple));
+            transition: all 0.3s ease;
         }
-         #shape3 {
-            width: 350px; height: 350px; background-color: #166534;
-            animation: move3 20s infinite alternate;
+        .btn-primary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
         }
-
-        @keyframes move1 {
-            from { transform: translate(10vw, 20vh) rotate(0deg); }
-            to { transform: translate(70vw, 80vh) rotate(360deg); }
+        .calendar-day { transition: all 0.2s ease; }
+        .calendar-day.active {
+            background: var(--brand-indigo);
+            color: white;
+            transform: scale(1.1);
         }
-        @keyframes move2 {
-            from { transform: translate(80vw, 10vh); }
-            to { transform: translate(20vw, 60vh); }
-        }
-         @keyframes move3 {
-            from { transform: translate(50vw, 90vh); }
-            to { transform: translate(10vw, 10vh); }
-        }
-
-        /* Glassmorphism Card Style */
-        .card {
-            position: relative;
-            background-color: rgba(15, 23, 42, 0.6); /* Slightly more opaque */
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 1.5rem;
-            padding: 1.5rem;
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
+        .calendar-day:not(.active):hover { background: var(--card-bg); }
+        .workout-item { border-left: 4px solid var(--brand-purple); }
+        .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        .animate-slide-up { animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* Neon Glow Effect on Hover */
-        .card:hover {
-            transform: translateY(-8px) scale(1.02);
-            box-shadow: 0 0 15px rgba(225, 29, 72, 0.3), 0 0 30px rgba(225, 29, 72, 0.2), 0 0 45px rgba(225, 29, 72, 0.1);
-            border-color: rgba(225, 29, 72, 0.5);
-        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--brand-purple); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--brand-indigo); }
 
-        /* NEW: Staggered page load animations */
-        .animate-on-load {
-            opacity: 0;
-            transform: translateY(25px);
-            transition: opacity 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        /* Timer Styles */
+        #timer-progress-circle {
+            stroke-dasharray: 283;
+            stroke-dashoffset: 283;
+            transition: stroke-dashoffset 1s linear;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
         }
-        
-        /* Activity log animation */
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateX(-20px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-        .activity-item {
-            animation: slideIn 0.5s ease-out forwards;
-        }
-
-        /* Number Ticker Animation */
-        .balance-ticker {
-            transition: transform 0.4s ease-out;
-            display: inline-block;
-        }
-        .balance-up {
-            transform: translateY(-100%);
-        }
-        .balance-down {
-            transform: translateY(100%);
-        }
-
-        /* QR Scanner styling */
-        #qr-reader {
-            border-radius: 12px;
-            overflow: hidden;
-            border: 2px solid #334155;
-        }
-        
-        /* NEW: Enhanced Modal Transitions */
-        #payment-modal {
-            transition: opacity 0.4s ease, visibility 0.4s;
-        }
-        #modal-content {
-            transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.4s;
-            transform: translateY(50px);
-            opacity: 0;
-        }
-        #payment-modal.modal-visible #modal-content {
-            transform: translateY(0);
-            opacity: 1;
-        }
-        #payment-modal.modal-hidden { visibility: hidden; opacity: 0; }
-        #payment-modal.modal-visible { visibility: visible; opacity: 1; }
-        
-        /* Chart tooltip styling */
-        .apexcharts-tooltip {
-            background: #1e293b !important;
-            color: #e2e8f0;
-            border: 1px solid #334155 !important;
-        }
-        .apexcharts-tooltip-title {
-            background: #334155 !important;
-            border-bottom: 1px solid #475569 !important;
-        }
-
-        /* PIN Input styling */
-        .pin-input {
-            width: 45px;
-            height: 50px;
-            text-align: center;
-            font-size: 1.5rem;
-            font-weight: bold;
-            border-radius: 0.5rem;
-            background-color: #1e293b;
-            border: 2px solid #475569;
-            color: #f1f5f9;
-            transition: border-color 0.2s, box-shadow 0.2s;
-            caret-color: transparent; /* Hide cursor */
-        }
-        .pin-input:focus, .pin-input.focused {
-            outline: none;
-            border-color: #e11d48;
-            box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.3);
-        }
-
-        /* Custom Keyboard Styling */
-        #pin-keyboard {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 0.75rem;
-            margin-top: 1.5rem;
-        }
-        .key-btn {
-            background-color: #1e293b;
-            border: none;
-            border-radius: 0.75rem;
-            color: #f1f5f9;
-            font-size: 1.5rem;
-            font-weight: 600;
-            padding: 1rem 0;
-            cursor: pointer;
-            transition: background-color 0.2s, transform 0.1s;
-            -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
-        }
-        .key-btn:hover {
-            background-color: #334155;
-        }
-        .key-btn:active {
-            background-color: #475569;
-            transform: scale(0.95);
-        }
-        .key-btn.utility {
-            font-size: 1.25rem;
-        }
-
-        /* NEW: Improved active state for main buttons */
-        #pay-btn:active, #confirm-pay-btn:active, #done-btn:active {
-            transform: scale(0.98) !important;
-            transition: transform 0.1s;
+        .pulsate { animation: pulsate 2s infinite ease-in-out; }
+        @keyframes pulsate {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
         }
     </style>
 </head>
-<body class="text-white antialiased">
+<body class="main-container">
 
-    <div id="aurora-bg">
-        <div id="shape1" class="aurora-shape"></div>
-        <div id="shape2" class="aurora-shape"></div>
-        <div id="shape3" class="aurora-shape"></div>
-    </div>
-
-    <div id="app" class="relative z-10 min-h-screen p-4 sm:p-6 lg:p-8 flex flex-col max-w-4xl mx-auto">
-        <header class="flex justify-between items-center mb-8 animate-on-load">
-            <div class="flex items-center gap-3">
-                <div id="logo-container" class="w-10 h-10"></div>
-                <h1 class="text-xl md:text-2xl font-bold tracking-tight text-slate-200">The Red Eagle Co.</h1>
+    <div id="app" class="p-4 md:p-8 max-w-7xl mx-auto animate-fade-in">
+        <header class="flex justify-between items-center mb-8 animate-slide-up" style="animation-delay: 0.1s;">
+             <div class="flex items-center gap-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-400"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                <h1 class="text-2xl md:text-3xl font-bold text-white tracking-wider">Fit Pulse</h1>
             </div>
-            <div class="text-right">
-                <p id="greeting" class="text-sm md:text-base text-slate-400">Hi Aryaveer, Good Morning!</p>
-                <div class="flex items-center justify-end gap-2 mt-1">
-                    <span id="market-status-indicator" class="h-2.5 w-2.5 rounded-full bg-gray-500 transition-colors"></span>
-                    <p id="market-status" class="text-xs font-semibold uppercase tracking-wider text-slate-300">Market Closed</p>
-                </div>
-            </div>
+            <div id="current-date" class="hidden md:block text-lg font-medium text-gray-400"></div>
         </header>
 
-        <main class="flex-grow">
-            <div class="card mb-8 animate-on-load">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-slate-400 text-sm font-medium mb-2">Total Wallet Balance</p>
-                        <div class="flex items-end gap-3">
-                            <div class="text-4xl md:text-5xl font-extrabold text-slate-50 tracking-tight transition-colors duration-500 h-[48px] overflow-hidden" style="line-height: 48px;">
-                                <span id="wallet-balance-ticker" class="balance-ticker">₹52,987.00</span>
-                            </div>
+        <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2 space-y-8">
+                <div class="glass-card p-6 animate-slide-up" style="animation-delay: 0.2s;">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold text-white">Weekly Planner</h2>
+                        <div class="flex items-center gap-2">
+                            <button id="prev-week" class="p-2 rounded-full hover:bg-white/10 transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                            </button>
+                            <span id="current-month-year" class="font-semibold w-28 text-center"></span>
+                            <button id="next-week" class="p-2 rounded-full hover:bg-white/10 transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                            </button>
                         </div>
                     </div>
-                    <div id="sparkline-container" class="mt-2">
-                        <div id="sparkline-chart"></div>
+                    <div id="calendar-container" class="grid grid-cols-7 gap-2 md:gap-4"></div>
+                </div>
+
+                <div class="glass-card p-6 animate-slide-up" style="animation-delay: 0.3s;">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4 sm:gap-0">
+                        <div>
+                            <h2 class="text-xl font-bold text-white">Today's Plan</h2>
+                            <p id="selected-date-display" class="text-gray-400"></p>
+                        </div>
+                        <button id="add-workout-btn" class="btn-primary font-semibold py-2 px-4 rounded-lg flex items-center gap-2 w-full sm:w-auto">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                            Add Workout
+                        </button>
                     </div>
+                    <div id="workout-list" class="space-y-4 max-h-96 overflow-y-auto pr-2"></div>
                 </div>
             </div>
 
-            <div class="card mb-8 animate-on-load">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-lg font-semibold text-slate-200">Portfolio Snapshot</h2>
+            <div class="space-y-8">
+                <div id="workout-templates-card" class="glass-card p-6 animate-slide-up cursor-pointer" style="animation-delay: 0.4s;">
+                     <h2 class="text-xl font-bold text-white mb-2">Workout Templates</h2>
+                     <p class="text-gray-400 text-sm">Get started quickly with pre-made workout plans.</p>
                 </div>
-                <div class="grid grid-cols-2 gap-4 mb-6 text-center">
-                    <div>
-                        <p class="text-sm text-slate-400">Today's P&L</p>
-                        <p id="todays-pnl" class="text-2xl font-bold text-slate-400 transition-colors duration-500">₹0.00</p>
-                    </div>
-                    <div>
-                        <p class="text-sm text-slate-400">Total P&L</p>
-                        <p id="total-pnl" class="text-2xl font-bold text-slate-400 transition-colors duration-500">₹0.00</p>
-                    </div>
-                </div>
-                <div>
-                    <p class="text-xs text-slate-400 mb-2 text-center font-medium">Weekly Performance</p>
-                    <div id="pnl-candlestick-chart" class="w-full h-48 -mb-4"></div>
-                </div>
-            </div>
-
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="card animate-on-load">
-                    <div>
-                        <h2 class="text-lg font-semibold text-slate-200 mb-1">UPI Payments</h2>
-                        <p class="text-slate-400 text-sm mb-6">Scan any QR code to pay instantly from your wallet.</p>
-                    </div>
-                    <button id="pay-btn" class="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-3 px-4 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg shadow-rose-900/40 mt-auto">
-                        Scan QR & Pay
-                    </button>
-                </div>
-                
-                <div class="card animate-on-load">
-                     <h2 class="text-lg font-semibold text-slate-200 mb-1">Recent Activity</h2>
-                     <p class="text-slate-400 text-sm mb-6">Portfolio updates and transactions will appear here.</p>
-                     <div id="activity-log" class="space-y-3 text-sm">
-                         <p class="text-slate-500 italic">No recent activity.</p>
-                     </div>
+                <div class="glass-card p-6 animate-slide-up" style="animation-delay: 0.5s;">
+                    <h2 class="text-xl font-bold text-white mb-4">Weekly Progress</h2>
+                    <div id="progress-container" class="flex justify-around items-end h-32"></div>
                 </div>
             </div>
         </main>
     </div>
 
-    <div id="payment-modal" class="modal-hidden fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-        <div id="modal-content" class="bg-slate-800/80 backdrop-blur-xl border border-slate-700 w-full max-w-md rounded-2xl p-6 shadow-2xl text-center relative">
-             <button id="close-modal-btn" class="absolute top-2 right-2 text-slate-400 hover:text-white transition-colors h-10 w-10 flex items-center justify-center text-2xl font-bold">&times;</button>
-            <div id="scanner-view">
-                <h2 class="text-xl font-bold mb-2">Scan UPI QR Code</h2>
-                <p class="text-slate-400 mb-4 text-sm">Hold the QR code within the frame.</p>
-                <div id="qr-reader" class="w-full mx-auto"></div>
-                <p id="scanner-error" class="text-red-400 text-sm mt-2 hidden"></p>
+    <!-- Modals -->
+    <div id="modal-container">
+        <!-- Add/Edit Workout Modal -->
+        <div id="workout-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden animate-fade-in">
+             <div class="glass-card w-full max-w-md p-6 rounded-2xl border-2 border-indigo-500/50 relative animate-slide-up">
+                <button class="close-modal-btn absolute top-4 right-4 text-gray-400 hover:text-white transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+                <h2 id="workout-modal-title" class="text-2xl font-bold mb-4 text-white"></h2>
+                <form id="workout-form">
+                    <input type="hidden" id="workout-id">
+                    <div class="mb-4">
+                        <label for="workout-name" class="block text-sm font-medium text-gray-300 mb-1">Workout Name</label>
+                        <input type="text" id="workout-name" placeholder="e.g., Chest Day" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="workout-type" class="block text-sm font-medium text-gray-300 mb-1">Workout Type</label>
+                        <select id="workout-type" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+                            <option>Strength</option> <option>Cardio</option> <option>Flexibility</option> <option>Rest Day</option>
+                        </select>
+                    </div>
+                     <div class="mb-6">
+                        <label for="workout-duration" class="block text-sm font-medium text-gray-300 mb-1">Duration (minutes)</label>
+                        <input type="number" id="workout-duration" placeholder="e.g., 60" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all" required>
+                    </div>
+                    <button type="submit" class="w-full btn-primary font-bold py-3 px-4 rounded-lg">Save Workout</button>
+                </form>
             </div>
-            <div id="details-view" class="hidden">
-                 <h2 class="text-xl font-bold mb-2">Confirm Payment</h2>
-                 <p class="text-slate-400 mb-6 text-sm">You are paying:</p>
-                 <div class="bg-slate-700/50 rounded-xl p-4 mb-4 text-left">
-                     <p class="text-xs text-slate-400">NAME</p>
-                     <p id="payee-name" class="font-semibold text-lg"></p>
-                     <p class="text-xs text-slate-400 mt-2">UPI ID</p>
-                     <p id="payee-upi" class="font-mono text-sm"></p>
-                 </div>
-                 <div class="relative">
-                     <span class="absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-bold text-slate-400">₹</span>
-                     <input type="number" id="amount-input" placeholder="0.00" class="w-full bg-slate-900 border-2 border-slate-600 focus:border-rose-500 focus:ring-0 rounded-lg text-center text-3xl font-bold py-3 transition-colors">
-                 </div>
-                 <p id="amount-error" class="text-red-400 text-sm mt-2 hidden">Invalid amount.</p>
-                 <button id="confirm-pay-btn" class="w-full mt-6 bg-rose-600 hover:bg-rose-700 text-white font-bold py-3 px-4 rounded-xl transition-transform transform hover:scale-105">Pay Now</button>
+        </div>
+        <!-- Workout Log Modal -->
+        <div id="log-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden animate-fade-in">
+             <div class="glass-card w-full max-w-md p-6 rounded-2xl border-2 border-green-500/50 relative animate-slide-up">
+                 <button class="close-modal-btn absolute top-4 right-4 text-gray-400 hover:text-white transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                 </button>
+                <form id="log-form"></form>
             </div>
-            <div id="pin-view" class="hidden">
-                <h2 class="text-xl font-bold mb-2">Enter Your PIN</h2>
-                <p class="text-slate-400 mb-4 text-sm">Enter your 4-digit PIN to authorize this transaction.</p>
-                <div id="pin-inputs" class="flex justify-center gap-3 mb-2">
-                    <input type="password" class="pin-input" maxlength="1" readonly>
-                    <input type="password" class="pin-input" maxlength="1" readonly>
-                    <input type="password" class="pin-input" maxlength="1" readonly>
-                    <input type="password" class="pin-input" maxlength="1" readonly>
-                </div>
-                <p id="pin-error" class="text-red-400 text-sm h-5"> </p>
-                <div id="pin-keyboard">
-                    </div>
+        </div>
+        <!-- Template Select Modal -->
+        <div id="template-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden animate-fade-in">
+             <div class="glass-card w-full max-w-lg p-6 rounded-2xl border-2 border-purple-500/50 relative animate-slide-up">
+                <button class="close-modal-btn absolute top-4 right-4 text-gray-400 hover:text-white transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+                <h2 class="text-2xl font-bold mb-4 text-white">Choose a Template</h2>
+                <div id="template-list" class="space-y-3 max-h-96 overflow-y-auto pr-2"></div>
             </div>
-            <div id="loading-view" class="hidden">
-                <lottie-player src="https://assets3.lottiefiles.com/packages/lf20_gjmecwoc.json" background="transparent" speed="1" style="width: 200px; height: 200px; margin: auto;" loop autoplay></lottie-player>
-                <h2 class="text-xl font-semibold text-slate-300 animate-pulse">Processing Payment...</h2>
+        </div>
+        <!-- Timer Modal -->
+        <div id="timer-modal" class="fixed inset-0 bg-black/90 backdrop-blur-xl flex flex-col items-center justify-center p-4 z-50 hidden animate-fade-in">
+            <div class="relative w-64 h-64 flex items-center justify-center mb-8">
+                <svg class="absolute w-full h-full" viewBox="0 0 100 100">
+                    <circle class="text-gray-700" stroke-width="5" stroke="currentColor" fill="transparent" r="45" cx="50" cy="50" />
+                    <circle id="timer-progress-circle" class="text-indigo-400" stroke-width="5" stroke-linecap="round" stroke="currentColor" fill="transparent" r="45" cx="50" cy="50" />
+                </svg>
+                <div id="time-display" class="text-5xl font-bold text-white z-10">00:00</div>
             </div>
-            <div id="confirmation-view" class="hidden">
-                <lottie-player id="success-animation" src="https://assets10.lottiefiles.com/packages/lf20_jbrw3hcz.json" background="transparent" speed="1" style="width: 150px; height: 150px; margin: auto;"></lottie-player>
-                <h2 class="text-2xl font-bold text-green-400 mt-2">Payment Successful!</h2>
-                <div class="bg-slate-700/50 rounded-xl p-4 my-4 text-left text-sm space-y-2">
-                    <div class="flex justify-between">
-                        <span class="text-slate-400">Amount:</span>
-                        <span id="confirm-amount" class="font-bold"></span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-slate-400">To:</span>
-                        <span id="confirm-payee-name" class="font-semibold"></span>
-                    </div>
-                     <div class="flex justify-between">
-                        <span class="text-slate-400">UPI ID:</span>
-                        <span id="confirm-payee-upi" class="font-mono text-xs"></span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-slate-400">UTR:</span>
-                        <span id="confirm-utr" class="font-mono text-xs"></span>
-                    </div>
-                </div>
-                <button id="done-btn" class="w-full mt-6 bg-slate-600 hover:bg-slate-700 text-white font-bold py-3 px-4 rounded-xl transition">Done</button>
+            <h3 id="timer-workout-name" class="text-xl font-semibold mb-8 text-gray-300"></h3>
+            <div class="flex items-center gap-6">
+                <button id="pause-resume-btn" class="text-gray-300 hover:text-white transition-colors p-4 bg-white/10 rounded-full">
+                    <svg id="play-icon" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="currentColor" class="hidden"><path d="M8 5v14l11-7z"/></svg>
+                    <svg id="pause-icon" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                </button>
+                <button id="stop-timer-btn" class="text-gray-300 hover:text-white transition-colors p-4 bg-red-500/20 hover:bg-red-500/40 rounded-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h12v12H6z"/></svg>
+                </button>
             </div>
         </div>
     </div>
-
-
-    <script type="module">
-        import * as THREE from 'three';
-
+    
+    <script>
         document.addEventListener('DOMContentLoaded', () => {
             // --- STATE & CONSTANTS ---
-            const CORRECT_PIN = "2580";
-            const initialInvestedValue = 52987.00;
-            let walletBalance = 52987.00;
-            let todaysPnl = 0;
-            let transactions = [];
-            let html5QrCode = null;
-            let simulationInterval = null; 
-            let sparklineChart, pnlChart;
-            let currentPinIndex = 0;
+            let currentDate = dayjs();
+            let selectedDate = dayjs().format('YYYY-MM-DD');
+            let workouts = JSON.parse(localStorage.getItem('fitPulseWorkouts')) || {};
             
-            // --- DUMMY DATA ---
-            let weeklyPnlData = [
-                { x: new Date('2025-09-01').getTime(), y: [52850.15, 52980.60, 52600.90, 52636.55] },
-                { x: new Date('2025-09-02').getTime(), y: [52630.10, 53250.75, 52580.20, 53066.65] },
-                { x: new Date('2025-09-03').getTime(), y: [53060.00, 53100.80, 52850.00, 52956.65] },
-                { x: new Date('2025-09-04').getTime(), y: [52960.25, 53750.10, 52950.50, 53606.40] },
-                { x: new Date('2025-09-05').getTime(), y: [53600.90, 53880.00, 53500.25, 53826.70] },
-                { x: new Date('2025-09-06').getTime(), y: [initialInvestedValue, initialInvestedValue, initialInvestedValue, initialInvestedValue] }
-            ];
+            let timerInterval;
+            let timeRemaining;
+            let totalTime;
+            let isPaused = false;
 
-            // --- ELEMENTS ---
-            const greetingEl = document.getElementById('greeting');
-            const marketStatusEl = document.getElementById('market-status');
-            const marketStatusIndicatorEl = document.getElementById('market-status-indicator');
-            const walletBalanceTickerEl = document.getElementById('wallet-balance-ticker');
-            const activityLogEl = document.getElementById('activity-log');
-            const todaysPnlEl = document.getElementById('todays-pnl');
-            const totalPnlEl = document.getElementById('total-pnl');
-            const modalElements = {
-                paymentModal: document.getElementById('payment-modal'),
-                modalContent: document.getElementById('modal-content'),
-                payBtn: document.getElementById('pay-btn'),
-                closeModalBtn: document.getElementById('close-modal-btn'),
-                scannerView: document.getElementById('scanner-view'),
-                detailsView: document.getElementById('details-view'),
-                pinView: document.getElementById('pin-view'),
-                confirmationView: document.getElementById('confirmation-view'),
-                loadingView: document.getElementById('loading-view'),
-                payeeNameEl: document.getElementById('payee-name'),
-                payeeUpiEl: document.getElementById('payee-upi'),
-                amountInput: document.getElementById('amount-input'),
-                amountError: document.getElementById('amount-error'),
-                confirmPayBtn: document.getElementById('confirm-pay-btn'),
-                pinInputs: document.querySelectorAll('.pin-input'),
-                pinError: document.getElementById('pin-error'),
-                pinKeyboard: document.getElementById('pin-keyboard'),
-                doneBtn: document.getElementById('done-btn'),
-                successAnimation: document.getElementById('success-animation'),
-                // Confirmation screen elements
-                confirmAmount: document.getElementById('confirm-amount'),
-                confirmPayeeName: document.getElementById('confirm-payee-name'),
-                confirmPayeeUpi: document.getElementById('confirm-payee-upi'),
-                confirmUtr: document.getElementById('confirm-utr'),
+            const ICONS = { /* SVG Icons for workout types */ }; // Defined below for cleaner code
+            const WORKOUT_TEMPLATES = [ /* Templates */ ]; // Defined below
+
+            // --- DOM ELEMENTS ---
+            const allElements = {
+                currentDateEl: document.getElementById('current-date'),
+                calendarContainer: document.getElementById('calendar-container'),
+                currentMonthYearEl: document.getElementById('current-month-year'),
+                selectedDateDisplay: document.getElementById('selected-date-display'),
+                workoutList: document.getElementById('workout-list'),
+                progressContainer: document.getElementById('progress-container'),
+                workoutModal: document.getElementById('workout-modal'),
+                workoutModalTitle: document.getElementById('workout-modal-title'),
+                workoutForm: document.getElementById('workout-form'),
+                workoutIdInput: document.getElementById('workout-id'),
+                workoutNameInput: document.getElementById('workout-name'),
+                workoutTypeInput: document.getElementById('workout-type'),
+                workoutDurationInput: document.getElementById('workout-duration'),
+                logModal: document.getElementById('log-modal'),
+                logForm: document.getElementById('log-form'),
+                templateModal: document.getElementById('template-modal'),
+                templateList: document.getElementById('template-list'),
+                timerModal: document.getElementById('timer-modal'),
+                timeDisplay: document.getElementById('time-display'),
+                timerProgressCircle: document.getElementById('timer-progress-circle'),
+                timerWorkoutName: document.getElementById('timer-workout-name'),
+                pauseResumeBtn: document.getElementById('pause-resume-btn'),
+                playIcon: document.getElementById('play-icon'),
+                pauseIcon: document.getElementById('pause-icon'),
             };
 
-            // --- 3D LOGO SETUP ---
-            const scene = new THREE.Scene();
-            const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
-            const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-            const logoContainer = document.getElementById('logo-container');
-            renderer.setSize(40, 40);
-            logoContainer.appendChild(renderer.domElement);
-            
-            const geometry = new THREE.IcosahedronGeometry(0.8, 0);
-            const material = new THREE.MeshStandardMaterial({
-                color: 0xe11d48, metalness: 0.6, roughness: 0.3
+            // --- ICONS & TEMPLATES DATA ---
+            Object.assign(ICONS, {
+                Strength: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-yellow-400"><path d="M12 1a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M12 18a9 9 0 0 0 9-9h-1.09a7 7 0 0 1-1.42 4.22l-1.42 1.42a3 3 0 0 0-4.14 0l-1.42-1.42A7 7 0 0 1 4.09 9H3a9 9 0 0 0 9 9z"></path></svg>`,
+                Cardio: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-sky-400"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>`,
+                Flexibility: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-emerald-400"><path d="M12.83 2.17a2 2 0 0 0-1.66 0L2.6 6.33a2 2 0 0 0-1 1.73v7.88a2 2 0 0 0 1 1.73l8.53 4.16a2 2 0 0 0 1.66 0l8.53-4.16a2 2 0 0 0 1-1.73V8.06a2 2 0 0 0-1-1.73Z"></path><path d="m12 14 4-4"></path><path d="m16 14-4-4"></path><path d="m8 10 4 4"></path></svg>`,
+                'Rest Day': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-purple-400"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line></svg>`
             });
-            const logo = new THREE.Mesh(geometry, material);
-            scene.add(logo);
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-            scene.add(ambientLight);
-            const pointLight = new THREE.PointLight(0xffffff, 1);
-            pointLight.position.set(5, 5, 5);
-            scene.add(pointLight);
-            camera.position.z = 2;
+            WORKOUT_TEMPLATES.push(
+                { name: "Full Body Strength", plan: [ { d:0, n:"Upper Body Strength", t:"Strength", min:60 }, { d:2, n:"Lower Body Power", t:"Strength", min:60 }, { d:4, n:"Core & Back", t:"Strength", min:45 }, { d:6, n:"Full Body HIIT", t:"Cardio", min:30 } ] },
+                { name: "Cardio Blast", plan: [ { d:0, n:"Running Intervals", t:"Cardio", min:30 }, { d:1, n:"Cycling", t:"Cardio", min:45 }, { d:3, n:"HIIT Cardio", t:"Cardio", min:25 }, { d:5, n:"Long Steady Run", t:"Cardio", min:60 } ] },
+                { name: "Flexibility & Flow", plan: [ { d:0, n:"Morning Yoga", t:"Flexibility", min:30 }, { d:2, n:"Deep Stretch", t:"Flexibility", min:45 }, { d:4, n:"Restorative Yoga", t:"Flexibility", min:60 } ] }
+            );
 
-            function animateLogo() {
-                requestAnimationFrame(animateLogo);
-                logo.rotation.x += 0.005;
-                logo.rotation.y += 0.005;
-                renderer.render(scene, camera);
-            }
-            animateLogo();
 
-            // --- CHART SETUP ---
-            function initCharts() {
-                const sparklineOptions = {
-                    series: [{ data: weeklyPnlData.map(d => d.y[3]).slice(0, -1).concat([walletBalance]) }],
-                    chart: { type: 'area', height: 60, width: 120, sparkline: { enabled: true } },
-                    stroke: { curve: 'smooth', width: 2 },
-                    fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.1, } },
-                    colors: ['#4ade80'],
-                    tooltip: { enabled: false }
-                };
-                sparklineChart = new ApexCharts(document.querySelector("#sparkline-chart"), sparklineOptions);
-                sparklineChart.render();
+            // --- CORE FUNCTIONS ---
+            const saveAndRerender = () => {
+                localStorage.setItem('fitPulseWorkouts', JSON.stringify(workouts));
+                renderCalendar();
+                renderWorkouts();
+                renderProgress();
+            };
+
+            const openModal = (modal) => modal.classList.remove('hidden');
+            const closeModal = (modal) => modal.classList.add('hidden');
+
+            const findWorkoutById = (workoutId) => {
+                if (!workouts[selectedDate]) return null;
+                return workouts[selectedDate].find(w => w.id === workoutId);
+            };
+
+            // --- RENDERING FUNCTIONS ---
+            const renderCalendar = () => {
+                allElements.calendarContainer.innerHTML = '';
+                const startOfWeek = currentDate.startOf('week');
+                allElements.currentMonthYearEl.textContent = startOfWeek.format('MMMM YYYY');
                 
-                const pnlChartOptions = {
-                    series: [{ data: weeklyPnlData }],
-                    chart: { type: 'candlestick', height: '100%', toolbar: { show: false }, background: 'transparent' },
-                    xaxis: { type: 'datetime', labels: { style: { colors: '#94a3b8' } }, axisBorder: { show: false }, axisTicks: { show: false } },
-                    yaxis: { labels: { show: false }, grid: { show: false } },
-                    grid: { show: true, borderColor: 'rgba(148, 163, 184, 0.1)', padding: { left: 0, right: 0 } },
-                    plotOptions: { candlestick: { colors: { upward: '#22c55e', downward: '#ef4444' }, wick: { useFillColor: true } } },
-                    tooltip: { theme: 'dark' }
-                };
-                pnlChart = new ApexCharts(document.querySelector("#pnl-candlestick-chart"), pnlChartOptions);
-                pnlChart.render();
-            }
-
-            // --- KEYBOARD & PIN LOGIC ---
-            function createKeyboard() {
-                const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', '⌫'];
-                modalElements.pinKeyboard.innerHTML = '';
-                keys.forEach(key => {
-                    const keyBtn = document.createElement('button');
-                    keyBtn.className = 'key-btn';
-                    keyBtn.textContent = key;
-                    keyBtn.dataset.key = key;
-                    if(key === '⌫') keyBtn.classList.add('utility');
-                    if(key === '') keyBtn.style.visibility = 'hidden';
-                    modalElements.pinKeyboard.appendChild(keyBtn);
-                });
-            }
-
-            function handleKeyboardInput(key) {
-                modalElements.pinError.textContent = ' '; // Clear error on new input
-                if (key === '⌫') {
-                    if (currentPinIndex > 0 && modalElements.pinInputs[currentPinIndex].value === '') {
-                        currentPinIndex--;
-                    }
-                    modalElements.pinInputs[currentPinIndex].value = '';
-                } else if (!isNaN(parseInt(key))) {
-                    if (currentPinIndex < 4) {
-                        modalElements.pinInputs[currentPinIndex].value = key;
-                        currentPinIndex++;
-                    }
-                }
-                updatePinFocus();
-                
-                const pin = Array.from(modalElements.pinInputs).map(i => i.value).join('');
-                if (pin.length === 4) {
-                    verifyPinAndPay();
-                }
-            }
-            
-            function updatePinFocus() {
-                let actualIndex = Array.from(modalElements.pinInputs).findIndex(input => input.value === '');
-                if (actualIndex === -1) actualIndex = 3; // Stay on last if full
-
-                modalElements.pinInputs.forEach((input, index) => {
-                    input.classList.toggle('focused', index === actualIndex);
-                });
-                currentPinIndex = actualIndex;
-            }
-
-            // --- LOCAL STORAGE FUNCTIONS ---
-            function loadTransactions() {
-                const storedTransactions = localStorage.getItem('redEagleTransactions');
-                if (storedTransactions) {
-                    transactions = JSON.parse(storedTransactions);
-                    // Deduct stored transaction amounts from initial balance
-                    const totalSpent = transactions.reduce((sum, tx) => tx.type === 'payment' ? sum + tx.amount : sum, 0);
-                    walletBalance -= totalSpent;
-                }
-            }
-
-            function saveTransactions() {
-                localStorage.setItem('redEagleTransactions', JSON.stringify(transactions));
-            }
-
-            // --- UI/STATE UPDATE FUNCTIONS ---
-            function renderActivityLog() {
-                activityLogEl.innerHTML = '';
-                if(transactions.length === 0 && !simulationInterval) {
-                     activityLogEl.innerHTML = '<p class="text-slate-500 italic">No recent activity.</p>';
-                     return;
-                }
-
-                transactions.sort((a, b) => b.timestamp - a.timestamp).slice(0, 5).forEach(tx => {
-                     const logEntry = document.createElement('div');
-                     logEntry.className = 'activity-item flex justify-between items-center';
-                     const timeString = new Date(tx.timestamp).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+                for (let i = 0; i < 7; i++) {
+                    const day = startOfWeek.add(i, 'day');
+                    const dateStr = day.format('YYYY-MM-DD');
+                    const dayEl = document.createElement('div');
+                    dayEl.className = `calendar-day text-center p-2 md:p-3 rounded-lg cursor-pointer flex flex-col items-center justify-center gap-1 ${dateStr === selectedDate ? 'active' : ''}`;
+                    dayEl.dataset.date = dateStr;
+                    const dayWorkouts = workouts[dateStr] || [];
+                    const isCompleted = dayWorkouts.length > 0 && dayWorkouts.every(w => w.completed);
+                    const isPlanned = dayWorkouts.length > 0;
                     
-                    if (tx.type === 'payment') {
-                         logEntry.innerHTML = `<div><span class="font-semibold">Paid to ${tx.payeeName}</span><span class="text-xs text-slate-400 ml-2">${timeString}</span></div><span class="font-semibold text-amber-400">-₹${tx.amount.toFixed(2)}</span>`;
-                    } else { // Portfolio change
-                         const textColor = tx.change > 0 ? 'text-green-400' : 'text-red-400';
-                         const changeType = tx.change > 0 ? 'Portfolio Gain' : 'Portfolio Loss';
-                         logEntry.innerHTML = `<div><span class="font-semibold">${changeType}</span><span class="text-xs text-slate-400 ml-2">${timeString}</span></div><span class="font-semibold ${textColor}">${tx.change > 0 ? '+' : ''}₹${Math.abs(tx.change).toFixed(2)}</span>`;
-                    }
-                     activityLogEl.appendChild(logEntry);
-                });
-            }
-
-            function animateBalance(newBalance) {
-                const newText = `₹${newBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                const newSpan = document.createElement('span');
-                newSpan.textContent = newText;
-                newSpan.className = 'balance-ticker';
-                const isGain = newBalance > parseFloat(walletBalanceTickerEl.textContent.replace(/[₹,]/g, ''));
-                walletBalanceTickerEl.classList.add(isGain ? 'balance-down' : 'balance-up');
-                
-                setTimeout(() => {
-                    walletBalanceTickerEl.innerHTML = '';
-                    walletBalanceTickerEl.appendChild(newSpan);
-                    walletBalanceTickerEl.classList.remove('balance-down', 'balance-up');
-                }, 400);
-            }
-
-            function updateDashboardState() {
-                const now = new Date();
-                // Simulating IST for demonstration regardless of user's timezone
-                const istTime = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
-                const hour = istTime.getHours();
-                const day = istTime.getDay();
-
-                if (hour < 12) greetingEl.textContent = "Hi Aryaveer, Good Morning!";
-                else if (hour < 17) greetingEl.textContent = "Hi Aryaveer, Good Afternoon!";
-                else greetingEl.textContent = "Hi Aryaveer, Good Evening!";
-
-                const minutes = istTime.getMinutes();
-                const timeInMinutes = hour * 60 + minutes;
-                const marketOpen = (day >= 1 && day <= 5) && (timeInMinutes >= (9 * 60 + 15) && timeInMinutes < (15 * 60 + 30));
-
-                if (marketOpen) {
-                    marketStatusEl.textContent = "Market Open";
-                    marketStatusIndicatorEl.classList.remove('bg-gray-500');
-                    marketStatusIndicatorEl.classList.add('bg-green-500', 'animate-pulse');
-                    if (!simulationInterval) {
-                        simulationInterval = setInterval(autoSimulateBalance, 2500);
-                    }
-                } else {
-                    marketStatusEl.textContent = "Market Closed";
-                    marketStatusIndicatorEl.classList.add('bg-gray-500');
-                    marketStatusIndicatorEl.classList.remove('bg-green-500', 'animate-pulse');
-                    if (simulationInterval) {
-                        clearInterval(simulationInterval);
-                        simulationInterval = null;
-                        renderActivityLog();
-                    }
+                    dayEl.innerHTML = `
+                        <span class="text-xs md:text-sm uppercase font-semibold text-gray-400 ${dateStr === selectedDate ? 'text-white/80' : ''}">${day.format('ddd')}</span>
+                        <span class="text-lg md:text-xl font-bold">${day.format('D')}</span>
+                        <div class="w-1.5 h-1.5 rounded-full ${isCompleted ? 'bg-green-400' : isPlanned ? 'bg-purple-400' : 'bg-transparent'}"></div>
+                    `;
+                    dayEl.addEventListener('click', () => { selectedDate = dateStr; renderCalendar(); renderWorkouts(); });
+                    allElements.calendarContainer.appendChild(dayEl);
                 }
-            }
+            };
             
-            function updatePnlAndCharts(newBalance) {
-                animateBalance(newBalance);
-                walletBalance = newBalance;
-                
-                let todayData = weeklyPnlData[weeklyPnlData.length - 1].y;
-                todayData[3] = walletBalance; // Close price
-                if (walletBalance > todayData[1]) todayData[1] = walletBalance; // High
-                if (walletBalance < todayData[2]) todayData[2] = walletBalance; // Low
+            const renderWorkouts = () => {
+                allElements.selectedDateDisplay.textContent = dayjs(selectedDate).format('dddd, MMMM D, YYYY');
+                allElements.workoutList.innerHTML = '';
+                const dayWorkouts = workouts[selectedDate] || [];
 
-                sparklineChart.updateSeries([{ data: weeklyPnlData.map(d => d.y[3]) }]);
-                sparklineChart.updateOptions({ colors: [todaysPnl >= 0 ? '#4ade80' : '#f87171']});
-                pnlChart.updateSeries([{ data: weeklyPnlData }]);
-
-                const totalPnl = walletBalance - initialInvestedValue;
-                todaysPnlEl.textContent = `₹${todaysPnl.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                totalPnlEl.textContent = `₹${totalPnl.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                
-                [todaysPnlEl, totalPnlEl].forEach(el => {
-                    const val = el === todaysPnlEl ? todaysPnl : totalPnl;
-                    el.classList.toggle('text-green-400', val > 0);
-                    el.classList.toggle('text-red-400', val < 0);
-                    el.classList.toggle('text-slate-400', val === 0);
-                });
-            }
-
-            function autoSimulateBalance() {
-                const change = (Math.random() - 0.49) * 400;
-                todaysPnl += change;
-                transactions.push({ type: 'portfolio', change: change, timestamp: Date.now() });
-                renderActivityLog();
-                updatePnlAndCharts(walletBalance + change);
-            }
-
-            // --- MODAL & PAYMENT LOGIC ---
-            function openModal() {
-                modalElements.paymentModal.classList.remove('modal-hidden');
-                modalElements.paymentModal.classList.add('modal-visible');
-                startScanner();
-            }
-
-            function closeModal() {
-                modalElements.paymentModal.classList.remove('modal-visible');
-                modalElements.paymentModal.classList.add('modal-hidden');
-                setTimeout(() => { stopScanner(); resetModalViews(); }, 400); // Wait for animation
-            }
-
-            function switchModalView(viewToShow) {
-                ['scannerView', 'detailsView', 'pinView', 'loadingView', 'confirmationView'].forEach(view => {
-                    modalElements[view].style.display = 'none';
-                });
-                modalElements[viewToShow].style.display = 'block';
-            }
-
-            function resetModalViews() {
-                switchModalView('scannerView');
-                modalElements.amountInput.value = '';
-                modalElements.amountError.classList.add('hidden');
-                modalElements.pinError.textContent = ' ';
-                modalElements.pinInputs.forEach(input => input.value = '');
-                currentPinIndex = 0;
-                updatePinFocus();
-                document.getElementById('scanner-error').classList.add('hidden');
-            }
-            
-            function startScanner() {
-                if (!html5QrCode) {
-                    html5QrCode = new Html5Qrcode("qr-reader");
-                }
-                const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-                html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure)
-                    .catch(err => {
-                        document.getElementById('scanner-error').textContent = "Could not start camera.";
-                        document.getElementById('scanner-error').classList.remove('hidden');
-                    });
-            }
-            
-            function stopScanner() {
-                if (html5QrCode && html5QrCode.isScanning) {
-                    html5QrCode.stop().catch(err => console.error("QR scanner stop failed.", err));
-                }
-            }
-            
-            function onScanSuccess(decodedText) {
-                stopScanner();
-                try {
-                    const url = new URL(decodedText);
-                    if (url.protocol !== 'upi:') throw new Error("Not a valid UPI QR code.");
-                    const params = url.searchParams;
-                    const upiId = params.get('pa');
-                    if (!upiId) throw new Error("UPI ID not found in QR code.");
-                    
-                    modalElements.payeeNameEl.textContent = decodeURIComponent(params.get('pn') || 'N/A');
-                    modalElements.payeeUpiEl.textContent = upiId;
-                    switchModalView('detailsView');
-                } catch (error) {
-                    document.getElementById('scanner-error').textContent = error.message;
-                    document.getElementById('scanner-error').classList.remove('hidden');
-                    setTimeout(startScanner, 2000);
-                }
-            }
-            
-            function onScanFailure(error) { /* intentionally blank */ }
-            
-            function initiatePayment() {
-                const amount = parseFloat(modalElements.amountInput.value);
-                if (isNaN(amount) || amount <= 0 || amount > walletBalance) {
-                    modalElements.amountError.textContent = amount > walletBalance ? "Insufficient balance." : "Invalid amount.";
-                    modalElements.amountError.classList.remove('hidden');
+                if (dayWorkouts.length === 0) {
+                    allElements.workoutList.innerHTML = `<div class="text-center py-8"><p class="text-gray-400">No workouts planned for this day.</p><p class="text-gray-500 text-sm">Add a workout or apply a template!</p></div>`;
                     return;
                 }
-                modalElements.amountError.classList.add('hidden');
-                switchModalView('pinView');
-                currentPinIndex = 0;
-                updatePinFocus();
-            }
 
-            function verifyPinAndPay() {
-                let pin = '';
-                modalElements.pinInputs.forEach(input => pin += input.value);
+                dayWorkouts.forEach(workout => {
+                    const workoutEl = document.createElement('div');
+                    workoutEl.className = `workout-item bg-white/5 p-4 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-fade-in`;
+                    workoutEl.innerHTML = `
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 flex items-center justify-center rounded-full bg-black/20 shrink-0">${ICONS[workout.type]}</div>
+                            <div>
+                                <h3 class="font-bold text-white text-lg">${workout.name}</h3>
+                                <p class="text-sm text-gray-400">${workout.type} &bull; ${workout.duration} mins ${workout.completed ? `&bull; <span class="text-green-400 font-semibold">Completed</span>` : ''}</p>
+                                ${workout.completed && workout.sets ? `<p class="text-xs text-gray-500">Logged: ${workout.sets} sets, ${workout.reps} reps, ${workout.weight} kg</p>` : ''}
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-1 self-end sm:self-center">
+                            <button class="start-timer-btn p-2 rounded-full hover:bg-white/10 ${workout.completed ? 'hidden' : ''}" data-id="${workout.id}" title="Start Timer">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-400"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                            </button>
+                            <button class="log-btn p-2 rounded-full hover:bg-white/10 ${workout.completed ? 'hidden' : ''}" data-id="${workout.id}" title="Log Workout">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-400"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                            </button>
+                            <button class="edit-btn p-2 rounded-full hover:bg-white/10" data-id="${workout.id}" title="Edit Workout">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-400"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                            </button>
+                            <button class="delete-btn p-2 rounded-full hover:bg-white/10" data-id="${workout.id}" title="Delete Workout">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-400"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            </button>
+                        </div>
+                    `;
+                    allElements.workoutList.appendChild(workoutEl);
+                });
+                attachWorkoutEventListeners();
+            };
 
-                if(pin !== CORRECT_PIN) {
-                    modalElements.pinError.textContent = 'Incorrect PIN. Please try again.';
-                    modalElements.pinInputs.forEach(input => input.value = '');
-                    currentPinIndex = 0;
-                    updatePinFocus();
-                    return;
-                }
-                
-                modalElements.pinError.textContent = ' ';
-                switchModalView('loadingView');
-                
-                // Simulate network delay then process the payment
-                setTimeout(() => {
-                    const amount = parseFloat(modalElements.amountInput.value);
-                    const newBalance = walletBalance - amount;
-                    const payeeName = modalElements.payeeNameEl.textContent;
-                    const payeeUpi = modalElements.payeeUpiEl.textContent;
-                    const utr = `UTR${Date.now()}${Math.floor(Math.random() * 1000)}`;
+            const renderProgress = () => {
+                allElements.progressContainer.innerHTML = '';
+                const startOfWeek = currentDate.startOf('week');
+                for (let i = 0; i < 7; i++) {
+                    const day = startOfWeek.add(i, 'day');
+                    const dateStr = day.format('YYYY-MM-DD');
+                    const dayWorkouts = workouts[dateStr] || [];
+                    const completed = dayWorkouts.length > 0 && dayWorkouts.every(w => w.completed);
+                    const planned = dayWorkouts.length > 0;
                     
-                    // Update confirmation screen
-                    modalElements.confirmAmount.textContent = `₹${amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                    modalElements.confirmPayeeName.textContent = payeeName;
-                    modalElements.confirmPayeeUpi.textContent = payeeUpi;
-                    modalElements.confirmUtr.textContent = utr;
+                    let barHeight = completed ? 'h-24' : planned ? 'h-16' : 'h-2';
+                    let barColor = completed ? 'bg-green-500' : planned ? 'bg-purple-500/50' : 'bg-gray-700';
+                    if (day.isSame(dayjs(), 'day')) barColor += ' pulsate';
 
-                    // Update global state and save
-                    const transaction = { type: 'payment', payeeName, payeeUpi, amount, utr, timestamp: Date.now() };
-                    transactions.push(transaction);
-                    saveTransactions();
-                    updatePnlAndCharts(newBalance);
-                    renderActivityLog();
-
-                    switchModalView('confirmationView');
-                    modalElements.successAnimation.seek(0);
-                    modalElements.successAnimation.play();
-                }, 1500);
-            }
-            
-            // --- EVENT LISTENERS ---
-            modalElements.payBtn.addEventListener('click', openModal);
-            modalElements.closeModalBtn.addEventListener('click', closeModal);
-            modalElements.doneBtn.addEventListener('click', closeModal);
-            modalElements.confirmPayBtn.addEventListener('click', initiatePayment);
-            modalElements.paymentModal.addEventListener('click', (e) => {
-                if(e.target === modalElements.paymentModal) closeModal();
-            });
-            modalElements.pinKeyboard.addEventListener('click', (e) => {
-                if (e.target.matches('.key-btn')) {
-                    handleKeyboardInput(e.target.dataset.key);
+                    const dayEl = document.createElement('div');
+                    dayEl.className = 'flex flex-col items-center gap-2 flex-1';
+                    dayEl.innerHTML = `<div class="w-full ${barHeight} ${barColor} rounded-t-md transition-all duration-500" title="${day.format('MMM D')}"></div><span class="text-xs font-bold text-gray-400">${day.format('ddd')}</span>`;
+                    allElements.progressContainer.appendChild(dayEl);
                 }
-            });
+            };
+            
+            const renderTemplates = () => {
+                allElements.templateList.innerHTML = '';
+                WORKOUT_TEMPLATES.forEach(template => {
+                    const templateEl = document.createElement('div');
+                    templateEl.className = 'glass-card p-4 rounded-lg cursor-pointer hover:border-purple-400';
+                    templateEl.dataset.templateName = template.name;
+                    templateEl.innerHTML = `<h3 class="font-bold text-white text-lg">${template.name}</h3><p class="text-sm text-gray-400">${template.plan.map(p => p.t).join(', ')}</p>`;
+                    templateEl.addEventListener('click', () => handleTemplateSelect(template.name));
+                    allElements.templateList.appendChild(templateEl);
+                });
+            };
+
+            // --- EVENT HANDLERS ---
+            const attachWorkoutEventListeners = () => {
+                document.querySelectorAll('.start-timer-btn').forEach(btn => btn.onclick = (e) => startTimer(e.currentTarget.dataset.id));
+                document.querySelectorAll('.log-btn').forEach(btn => btn.onclick = (e) => handleLog(e.currentTarget.dataset.id));
+                document.querySelectorAll('.edit-btn').forEach(btn => btn.onclick = (e) => handleEdit(e.currentTarget.dataset.id));
+                document.querySelectorAll('.delete-btn').forEach(btn => btn.onclick = (e) => handleDelete(e.currentTarget.dataset.id));
+            };
+
+            const handleLog = (workoutId) => {
+                const workout = findWorkoutById(workoutId);
+                if (!workout) return;
+                
+                allElements.logForm.innerHTML = `
+                    <h3 class="font-semibold mb-4 text-white text-xl">Log: ${workout.name}</h3>
+                    <div class="grid grid-cols-3 gap-3 mb-6">
+                       <div><label class="text-xs text-gray-400">Sets</label><input type="number" id="log-sets" placeholder="3" class="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-2 text-white focus:outline-none focus:ring-1 focus:ring-green-500" required></div>
+                       <div><label class="text-xs text-gray-400">Reps</label><input type="number" id="log-reps" placeholder="10" class="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-2 text-white focus:outline-none focus:ring-1 focus:ring-green-500" required></div>
+                       <div><label class="text-xs text-gray-400">Weight (kg)</label><input type="number" step="0.5" id="log-weight" placeholder="20" class="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-2 text-white focus:outline-none focus:ring-1 focus:ring-green-500" required></div>
+                    </div>
+                    <button type="submit" class="w-full btn-primary font-semibold py-3 px-3 rounded-lg">Log & Complete</button>`;
+                
+                allElements.logForm.onsubmit = (e) => {
+                    e.preventDefault();
+                    const sets = document.getElementById('log-sets').value;
+                    const reps = document.getElementById('log-reps').value;
+                    const weight = document.getElementById('log-weight').value;
+                    
+                    const workoutIndex = workouts[selectedDate].findIndex(w => w.id === workoutId);
+                    if (workoutIndex > -1) {
+                        workouts[selectedDate][workoutIndex] = { ...workouts[selectedDate][workoutIndex], completed: true, sets, reps, weight };
+                        closeModal(allElements.logModal);
+                        saveAndRerender();
+                    }
+                };
+                openModal(allElements.logModal);
+            };
+
+            const handleEdit = (workoutId) => {
+                const workout = findWorkoutById(workoutId);
+                if (!workout) return;
+                allElements.workoutModalTitle.textContent = "Edit Workout";
+                allElements.workoutIdInput.value = workout.id;
+                allElements.workoutNameInput.value = workout.name;
+                allElements.workoutTypeInput.value = workout.type;
+                allElements.workoutDurationInput.value = workout.duration;
+                openModal(allElements.workoutModal);
+            };
+
+            const handleDelete = (workoutId) => {
+                workouts[selectedDate] = workouts[selectedDate].filter(w => w.id !== workoutId);
+                saveAndRerender();
+            };
+
+            const handleTemplateSelect = (templateName) => {
+                const template = WORKOUT_TEMPLATES.find(t => t.name === templateName);
+                const startOfWeek = currentDate.startOf('week');
+                template.plan.forEach(item => {
+                    const date = startOfWeek.add(item.d, 'day').format('YYYY-MM-DD');
+                    if (!workouts[date]) workouts[date] = [];
+                    workouts[date].push({ id: `workout-${Date.now()}-${Math.random()}`, name: item.n, type: item.t, duration: item.min, completed: false });
+                });
+                closeModal(allElements.templateModal);
+                saveAndRerender();
+            };
+            
+            // --- TIMER LOGIC ---
+            const startTimer = (workoutId) => {
+                const workout = findWorkoutById(workoutId);
+                if (!workout) return;
+                
+                timeRemaining = workout.duration * 60;
+                totalTime = timeRemaining;
+                isPaused = false;
+                allElements.timerWorkoutName.textContent = workout.name;
+                allElements.playIcon.classList.add('hidden');
+                allElements.pauseIcon.classList.remove('hidden');
+                updateTimerDisplay();
+                
+                timerInterval = setInterval(() => {
+                    if (!isPaused) {
+                        timeRemaining--;
+                        updateTimerDisplay();
+                        if (timeRemaining <= 0) {
+                            clearInterval(timerInterval);
+                            // Auto-complete workout after timer finishes
+                            const workoutIndex = workouts[selectedDate].findIndex(w => w.id === workoutId);
+                            if (workoutIndex > -1) workouts[selectedDate][workoutIndex].completed = true;
+                            saveAndRerender();
+                            setTimeout(() => closeModal(allElements.timerModal), 1000); // Close after 1s
+                        }
+                    }
+                }, 1000);
+                openModal(allElements.timerModal);
+            };
+
+            const updateTimerDisplay = () => {
+                const minutes = Math.floor(timeRemaining / 60);
+                const seconds = timeRemaining % 60;
+                allElements.timeDisplay.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                
+                const progress = (totalTime - timeRemaining) / totalTime;
+                allElements.timerProgressCircle.style.strokeDashoffset = 283 * (1 - progress);
+            };
+
+            const pauseResumeTimer = () => {
+                isPaused = !isPaused;
+                allElements.playIcon.classList.toggle('hidden', !isPaused);
+                allElements.pauseIcon.classList.toggle('hidden', isPaused);
+            };
+            
+            const stopTimer = () => {
+                clearInterval(timerInterval);
+                closeModal(allElements.timerModal);
+            };
 
             // --- INITIALIZATION ---
-            function initStaggeredAnimations() {
-                const animatedElements = document.querySelectorAll('.animate-on-load');
-                animatedElements.forEach((el, index) => {
-                    setTimeout(() => {
-                        el.style.opacity = '1';
-                        el.style.transform = 'translateY(0)';
-                    }, 150 * (index + 1));
-                });
-            }
+            const init = () => {
+                allElements.currentDateEl.textContent = dayjs().format('dddd, MMMM D');
+                renderCalendar();
+                renderWorkouts();
+                renderProgress();
+                renderTemplates();
 
-            createKeyboard();
-            loadTransactions();
-            initCharts();
-            updatePnlAndCharts(walletBalance);
-            updateDashboardState();
-            renderActivityLog();
-            initStaggeredAnimations();
-            setInterval(updateDashboardState, 60000);
-            window.addEventListener('resize', () => {
-                pnlChart.destroy();
-                sparklineChart.destroy();
-                initCharts();
-            });
+                // General Event Listeners
+                document.getElementById('prev-week').addEventListener('click', () => { currentDate = currentDate.subtract(1, 'week'); renderCalendar(); });
+                document.getElementById('next-week').addEventListener('click', () => { currentDate = currentDate.add(1, 'week'); renderCalendar(); });
+                document.getElementById('add-workout-btn').addEventListener('click', () => {
+                    allElements.workoutModalTitle.textContent = "Add New Workout";
+                    allElements.workoutForm.reset();
+                    allElements.workoutIdInput.value = '';
+                    openModal(allElements.workoutModal);
+});
+                document.getElementById('workout-templates-card').addEventListener('click', () => openModal(allElements.templateModal));
+                document.querySelectorAll('.close-modal-btn').forEach(btn => btn.addEventListener('click', (e) => closeModal(e.target.closest('.fixed'))));
+                document.querySelectorAll('.fixed').forEach(modal => modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(modal); }));
+
+                allElements.workoutForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const workoutData = {
+                        id: allElements.workoutIdInput.value || `workout-${Date.now()}`,
+                        name: allElements.workoutNameInput.value,
+                        type: allElements.workoutTypeInput.value,
+                        duration: allElements.workoutDurationInput.value,
+                    };
+                    if (!workouts[selectedDate]) workouts[selectedDate] = [];
+                    const existingIndex = workouts[selectedDate].findIndex(w => w.id === workoutData.id);
+                    if (existingIndex > -1) {
+                        workouts[selectedDate][existingIndex] = { ...workouts[selectedDate][existingIndex], ...workoutData };
+                    } else {
+                        workouts[selectedDate].push({ ...workoutData, completed: false });
+                    }
+                    closeModal(allElements.workoutModal);
+                    saveAndRerender();
+                });
+
+                allElements.pauseResumeBtn.addEventListener('click', pauseResumeTimer);
+                document.getElementById('stop-timer-btn').addEventListener('click', stopTimer);
+
+                setInterval(() => allElements.currentDateEl.textContent = dayjs().format('dddd, MMMM D'), 60000);
+            };
+
+            init();
         });
     </script>
 
 </body>
 </html>
+
