@@ -13,8 +13,6 @@
         dayjs.extend(dayjs_plugin_weekday);
         dayjs.extend(dayjs_plugin_weekOfYear);
     </script>
-    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <style>
         :root {
             --brand-indigo: #6366F1;
@@ -141,7 +139,6 @@
                             <p id="selected-date-display" class="text-gray-400"></p>
                         </div>
                         <div class="flex items-center gap-2 w-full sm:w-auto">
-                            <button id="ai-generate-btn" class="btn-secondary font-semibold py-2 px-4 rounded-lg flex items-center gap-2 w-full sm:w-auto">✨ Generate with AI</button>
                             <button id="add-workout-btn" class="btn-primary font-semibold py-2 px-4 rounded-lg flex items-center gap-2 w-full sm:w-auto">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                                 Add Workout
@@ -157,11 +154,15 @@
                      <h2 class="text-xl font-bold text-white mb-2">Workout Templates</h2>
                      <p class="text-gray-400 text-sm">Get started quickly with pre-made workout plans.</p>
                 </div>
-                <div class="glass-card p-6 animate-slide-up" style="animation-delay: 0.5s;">
+                 <div id="diet-planner-card" class="glass-card p-6 animate-slide-up cursor-pointer" style="animation-delay: 0.5s;">
+                     <h2 class="text-xl font-bold text-white mb-2">Daily Diet Planner</h2>
+                     <p class="text-gray-400 text-sm">Create a personalized daily diet plan to match your goals.</p>
+                </div>
+                <div class="glass-card p-6 animate-slide-up" style="animation-delay: 0.6s;">
                     <h2 class="text-xl font-bold text-white mb-4">Weekly Progress</h2>
                     <div id="progress-container" class="flex justify-around items-end h-32"></div>
                 </div>
-                <div class="glass-card p-6 animate-slide-up" style="animation-delay: 0.6s;">
+                <div class="glass-card p-6 animate-slide-up" style="animation-delay: 0.7s;">
                     <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-400"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h3l2.5 3h5L20 16h-3a2 2 0 0 0-2-2V6a2 2 0 0 0-2-2z"></path><path d="M14.5 4a2 2 0 0 1 2 2v2"></path></svg>
                         Daily Motivation
@@ -281,51 +282,40 @@
                 </button>
             </div>
         </div>
-        <!-- AI Generator Modal -->
-        <div id="ai-generator-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden animate-fade-in">
-             <div class="glass-card w-full max-w-md p-6 rounded-2xl border-2 border-purple-500/50 relative animate-slide-up">
+        <!-- Diet Creator Modal -->
+        <div id="diet-creator-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden animate-fade-in">
+             <div class="glass-card w-full max-w-md p-6 rounded-2xl border-2 border-emerald-500/50 relative animate-slide-up">
                 <button class="close-modal-btn absolute top-4 right-4 text-gray-400 hover:text-white transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                 </button>
-                <h2 class="text-2xl font-bold mb-4 text-white">✨ AI Workout Generator</h2>
-                <form id="ai-generator-form">
+                <h2 class="text-2xl font-bold mb-4 text-white">Create Your Diet Plan</h2>
+                <form id="diet-creator-form">
                     <div class="mb-4">
-                        <label for="ai-goal" class="block text-sm font-medium text-gray-300 mb-1">What is your primary goal?</label>
-                        <select id="ai-goal" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all">
-                            <option>Build Muscle</option>
-                            <option>Lose Weight</option>
-                            <option>Improve Endurance</option>
-                            <option>Increase Flexibility</option>
-                            <option>General Fitness</option>
+                        <label for="diet-preference" class="block text-sm font-medium text-gray-300 mb-1">Dietary Preference</label>
+                        <select id="diet-preference" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
+                            <option value="veg">Vegetarian</option>
+                            <option value="nonveg">Non-Vegetarian</option>
                         </select>
                     </div>
-                    <div class="mb-4">
-                        <label for="ai-equipment" class="block text-sm font-medium text-gray-300 mb-1">What equipment do you have?</label>
-                        <input type="text" id="ai-equipment" placeholder="e.g., dumbbells, resistance bands" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all">
+                    <div class="mb-6">
+                        <label for="diet-goal" class="block text-sm font-medium text-gray-300 mb-1">Primary Goal</label>
+                        <select id="diet-goal" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
+                            <option value="loss">Weight Loss</option>
+                            <option value="gain">Weight Gain</option>
+                        </select>
                     </div>
-                     <div class="mb-6">
-                        <label for="ai-duration" class="block text-sm font-medium text-gray-300 mb-1">Workout Duration (minutes)</label>
-                        <input type="number" id="ai-duration" value="45" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all" required>
-                    </div>
-                    <p id="ai-error-msg" class="text-red-400 text-sm mb-4 text-center"></p>
-                    <button id="ai-submit-btn" type="submit" class="w-full btn-primary font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2">
-                        <span id="ai-submit-text">Generate Workout</span>
-                        <svg id="ai-spinner" class="spinner h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                    </button>
+                    <button type="submit" class="w-full btn-primary font-bold py-3 px-4 rounded-lg">Generate Diet Plan</button>
                 </form>
             </div>
         </div>
-        <!-- Explanation Modal -->
-        <div id="explanation-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden animate-fade-in">
-            <div class="glass-card w-full max-w-lg p-6 rounded-2xl border-2 border-sky-500/50 relative animate-slide-up">
+        <!-- Diet Plan Display Modal -->
+        <div id="diet-plan-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden animate-fade-in">
+            <div class="glass-card w-full max-w-lg p-6 rounded-2xl border-2 border-emerald-500/50 relative animate-slide-up">
                 <button class="close-modal-btn absolute top-4 right-4 text-gray-400 hover:text-white transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                 </button>
-                <h2 id="explanation-title" class="text-2xl font-bold mb-4 text-white"></h2>
-                <div id="explanation-content" class="text-gray-300 max-h-96 overflow-y-auto pr-2"></div>
+                <h2 id="diet-plan-title" class="text-2xl font-bold mb-4 text-white">Your Daily Diet Plan</h2>
+                <div id="diet-plan-content" class="text-gray-300 max-h-96 overflow-y-auto pr-2 space-y-4"></div>
             </div>
         </div>
     </div>
@@ -369,8 +359,53 @@
             const WORKOUT_TEMPLATES = [
                 { name: "Full Body Strength", plan: [ { d:0, n:"Upper Body Strength", type:"Strength", min:60, sets: 5 }, { d:2, n:"Lower Body Power", type:"Strength", min:60, sets: 5 }, { d:4, n:"Core & Back", type:"Strength", min:45, sets: 4 }, { d:6, n:"Full Body HIIT", type:"Cardio", min:30, sets: 0 } ] },
                 { name: "Cardio Blast", plan: [ { d:0, n:"Running Intervals", type:"Cardio", min:30 }, { d:1, n:"Cycling", type:"Cardio", min:45 }, { d:3, n:"HIIT Cardio", type:"Cardio", min:25 }, { d:5, n:"Long Steady Run", type:"Cardio", min:60 } ] },
-                { name: "Flexibility & Flow", plan: [ { d:0, n:"Morning Yoga", type:"Flexibility", min:30 }, { d:2, n:"Deep Stretch", type:"Flexibility", min:45 }, { d:4, n:"Restorative Yoga", type:"Flexibility", min:60 } ] }
+                { name: "Flexibility & Flow", plan: [ { d:0, n:"Morning Yoga", type:"Flexibility", min:30 }, { d:2, n:"Deep Stretch", type:"Flexibility", min:45 }, { d:4, n:"Restorative Yoga", type:"Flexibility", min:60 } ] },
+                { name: "Push/Pull/Legs Split", plan: [ { d: 0, n: "Push (Chest, Shoulders, Triceps)", type: "Strength", min: 60, sets: 5 }, { d: 1, n: "Pull (Back, Biceps)", type: "Strength", min: 60, sets: 5 }, { d: 2, n: "Legs (Quads, Hamstrings, Calves)", type: "Strength", min: 75, sets: 5 }, { d: 3, n: "Rest", type: "Rest Day", min: 0 }, { d: 4, n: "Push 2", type: "Strength", min: 60, sets: 5 }, { d: 5, n: "Pull 2", type: "Strength", min: 60, sets: 5 }, { d: 6, n: "Active Recovery", type: "Flexibility", min: 30 } ] },
+                { name: "Home Bodyweight Circuit", plan: [ { d: 0, n: "Full Body Circuit A", type: "Strength", min: 30, sets: 3 }, { d: 2, n: "Full Body Circuit B", type: "Strength", min: 30, sets: 3 }, { d: 4, n: "Full Body Circuit C", type: "Strength", min: 30, sets: 3 }, { d: 6, n: "Yoga & Stretching", type: "Flexibility", min: 20 } ] }
             ];
+
+            const DIET_PLANS = {
+                veg: {
+                    gain: {
+                        title: "Vegetarian Weight Gain Plan",
+                        meals: {
+                            Breakfast: "2 Paneer Parathas with curd, and a handful of almonds.",
+                            Lunch: "Large bowl of Rajma/Chole, brown rice, mixed vegetable curry, and a side salad.",
+                            Snack: "A large banana smoothie with milk, oats, and a scoop of peanut butter.",
+                            Dinner: "Tofu/Soya chunks curry, 2 multigrain rotis, dal, and a glass of milk before bed."
+                        }
+                    },
+                    loss: {
+                        title: "Vegetarian Weight Loss Plan",
+                        meals: {
+                            Breakfast: "Bowl of oats with berries and a few nuts. A cup of green tea.",
+                            Lunch: "Mixed vegetable salad with chickpeas and a light lemon dressing, one multigrain roti with dal.",
+                            Snack: "An apple and a small bowl of sprouts.",
+                            Dinner: "Grilled Paneer/Tofu with sauteed vegetables. A bowl of clear vegetable soup."
+                        }
+                    }
+                },
+                nonveg: {
+                    gain: {
+                        title: "Non-Vegetarian Weight Gain Plan",
+                        meals: {
+                            Breakfast: "4 boiled eggs (2 whole, 2 whites), whole wheat toast with avocado, and a glass of milk.",
+                            Lunch: "150g grilled chicken breast, a cup of brown rice, a bowl of dal, and a large salad.",
+                            Snack: "A handful of mixed nuts and a protein shake.",
+                            Dinner: "150g fish curry, 2 multigrain rotis, and mixed vegetables."
+                        }
+                    },
+                    loss: {
+                        title: "Non-Vegetarian Weight Loss Plan",
+                        meals: {
+                            Breakfast: "3 boiled egg whites, with a side of papaya. Green tea.",
+                            Lunch: "100g grilled chicken or fish salad with lots of leafy greens and a light vinaigrette.",
+                            Snack: "A bowl of curd/yogurt.",
+                            Dinner: "100g chicken/fish soup with plenty of vegetables."
+                        }
+                    }
+                }
+            };
 
             // --- DOM ELEMENTS ---
             const allElements = {
@@ -398,6 +433,8 @@
                 trackerRepsInput: document.getElementById('tracker-reps-input'),
                 trackerPreviousSetData: document.getElementById('tracker-previous-set-data'),
                 restTimerDisplay: document.getElementById('rest-timer-display'),
+                prevSetBtn: document.getElementById('prev-set-btn'),
+                nextSetBtn: document.getElementById('next-set-btn'),
                 templateModal: document.getElementById('template-modal'),
                 templateList: document.getElementById('template-list'),
                 timerModal: document.getElementById('timer-modal'),
@@ -407,16 +444,14 @@
                 pauseResumeBtn: document.getElementById('pause-resume-btn'),
                 playIcon: document.getElementById('play-icon'),
                 pauseIcon: document.getElementById('pause-icon'),
-                aiGeneratorModal: document.getElementById('ai-generator-modal'),
-                aiGeneratorForm: document.getElementById('ai-generator-form'),
-                aiSubmitBtn: document.getElementById('ai-submit-btn'),
-                aiSubmitText: document.getElementById('ai-submit-text'),
-                aiSpinner: document.getElementById('ai-spinner'),
-                explanationModal: document.getElementById('explanation-modal'),
-                explanationTitle: document.getElementById('explanation-title'),
-                explanationContent: document.getElementById('explanation-content'),
                 motivationQuote: document.getElementById('motivation-quote'),
                 motivationAuthor: document.getElementById('motivation-author'),
+                dietPlannerCard: document.getElementById('diet-planner-card'),
+                dietCreatorModal: document.getElementById('diet-creator-modal'),
+                dietCreatorForm: document.getElementById('diet-creator-form'),
+                dietPlanModal: document.getElementById('diet-plan-modal'),
+                dietPlanTitle: document.getElementById('diet-plan-title'),
+                dietPlanContent: document.getElementById('diet-plan-content'),
             };
 
             // --- CORE FUNCTIONS ---
@@ -542,9 +577,6 @@
                             </div>
                         </div>
                         <div class="flex items-center gap-1 self-end sm:self-center">
-                            <button class="explain-btn p-2 rounded-full hover:bg-white/10" data-name="${workout.name}" title="Explain Exercise">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-sky-400"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-                            </button>
                             ${actionButtonsHTML}
                             <button class="edit-btn p-2 rounded-full hover:bg-white/10" data-id="${workout.id}" title="Edit Workout">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-400"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
@@ -594,7 +626,6 @@
 
             // --- EVENT HANDLERS & WORKFLOWS ---
             const attachWorkoutEventListeners = () => {
-                document.querySelectorAll('.explain-btn').forEach(btn => btn.onclick = (e) => handleExplain(e.currentTarget.dataset.name));
                 document.querySelectorAll('.track-btn').forEach(btn => btn.onclick = (e) => handleTrack(e.currentTarget.dataset.id));
                 document.querySelectorAll('.start-timer-btn').forEach(btn => btn.onclick = (e) => startDurationTimer(e.currentTarget.dataset.id));
                 document.querySelectorAll('.log-btn').forEach(btn => btn.onclick = (e) => handleLog(e.currentTarget.dataset.id));
@@ -646,6 +677,26 @@
                 });
                 closeModal(allElements.templateModal);
                 saveAndRerender();
+            };
+
+            // --- DIET PLANNER LOGIC ---
+            const generateAndShowDietPlan = (preference, goal) => {
+                const plan = DIET_PLANS[preference]?.[goal];
+                if (!plan) return;
+
+                allElements.dietPlanTitle.textContent = plan.title;
+                
+                let contentHTML = '';
+                for (const meal in plan.meals) {
+                    contentHTML += `
+                        <div class="border-l-4 border-emerald-500 pl-4">
+                            <h3 class="font-bold text-white">${meal}</h3>
+                            <p class="text-gray-400">${plan.meals[meal]}</p>
+                        </div>
+                    `;
+                }
+                allElements.dietPlanContent.innerHTML = contentHTML;
+                openModal(allElements.dietPlanModal);
             };
 
             // --- TRACKER MODAL LOGIC ---
@@ -743,144 +794,6 @@
                     renderTrackerState();
                 }
             };
-
-
-            // --- GEMINI API FUNCTIONS ---
-            const callGemini = async (payload) => {
-                const apiKey = ""; 
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-
-                try {
-                    const response = await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    if (!response.ok) {
-                        throw new Error(`API call failed with status: ${response.status}`);
-                    }
-                    const result = await response.json();
-                    const candidate = result.candidates?.[0];
-                    if (candidate && candidate.content?.parts?.[0]?.text) {
-                        return candidate.content.parts[0].text;
-                    } else {
-                        throw new Error('Invalid response structure from API.');
-                    }
-                } catch (error) {
-                    console.error("Gemini API call error:", error);
-                    return null;
-                }
-            };
-
-            const handleExplain = async (workoutName) => {
-                allElements.explanationTitle.textContent = workoutName;
-                allElements.explanationContent.innerHTML = `<div class="flex items-center justify-center p-8"><svg class="spinner h-8 w-8 text-sky-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg></div>`;
-                openModal(allElements.explanationModal);
-
-                const prompt = `Provide a detailed, step-by-step guide for the exercise "${workoutName}". Structure the explanation into the following sections using markdown headings: 'Setup', 'Execution', and 'Pro Tips'.
-- In the 'Execution' section, use a numbered list for the steps.
-- Use markdown bolding for important keywords (e.g., **core engaged**, **neutral spine**).
-- Where applicable, use LaTeX for numerical values, especially angles (e.g., bend your knees to a $90^\\circ$ angle).
-Keep the language clear and concise for a fitness enthusiast.`;
-                const payload = { contents: [{ parts: [{ text: prompt }] }] };
-                
-                const explanation = await callGemini(payload);
-
-                if (explanation) {
-                    // A more robust markdown to HTML converter
-                    let html = explanation
-                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                        .replace(/^### (.*$)/gim, '<h3 class="text-lg font-bold text-white mt-4 mb-2">$1</h3>')
-                        .replace(/^\s*(\d+\..+(?:\n\s*\d+\..+)*)/gm, (match) => {
-                            const items = match.split('\n').map(line => 
-                                line.replace(/^\s*\d+\.\s*(.*)/, '<li>$1</li>')
-                            ).join('');
-                            return `<ol class="list-decimal list-inside space-y-2">${items}</ol>`;
-                        })
-                        .replace(/\n/g, '<br>');
-
-                    allElements.explanationContent.innerHTML = html;
-                    
-                    if (window.MathJax) {
-                        window.MathJax.typeset();
-                    }
-                } else {
-                    allElements.explanationContent.textContent = 'Sorry, I couldn\'t fetch the explanation. Please try again.';
-                }
-            };
-            
-            allElements.aiGeneratorForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const errorEl = document.getElementById('ai-error-msg');
-                errorEl.textContent = '';
-
-                allElements.aiSubmitText.textContent = "Generating...";
-                allElements.aiSpinner.classList.remove('hidden');
-                allElements.aiSubmitBtn.disabled = true;
-
-                const goal = document.getElementById('ai-goal').value;
-                const equipment = document.getElementById('ai-equipment').value || 'bodyweight only';
-                const duration = document.getElementById('ai-duration').value;
-
-                const prompt = `Generate a workout plan for a user with the goal: "${goal}". Equipment: "${equipment}". Total duration: around ${duration} minutes. Respond with ONLY a valid JSON array of objects. Each object needs "name" (string), "type" ("Strength", "Cardio", or "Flexibility"), and "duration" (number in minutes). Be efficient and generate a sensible number of exercises for the given duration. No extra text.`;
-                
-                const payload = {
-                    contents: [{ parts: [{ text: prompt }] }],
-                    generationConfig: {
-                        responseMimeType: "application/json",
-                        responseSchema: {
-                            type: "ARRAY",
-                            items: {
-                                type: "OBJECT",
-                                properties: {
-                                    "name": { "type": "STRING" },
-                                    "type": { "type": "STRING", "enum": ["Strength", "Cardio", "Flexibility"] },
-                                    "duration": { "type": "NUMBER" }
-                                },
-                                required: ["name", "type", "duration"]
-                            }
-                        }
-                    }
-                };
-
-                const resultJson = await callGemini(payload);
-
-                if (resultJson) {
-                    try {
-                        const jsonMatch = resultJson.match(/(\[[\s\S]*\])/);
-                        const cleanedJson = jsonMatch ? jsonMatch[0] : resultJson;
-
-                        const newWorkouts = JSON.parse(cleanedJson);
-                        if (!Array.isArray(newWorkouts)) throw new Error("Response is not an array.");
-
-                        if (!workouts[selectedDate]) workouts[selectedDate] = [];
-                        newWorkouts.forEach(w => {
-                            if(w.name && w.type && w.duration) {
-                                workouts[selectedDate].push({
-                                    id: `workout-${Date.now()}-${Math.random()}`,
-                                    name: w.name,
-                                    type: w.type,
-                                    duration: w.duration,
-                                    completed: false,
-                                    totalSets: w.type === 'Strength' ? 3 : 0,
-                                    setsData: w.type === 'Strength' ? Array(3).fill({weight: '', reps: '', completed: false}) : []
-                                });
-                            }
-                        });
-                        saveAndRerender();
-                        closeModal(allElements.aiGeneratorModal);
-                    } catch (err) {
-                        console.error("Failed to parse AI response:", err);
-                        errorEl.textContent = 'The AI returned an invalid format. Please try again.';
-                    }
-                } else {
-                    errorEl.textContent = 'Could not generate workout. Please try again.';
-                }
-
-                allElements.aiSubmitText.textContent = "Generate Workout";
-                allElements.aiSpinner.classList.add('hidden');
-                allElements.aiSubmitBtn.disabled = false;
-            });
             
             // --- DURATION TIMER (CARDIO, ETC.) LOGIC ---
             const startDurationTimer = (workoutId) => {
@@ -951,7 +864,6 @@ Keep the language clear and concise for a fitness enthusiast.`;
                     allElements.setsInputContainer.style.display = 'block';
                     openModal(allElements.workoutModal);
                 });
-                document.getElementById('ai-generate-btn').addEventListener('click', () => openModal(allElements.aiGeneratorModal));
                 document.getElementById('workout-templates-card').addEventListener('click', () => openModal(allElements.templateModal));
                 
                 document.querySelectorAll('.close-modal-btn').forEach(btn => btn.addEventListener('click', (e) => {
@@ -1023,6 +935,17 @@ Keep the language clear and concise for a fitness enthusiast.`;
                     closeModal(allElements.trackerModal);
                     saveAndRerender();
                 });
+
+                // Diet Planner Listeners
+                allElements.dietPlannerCard.addEventListener('click', () => openModal(allElements.dietCreatorModal));
+                allElements.dietCreatorForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const preference = document.getElementById('diet-preference').value;
+                    const goal = document.getElementById('diet-goal').value;
+                    generateAndShowDietPlan(preference, goal);
+                    closeModal(allElements.dietCreatorModal);
+                });
+
 
                 // Duration Timer Listeners
                 allElements.pauseResumeBtn.addEventListener('click', pauseResumeTimer);
