@@ -53,6 +53,14 @@
             transform: scale(1.05);
             box-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
         }
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
         .calendar-day { transition: all 0.2s ease; }
         .calendar-day.active {
             background: var(--brand-indigo);
@@ -85,6 +93,13 @@
             0% { transform: scale(1); opacity: 1; }
             50% { transform: scale(1.05); opacity: 0.7; }
             100% { transform: scale(1); opacity: 1; }
+        }
+        .spinner {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -123,10 +138,13 @@
                             <h2 class="text-xl font-bold text-white">Today's Plan</h2>
                             <p id="selected-date-display" class="text-gray-400"></p>
                         </div>
-                        <button id="add-workout-btn" class="btn-primary font-semibold py-2 px-4 rounded-lg flex items-center gap-2 w-full sm:w-auto">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                            Add Workout
-                        </button>
+                        <div class="flex items-center gap-2 w-full sm:w-auto">
+                            <button id="ai-generate-btn" class="btn-secondary font-semibold py-2 px-4 rounded-lg flex items-center gap-2 w-full sm:w-auto">✨ Generate with AI</button>
+                            <button id="add-workout-btn" class="btn-primary font-semibold py-2 px-4 rounded-lg flex items-center gap-2 w-full sm:w-auto">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                Add Workout
+                            </button>
+                        </div>
                     </div>
                     <div id="workout-list" class="space-y-4 max-h-96 overflow-y-auto pr-2"></div>
                 </div>
@@ -213,6 +231,52 @@
                 </button>
             </div>
         </div>
+        <!-- AI Generator Modal -->
+        <div id="ai-generator-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden animate-fade-in">
+             <div class="glass-card w-full max-w-md p-6 rounded-2xl border-2 border-purple-500/50 relative animate-slide-up">
+                <button class="close-modal-btn absolute top-4 right-4 text-gray-400 hover:text-white transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+                <h2 class="text-2xl font-bold mb-4 text-white">✨ AI Workout Generator</h2>
+                <form id="ai-generator-form">
+                    <div class="mb-4">
+                        <label for="ai-goal" class="block text-sm font-medium text-gray-300 mb-1">What is your primary goal?</label>
+                        <select id="ai-goal" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all">
+                            <option>Build Muscle</option>
+                            <option>Lose Weight</option>
+                            <option>Improve Endurance</option>
+                            <option>Increase Flexibility</option>
+                            <option>General Fitness</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label for="ai-equipment" class="block text-sm font-medium text-gray-300 mb-1">What equipment do you have?</label>
+                        <input type="text" id="ai-equipment" placeholder="e.g., dumbbells, resistance bands" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all">
+                    </div>
+                     <div class="mb-6">
+                        <label for="ai-duration" class="block text-sm font-medium text-gray-300 mb-1">Workout Duration (minutes)</label>
+                        <input type="number" id="ai-duration" value="45" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all" required>
+                    </div>
+                    <button id="ai-submit-btn" type="submit" class="w-full btn-primary font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2">
+                        <span id="ai-submit-text">Generate Workout</span>
+                        <svg id="ai-spinner" class="spinner h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </button>
+                </form>
+            </div>
+        </div>
+        <!-- Explanation Modal -->
+        <div id="explanation-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden animate-fade-in">
+            <div class="glass-card w-full max-w-lg p-6 rounded-2xl border-2 border-sky-500/50 relative animate-slide-up">
+                <button class="close-modal-btn absolute top-4 right-4 text-gray-400 hover:text-white transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+                <h2 id="explanation-title" class="text-2xl font-bold mb-4 text-white"></h2>
+                <div id="explanation-content" class="text-gray-300 max-h-96 overflow-y-auto pr-2"></div>
+            </div>
+        </div>
     </div>
     
     <script>
@@ -227,8 +291,19 @@
             let totalTime;
             let isPaused = false;
 
-            const ICONS = { /* SVG Icons for workout types */ }; // Defined below for cleaner code
-            const WORKOUT_TEMPLATES = [ /* Templates */ ]; // Defined below
+            // --- ICONS & TEMPLATES DATA ---
+            const ICONS = {
+                Strength: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-yellow-400"><path d="M12 1a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M12 18a9 9 0 0 0 9-9h-1.09a7 7 0 0 1-1.42 4.22l-1.42 1.42a3 3 0 0 0-4.14 0l-1.42-1.42A7 7 0 0 1 4.09 9H3a9 9 0 0 0 9 9z"></path></svg>`,
+                Cardio: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-sky-400"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>`,
+                Flexibility: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-emerald-400"><path d="M12.83 2.17a2 2 0 0 0-1.66 0L2.6 6.33a2 2 0 0 0-1 1.73v7.88a2 2 0 0 0 1 1.73l8.53 4.16a2 2 0 0 0 1.66 0l8.53-4.16a2 2 0 0 0 1-1.73V8.06a2 2 0 0 0-1-1.73Z"></path><path d="m12 14 4-4"></path><path d="m16 14-4-4"></path><path d="m8 10 4 4"></path></svg>`,
+                'Rest Day': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-purple-400"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line></svg>`
+            };
+
+            const WORKOUT_TEMPLATES = [
+                { name: "Full Body Strength", plan: [ { d:0, n:"Upper Body Strength", type:"Strength", min:60 }, { d:2, n:"Lower Body Power", type:"Strength", min:60 }, { d:4, n:"Core & Back", type:"Strength", min:45 }, { d:6, n:"Full Body HIIT", type:"Cardio", min:30 } ] },
+                { name: "Cardio Blast", plan: [ { d:0, n:"Running Intervals", type:"Cardio", min:30 }, { d:1, n:"Cycling", type:"Cardio", min:45 }, { d:3, n:"HIIT Cardio", type:"Cardio", min:25 }, { d:5, n:"Long Steady Run", type:"Cardio", min:60 } ] },
+                { name: "Flexibility & Flow", plan: [ { d:0, n:"Morning Yoga", type:"Flexibility", min:30 }, { d:2, n:"Deep Stretch", type:"Flexibility", min:45 }, { d:4, n:"Restorative Yoga", type:"Flexibility", min:60 } ] }
+            ];
 
             // --- DOM ELEMENTS ---
             const allElements = {
@@ -256,21 +331,15 @@
                 pauseResumeBtn: document.getElementById('pause-resume-btn'),
                 playIcon: document.getElementById('play-icon'),
                 pauseIcon: document.getElementById('pause-icon'),
+                aiGeneratorModal: document.getElementById('ai-generator-modal'),
+                aiGeneratorForm: document.getElementById('ai-generator-form'),
+                aiSubmitBtn: document.getElementById('ai-submit-btn'),
+                aiSubmitText: document.getElementById('ai-submit-text'),
+                aiSpinner: document.getElementById('ai-spinner'),
+                explanationModal: document.getElementById('explanation-modal'),
+                explanationTitle: document.getElementById('explanation-title'),
+                explanationContent: document.getElementById('explanation-content'),
             };
-
-            // --- ICONS & TEMPLATES DATA ---
-            Object.assign(ICONS, {
-                Strength: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-yellow-400"><path d="M12 1a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M12 18a9 9 0 0 0 9-9h-1.09a7 7 0 0 1-1.42 4.22l-1.42 1.42a3 3 0 0 0-4.14 0l-1.42-1.42A7 7 0 0 1 4.09 9H3a9 9 0 0 0 9 9z"></path></svg>`,
-                Cardio: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-sky-400"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>`,
-                Flexibility: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-emerald-400"><path d="M12.83 2.17a2 2 0 0 0-1.66 0L2.6 6.33a2 2 0 0 0-1 1.73v7.88a2 2 0 0 0 1 1.73l8.53 4.16a2 2 0 0 0 1.66 0l8.53-4.16a2 2 0 0 0 1-1.73V8.06a2 2 0 0 0-1-1.73Z"></path><path d="m12 14 4-4"></path><path d="m16 14-4-4"></path><path d="m8 10 4 4"></path></svg>`,
-                'Rest Day': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-purple-400"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line></svg>`
-            });
-            WORKOUT_TEMPLATES.push(
-                { name: "Full Body Strength", plan: [ { d:0, n:"Upper Body Strength", t:"Strength", min:60 }, { d:2, n:"Lower Body Power", t:"Strength", min:60 }, { d:4, n:"Core & Back", t:"Strength", min:45 }, { d:6, n:"Full Body HIIT", t:"Cardio", min:30 } ] },
-                { name: "Cardio Blast", plan: [ { d:0, n:"Running Intervals", t:"Cardio", min:30 }, { d:1, n:"Cycling", t:"Cardio", min:45 }, { d:3, n:"HIIT Cardio", t:"Cardio", min:25 }, { d:5, n:"Long Steady Run", t:"Cardio", min:60 } ] },
-                { name: "Flexibility & Flow", plan: [ { d:0, n:"Morning Yoga", t:"Flexibility", min:30 }, { d:2, n:"Deep Stretch", t:"Flexibility", min:45 }, { d:4, n:"Restorative Yoga", t:"Flexibility", min:60 } ] }
-            );
-
 
             // --- CORE FUNCTIONS ---
             const saveAndRerender = () => {
@@ -309,7 +378,11 @@
                         <span class="text-lg md:text-xl font-bold">${day.format('D')}</span>
                         <div class="w-1.5 h-1.5 rounded-full ${isCompleted ? 'bg-green-400' : isPlanned ? 'bg-purple-400' : 'bg-transparent'}"></div>
                     `;
-                    dayEl.addEventListener('click', () => { selectedDate = dateStr; renderCalendar(); renderWorkouts(); });
+                    dayEl.addEventListener('click', () => { 
+                        selectedDate = dateStr; 
+                        renderCalendar(); 
+                        renderWorkouts(); 
+                    });
                     allElements.calendarContainer.appendChild(dayEl);
                 }
             };
@@ -329,7 +402,7 @@
                     workoutEl.className = `workout-item bg-white/5 p-4 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-fade-in`;
                     workoutEl.innerHTML = `
                         <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 flex items-center justify-center rounded-full bg-black/20 shrink-0">${ICONS[workout.type]}</div>
+                            <div class="w-12 h-12 flex items-center justify-center rounded-full bg-black/20 shrink-0">${ICONS[workout.type] || ICONS['Strength']}</div>
                             <div>
                                 <h3 class="font-bold text-white text-lg">${workout.name}</h3>
                                 <p class="text-sm text-gray-400">${workout.type} &bull; ${workout.duration} mins ${workout.completed ? `&bull; <span class="text-green-400 font-semibold">Completed</span>` : ''}</p>
@@ -337,6 +410,9 @@
                             </div>
                         </div>
                         <div class="flex items-center gap-1 self-end sm:self-center">
+                            <button class="explain-btn p-2 rounded-full hover:bg-white/10" data-name="${workout.name}" title="Explain Exercise">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-sky-400"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                            </button>
                             <button class="start-timer-btn p-2 rounded-full hover:bg-white/10 ${workout.completed ? 'hidden' : ''}" data-id="${workout.id}" title="Start Timer">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-400"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                             </button>
@@ -383,7 +459,7 @@
                     const templateEl = document.createElement('div');
                     templateEl.className = 'glass-card p-4 rounded-lg cursor-pointer hover:border-purple-400';
                     templateEl.dataset.templateName = template.name;
-                    templateEl.innerHTML = `<h3 class="font-bold text-white text-lg">${template.name}</h3><p class="text-sm text-gray-400">${template.plan.map(p => p.t).join(', ')}</p>`;
+                    templateEl.innerHTML = `<h3 class="font-bold text-white text-lg">${template.name}</h3><p class="text-sm text-gray-400">${template.plan.map(p => p.type).join(', ')}</p>`;
                     templateEl.addEventListener('click', () => handleTemplateSelect(template.name));
                     allElements.templateList.appendChild(templateEl);
                 });
@@ -391,6 +467,7 @@
 
             // --- EVENT HANDLERS ---
             const attachWorkoutEventListeners = () => {
+                document.querySelectorAll('.explain-btn').forEach(btn => btn.onclick = (e) => handleExplain(e.currentTarget.dataset.name));
                 document.querySelectorAll('.start-timer-btn').forEach(btn => btn.onclick = (e) => startTimer(e.currentTarget.dataset.id));
                 document.querySelectorAll('.log-btn').forEach(btn => btn.onclick = (e) => handleLog(e.currentTarget.dataset.id));
                 document.querySelectorAll('.edit-btn').forEach(btn => btn.onclick = (e) => handleEdit(e.currentTarget.dataset.id));
@@ -400,6 +477,16 @@
             const handleLog = (workoutId) => {
                 const workout = findWorkoutById(workoutId);
                 if (!workout) return;
+
+                const workoutIndex = workouts[selectedDate].findIndex(w => w.id === workoutId);
+                if (workoutIndex === -1) return;
+                
+                // **FIX**: Show detailed log for 'Strength', otherwise just mark as complete.
+                if (workout.type !== 'Strength') {
+                    workouts[selectedDate][workoutIndex].completed = true;
+                    saveAndRerender();
+                    return;
+                }
                 
                 allElements.logForm.innerHTML = `
                     <h3 class="font-semibold mb-4 text-white text-xl">Log: ${workout.name}</h3>
@@ -416,7 +503,6 @@
                     const reps = document.getElementById('log-reps').value;
                     const weight = document.getElementById('log-weight').value;
                     
-                    const workoutIndex = workouts[selectedDate].findIndex(w => w.id === workoutId);
                     if (workoutIndex > -1) {
                         workouts[selectedDate][workoutIndex] = { ...workouts[selectedDate][workoutIndex], completed: true, sets, reps, weight };
                         closeModal(allElements.logModal);
@@ -448,11 +534,124 @@
                 template.plan.forEach(item => {
                     const date = startOfWeek.add(item.d, 'day').format('YYYY-MM-DD');
                     if (!workouts[date]) workouts[date] = [];
-                    workouts[date].push({ id: `workout-${Date.now()}-${Math.random()}`, name: item.n, type: item.t, duration: item.min, completed: false });
+                    workouts[date].push({ id: `workout-${Date.now()}-${Math.random()}`, name: item.n, type: item.type, duration: item.min, completed: false });
                 });
                 closeModal(allElements.templateModal);
                 saveAndRerender();
             };
+
+            // --- GEMINI API FUNCTIONS ---
+            const callGemini = async (payload) => {
+                const apiKey = ""; 
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!response.ok) {
+                        throw new Error(`API call failed with status: ${response.status}`);
+                    }
+                    const result = await response.json();
+                    const candidate = result.candidates?.[0];
+                    if (candidate && candidate.content?.parts?.[0]?.text) {
+                        return candidate.content.parts[0].text;
+                    } else {
+                        throw new Error('Invalid response structure from API.');
+                    }
+                } catch (error) {
+                    console.error("Gemini API call error:", error);
+                    return null;
+                }
+            };
+
+            const handleExplain = async (workoutName) => {
+                allElements.explanationTitle.textContent = workoutName;
+                allElements.explanationContent.innerHTML = `<div class="flex items-center justify-center p-8"><svg class="spinner h-8 w-8 text-sky-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg></div>`;
+                openModal(allElements.explanationModal);
+
+                const prompt = `Explain how to perform the exercise "${workoutName}". Provide simple, step-by-step instructions suitable for a beginner. Use markdown for formatting, like headings and lists.`;
+                const payload = { contents: [{ parts: [{ text: prompt }] }] };
+                
+                const explanation = await callGemini(payload);
+
+                if (explanation) {
+                    // A simple markdown to HTML converter
+                    let html = explanation
+                        .replace(/^### (.*$)/gim, '<h3 class="text-lg font-bold text-white mt-4 mb-2">$1</h3>')
+                        .replace(/^## (.*$)/gim, '<h2 class="text-xl font-bold text-white mt-4 mb-2">$1</h2>')
+                        .replace(/^# (.*$)/gim, '<h1 class="text-2xl font-bold text-white mt-4 mb-2">$1</h1>')
+                        .replace(/^\* (.*$)/gim, '<li>$1</li>')
+                        .replace(/(\r\n|\n|\r)/gm, "") // remove all newlines
+                        .replace(/(<\/h[1-3]>|<\/li>)/g, '$1<br/>') // add breaks after these tags
+                        .replace(/(<li>)/g, '<li class="ml-4 list-disc">');
+
+                    allElements.explanationContent.innerHTML = html;
+                } else {
+                    allElements.explanationContent.textContent = 'Sorry, I couldn\'t fetch the explanation. Please try again.';
+                }
+            };
+            
+            allElements.aiGeneratorForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                allElements.aiSubmitText.textContent = "Generating...";
+                allElements.aiSpinner.classList.remove('hidden');
+                allElements.aiSubmitBtn.disabled = true;
+
+                const goal = document.getElementById('ai-goal').value;
+                const equipment = document.getElementById('ai-equipment').value || 'bodyweight only';
+                const duration = document.getElementById('ai-duration').value;
+
+                const prompt = `Create a workout plan for a user with the goal of "${goal}". The user has the following equipment: "${equipment}". The total workout duration should be approximately ${duration} minutes. Include a mix of exercises.`;
+                
+                const payload = {
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: "ARRAY",
+                            items: {
+                                type: "OBJECT",
+                                properties: {
+                                    "name": { "type": "STRING" },
+                                    "type": { "type": "STRING", "enum": ["Strength", "Cardio", "Flexibility"] },
+                                    "duration": { "type": "NUMBER" }
+                                },
+                                required: ["name", "type", "duration"]
+                            }
+                        }
+                    }
+                };
+
+                const resultJson = await callGemini(payload);
+
+                if (resultJson) {
+                    try {
+                        const newWorkouts = JSON.parse(resultJson);
+                        if (!workouts[selectedDate]) workouts[selectedDate] = [];
+                        newWorkouts.forEach(w => {
+                            workouts[selectedDate].push({
+                                id: `workout-${Date.now()}-${Math.random()}`,
+                                name: w.name,
+                                type: w.type,
+                                duration: w.duration,
+                                completed: false
+                            });
+                        });
+                        saveAndRerender();
+                        closeModal(allElements.aiGeneratorModal);
+                    } catch (err) {
+                        console.error("Failed to parse AI response:", err);
+                        // You could show an error message to the user here
+                    }
+                }
+
+                allElements.aiSubmitText.textContent = "Generate Workout";
+                allElements.aiSpinner.classList.add('hidden');
+                allElements.aiSubmitBtn.disabled = false;
+            });
             
             // --- TIMER LOGIC ---
             const startTimer = (workoutId) => {
@@ -520,7 +719,8 @@
                     allElements.workoutForm.reset();
                     allElements.workoutIdInput.value = '';
                     openModal(allElements.workoutModal);
-});
+                });
+                document.getElementById('ai-generate-btn').addEventListener('click', () => openModal(allElements.aiGeneratorModal));
                 document.getElementById('workout-templates-card').addEventListener('click', () => openModal(allElements.templateModal));
                 document.querySelectorAll('.close-modal-btn').forEach(btn => btn.addEventListener('click', (e) => closeModal(e.target.closest('.fixed'))));
                 document.querySelectorAll('.fixed').forEach(modal => modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(modal); }));
@@ -528,7 +728,8 @@
                 allElements.workoutForm.addEventListener('submit', (e) => {
                     e.preventDefault();
                     const workoutData = {
-                        id: allElements.workoutIdInput.value || `workout-${Date.now()}`,
+                        // **FIX**: Use a unique ID for new workouts. Template literals `` are needed.
+                        id: allElements.workoutIdInput.value || `workout-${Date.now()}-${Math.random()}`,
                         name: allElements.workoutNameInput.value,
                         type: allElements.workoutTypeInput.value,
                         duration: allElements.workoutDurationInput.value,
@@ -556,4 +757,3 @@
 
 </body>
 </html>
-
