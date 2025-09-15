@@ -161,6 +161,14 @@
                     <h2 class="text-xl font-bold text-white mb-4">Weekly Progress</h2>
                     <div id="progress-container" class="flex justify-around items-end h-32"></div>
                 </div>
+                <div class="glass-card p-6 animate-slide-up" style="animation-delay: 0.6s;">
+                    <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-400"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h3l2.5 3h5L20 16h-3a2 2 0 0 0-2-2V6a2 2 0 0 0-2-2z"></path><path d="M14.5 4a2 2 0 0 1 2 2v2"></path></svg>
+                        Daily Motivation
+                    </h2>
+                    <blockquote id="motivation-quote" class="text-gray-300 italic text-center text-lg"></blockquote>
+                    <p id="motivation-author" class="text-right text-gray-400 font-semibold mt-3 text-sm"></p>
+                </div>
             </div>
         </main>
     </div>
@@ -178,7 +186,7 @@
                     <input type="hidden" id="workout-id">
                     <div class="mb-4">
                         <label for="workout-name" class="block text-sm font-medium text-gray-300 mb-1">Workout Name</label>
-                        <input type="text" id="workout-name" placeholder="e.g., Chest Day" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all" required>
+                        <input type="text" id="workout-name" placeholder="e.g., Bench Press" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all" required>
                     </div>
                     <div class="mb-4">
                         <label for="workout-type" class="block text-sm font-medium text-gray-300 mb-1">Workout Type</label>
@@ -186,21 +194,61 @@
                             <option>Strength</option> <option>Cardio</option> <option>Flexibility</option> <option>Rest Day</option>
                         </select>
                     </div>
-                     <div class="mb-6">
-                        <label for="workout-duration" class="block text-sm font-medium text-gray-300 mb-1">Duration (minutes)</label>
-                        <input type="number" id="workout-duration" placeholder="e.g., 60" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all" required>
+                     <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <label for="workout-duration" class="block text-sm font-medium text-gray-300 mb-1">Duration (min)</label>
+                            <input type="number" id="workout-duration" placeholder="45" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all" required>
+                        </div>
+                        <div id="sets-input-container">
+                            <label for="workout-sets" class="block text-sm font-medium text-gray-300 mb-1">Number of Sets</label>
+                            <input type="number" id="workout-sets" placeholder="3" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+                        </div>
                     </div>
                     <button type="submit" class="w-full btn-primary font-bold py-3 px-4 rounded-lg">Save Workout</button>
                 </form>
             </div>
         </div>
-        <!-- Workout Log Modal -->
-        <div id="log-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden animate-fade-in">
+        <!-- Workout Tracker Modal -->
+        <div id="tracker-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden animate-fade-in">
              <div class="glass-card w-full max-w-md p-6 rounded-2xl border-2 border-green-500/50 relative animate-slide-up">
                  <button class="close-modal-btn absolute top-4 right-4 text-gray-400 hover:text-white transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                  </button>
-                <form id="log-form"></form>
+                <h2 id="tracker-modal-title" class="text-2xl font-bold mb-1 text-white text-center"></h2>
+                <p id="tracker-progress-header" class="text-center font-semibold text-indigo-300 mb-6"></p>
+
+                <div id="tracker-view-container">
+                    <!-- Set Logging View -->
+                    <div id="tracker-set-view">
+                        <div class="grid grid-cols-2 gap-4 mb-6">
+                            <div>
+                                <label class="block text-center text-sm text-gray-400 mb-1">Weight (kg)</label>
+                                <input id="tracker-weight-input" type="number" step="0.5" class="w-full text-3xl font-bold bg-white/5 border-2 border-white/10 rounded-lg p-3 text-white text-center focus:outline-none focus:ring-2 focus:ring-green-500">
+                            </div>
+                            <div>
+                                <label class="block text-center text-sm text-gray-400 mb-1">Reps</label>
+                                <input id="tracker-reps-input" type="number" class="w-full text-3xl font-bold bg-white/5 border-2 border-white/10 rounded-lg p-3 text-white text-center focus:outline-none focus:ring-2 focus:ring-green-500">
+                            </div>
+                        </div>
+                        <p class="text-center text-gray-400 text-sm mb-4">Previous: <span id="tracker-previous-set-data">--</span></p>
+                        <button id="log-set-btn" class="w-full btn-primary font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2">Log Set & Rest</button>
+                    </div>
+                    <!-- Rest Timer View -->
+                    <div id="tracker-rest-view" class="hidden text-center">
+                        <p class="text-lg text-gray-400">REST</p>
+                        <p id="rest-timer-display" class="text-7xl font-bold my-4 text-white">01:00</p>
+                        <div class="flex justify-center gap-4">
+                            <button id="skip-rest-btn" class="btn-secondary text-sm font-semibold py-2 px-4 rounded-lg">Skip</button>
+                            <button id="add-time-btn" class="btn-secondary text-sm font-semibold py-2 px-4 rounded-lg">+30s</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center mt-6">
+                    <button id="prev-set-btn" class="btn-secondary text-sm py-2 px-3 rounded-lg">&lt; Prev Set</button>
+                    <button id="finish-workout-btn" class="btn-primary font-bold py-2 px-4 rounded-lg">Finish Workout</button>
+                    <button id="next-set-btn" class="btn-secondary text-sm py-2 px-3 rounded-lg">Next Set &gt;</button>
+                </div>
             </div>
         </div>
         <!-- Template Select Modal -->
@@ -293,6 +341,22 @@
             let timeRemaining;
             let totalTime;
             let isPaused = false;
+            
+            let currentWorkoutId = null;
+            let currentSetIndex = 0;
+            let restTimerInterval = null;
+            let restTimeRemaining = 60;
+
+            const MOTIVATIONAL_QUOTES = [
+                { quote: "The only bad workout is the one that didn't happen.", author: "Anonymous" },
+                { quote: "Strive for progress, not perfection.", author: "Anonymous" },
+                { quote: "Your body can stand almost anything. It’s your mind that you have to convince.", author: "Anonymous" },
+                { quote: "Success isn’t always about greatness. It’s about consistency. Consistent hard work leads to success. Greatness will come.", author: "Dwayne Johnson" },
+                { quote: "The last three or four reps is what makes the muscle grow. This area of pain divides a champion from someone who is not a champion.", author: "Arnold Schwarzenegger" },
+                { quote: "Don’t count the days, make the days count.", author: "Muhammad Ali" },
+                { quote: "The clock is ticking. Are you becoming the person you want to be?", author: "Greg Plitt" },
+                { quote: "Believe you can and you're halfway there.", author: "Theodore Roosevelt" }
+            ];
 
             // --- ICONS & TEMPLATES DATA ---
             const ICONS = {
@@ -303,7 +367,7 @@
             };
 
             const WORKOUT_TEMPLATES = [
-                { name: "Full Body Strength", plan: [ { d:0, n:"Upper Body Strength", type:"Strength", min:60 }, { d:2, n:"Lower Body Power", type:"Strength", min:60 }, { d:4, n:"Core & Back", type:"Strength", min:45 }, { d:6, n:"Full Body HIIT", type:"Cardio", min:30 } ] },
+                { name: "Full Body Strength", plan: [ { d:0, n:"Upper Body Strength", type:"Strength", min:60, sets: 5 }, { d:2, n:"Lower Body Power", type:"Strength", min:60, sets: 5 }, { d:4, n:"Core & Back", type:"Strength", min:45, sets: 4 }, { d:6, n:"Full Body HIIT", type:"Cardio", min:30, sets: 0 } ] },
                 { name: "Cardio Blast", plan: [ { d:0, n:"Running Intervals", type:"Cardio", min:30 }, { d:1, n:"Cycling", type:"Cardio", min:45 }, { d:3, n:"HIIT Cardio", type:"Cardio", min:25 }, { d:5, n:"Long Steady Run", type:"Cardio", min:60 } ] },
                 { name: "Flexibility & Flow", plan: [ { d:0, n:"Morning Yoga", type:"Flexibility", min:30 }, { d:2, n:"Deep Stretch", type:"Flexibility", min:45 }, { d:4, n:"Restorative Yoga", type:"Flexibility", min:60 } ] }
             ];
@@ -323,8 +387,17 @@
                 workoutNameInput: document.getElementById('workout-name'),
                 workoutTypeInput: document.getElementById('workout-type'),
                 workoutDurationInput: document.getElementById('workout-duration'),
-                logModal: document.getElementById('log-modal'),
-                logForm: document.getElementById('log-form'),
+                workoutSetsInput: document.getElementById('workout-sets'),
+                setsInputContainer: document.getElementById('sets-input-container'),
+                trackerModal: document.getElementById('tracker-modal'),
+                trackerModalTitle: document.getElementById('tracker-modal-title'),
+                trackerProgressHeader: document.getElementById('tracker-progress-header'),
+                trackerSetView: document.getElementById('tracker-set-view'),
+                trackerRestView: document.getElementById('tracker-rest-view'),
+                trackerWeightInput: document.getElementById('tracker-weight-input'),
+                trackerRepsInput: document.getElementById('tracker-reps-input'),
+                trackerPreviousSetData: document.getElementById('tracker-previous-set-data'),
+                restTimerDisplay: document.getElementById('rest-timer-display'),
                 templateModal: document.getElementById('template-modal'),
                 templateList: document.getElementById('template-list'),
                 timerModal: document.getElementById('timer-modal'),
@@ -342,6 +415,8 @@
                 explanationModal: document.getElementById('explanation-modal'),
                 explanationTitle: document.getElementById('explanation-title'),
                 explanationContent: document.getElementById('explanation-content'),
+                motivationQuote: document.getElementById('motivation-quote'),
+                motivationAuthor: document.getElementById('motivation-author'),
             };
 
             // --- CORE FUNCTIONS ---
@@ -358,6 +433,20 @@
             const findWorkoutById = (workoutId) => {
                 if (!workouts[selectedDate]) return null;
                 return workouts[selectedDate].find(w => w.id === workoutId);
+            };
+            
+            const findWorkoutIndexById = (workoutId) => {
+                if (!workouts[selectedDate]) return -1;
+                return workouts[selectedDate].findIndex(w => w.id === workoutId);
+            }
+
+            const renderMotivation = () => {
+                if (allElements.motivationQuote && allElements.motivationAuthor) {
+                    const randomIndex = Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length);
+                    const { quote, author } = MOTIVATIONAL_QUOTES[randomIndex];
+                    allElements.motivationQuote.textContent = `“${quote}”`;
+                    allElements.motivationAuthor.textContent = `— ${author}`;
+                }
             };
 
             // --- RENDERING FUNCTIONS ---
@@ -403,25 +492,60 @@
                 dayWorkouts.forEach(workout => {
                     const workoutEl = document.createElement('div');
                     workoutEl.className = `workout-item bg-white/5 p-4 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-fade-in`;
+                    
+                    const totalSets = workout.totalSets || 0;
+                    const completedSetsCount = workout.setsData ? workout.setsData.filter(s => s && s.completed).length : 0;
+                    
+                    let progressText;
+                    if (workout.type === 'Strength' && totalSets > 0) {
+                        progressText = `Sets: ${completedSetsCount} / ${totalSets} &bull; ${workout.duration} mins`;
+                    } else {
+                        progressText = `${workout.type} &bull; ${workout.duration} mins`;
+                    }
+
+                    if (workout.completed) {
+                        progressText += ` &bull; <span class="text-green-400 font-semibold">Completed</span>`;
+                    }
+
+                    let loggedText = '';
+                    if (workout.completed && completedSetsCount > 0) {
+                        const bestSet = workout.setsData.reduce((best, current) => {
+                           if (!current || !current.weight) return best;
+                           return parseFloat(current.weight) > parseFloat(best.weight) ? current : best;
+                        }, {weight: 0, reps: 0});
+                        loggedText = `<p class="text-xs text-gray-500">Best set: ${bestSet.reps} reps at ${bestSet.weight} kg</p>`;
+                    }
+
+                    let actionButtonsHTML = '';
+                    if (workout.type === 'Strength' && totalSets > 0) {
+                        actionButtonsHTML = `
+                            <button class="track-btn p-2 rounded-full hover:bg-white/10 ${workout.completed ? 'hidden' : ''}" data-id="${workout.id}" title="Track Workout">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-400"><path d="M15.5 2H8.6c-.4 0-.8.2-1.1.5-.3.3-.5.7-.5 1.1V21c0 .4.2.8.5 1.1.3.3.7.5 1.1.5h7.8c.4 0 .8-.2 1.1-.5.3-.3.5-.7.5-1.1V6.5L15.5 2z"></path><path d="M15 2v5h5"></path><path d="M10 16h4"></path><path d="M10 12h4"></path><path d="M10 8h2"></path></svg>
+                            </button>`;
+                    } else { // For Cardio, Flexibility, Rest Day, or Strength with 0 sets
+                        actionButtonsHTML = `
+                            <button class="start-timer-btn p-2 rounded-full hover:bg-white/10 ${workout.completed ? 'hidden' : ''}" data-id="${workout.id}" title="Start Timer">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-400"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                            </button>
+                            <button class="log-btn p-2 rounded-full hover:bg-white/10 ${workout.completed ? 'hidden' : ''}" data-id="${workout.id}" title="Mark Complete">
+                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-400"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                            </button>`;
+                    }
+
                     workoutEl.innerHTML = `
-                        <div class="flex items-center gap-4">
+                        <div class="flex items-center gap-4 flex-1">
                             <div class="w-12 h-12 flex items-center justify-center rounded-full bg-black/20 shrink-0">${ICONS[workout.type] || ICONS['Strength']}</div>
-                            <div>
+                            <div class="flex-1">
                                 <h3 class="font-bold text-white text-lg">${workout.name}</h3>
-                                <p class="text-sm text-gray-400">${workout.type} &bull; ${workout.duration} mins ${workout.completed ? `&bull; <span class="text-green-400 font-semibold">Completed</span>` : ''}</p>
-                                ${workout.completed && workout.sets ? `<p class="text-xs text-gray-500">Logged: ${workout.sets} sets, ${workout.reps} reps, ${workout.weight} kg</p>` : ''}
+                                <p class="text-sm text-gray-400">${progressText}</p>
+                                ${loggedText}
                             </div>
                         </div>
                         <div class="flex items-center gap-1 self-end sm:self-center">
                             <button class="explain-btn p-2 rounded-full hover:bg-white/10" data-name="${workout.name}" title="Explain Exercise">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-sky-400"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
                             </button>
-                            <button class="start-timer-btn p-2 rounded-full hover:bg-white/10 ${workout.completed ? 'hidden' : ''}" data-id="${workout.id}" title="Start Timer">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-400"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                            </button>
-                            <button class="log-btn p-2 rounded-full hover:bg-white/10 ${workout.completed ? 'hidden' : ''}" data-id="${workout.id}" title="Log Workout">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-400"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-                            </button>
+                            ${actionButtonsHTML}
                             <button class="edit-btn p-2 rounded-full hover:bg-white/10" data-id="${workout.id}" title="Edit Workout">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-400"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                             </button>
@@ -468,53 +592,24 @@
                 });
             };
 
-            // --- EVENT HANDLERS ---
+            // --- EVENT HANDLERS & WORKFLOWS ---
             const attachWorkoutEventListeners = () => {
                 document.querySelectorAll('.explain-btn').forEach(btn => btn.onclick = (e) => handleExplain(e.currentTarget.dataset.name));
-                document.querySelectorAll('.start-timer-btn').forEach(btn => btn.onclick = (e) => startTimer(e.currentTarget.dataset.id));
+                document.querySelectorAll('.track-btn').forEach(btn => btn.onclick = (e) => handleTrack(e.currentTarget.dataset.id));
+                document.querySelectorAll('.start-timer-btn').forEach(btn => btn.onclick = (e) => startDurationTimer(e.currentTarget.dataset.id));
                 document.querySelectorAll('.log-btn').forEach(btn => btn.onclick = (e) => handleLog(e.currentTarget.dataset.id));
                 document.querySelectorAll('.edit-btn').forEach(btn => btn.onclick = (e) => handleEdit(e.currentTarget.dataset.id));
                 document.querySelectorAll('.delete-btn').forEach(btn => btn.onclick = (e) => handleDelete(e.currentTarget.dataset.id));
             };
-
+            
             const handleLog = (workoutId) => {
-                const workout = findWorkoutById(workoutId);
-                if (!workout) return;
-
-                const workoutIndex = workouts[selectedDate].findIndex(w => w.id === workoutId);
-                if (workoutIndex === -1) return;
-                
-                // **FIX**: Show detailed log for 'Strength', otherwise just mark as complete.
-                if (workout.type !== 'Strength') {
+                 const workoutIndex = findWorkoutIndexById(workoutId);
+                 if (workoutIndex > -1) {
                     workouts[selectedDate][workoutIndex].completed = true;
                     saveAndRerender();
-                    return;
-                }
-                
-                allElements.logForm.innerHTML = `
-                    <h3 class="font-semibold mb-4 text-white text-xl">Log: ${workout.name}</h3>
-                    <div class="grid grid-cols-3 gap-3 mb-6">
-                       <div><label class="text-xs text-gray-400">Sets</label><input type="number" id="log-sets" placeholder="3" class="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-2 text-white focus:outline-none focus:ring-1 focus:ring-green-500" required></div>
-                       <div><label class="text-xs text-gray-400">Reps</label><input type="number" id="log-reps" placeholder="10" class="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-2 text-white focus:outline-none focus:ring-1 focus:ring-green-500" required></div>
-                       <div><label class="text-xs text-gray-400">Weight (kg)</label><input type="number" step="0.5" id="log-weight" placeholder="20" class="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-2 text-white focus:outline-none focus:ring-1 focus:ring-green-500" required></div>
-                    </div>
-                    <button type="submit" class="w-full btn-primary font-semibold py-3 px-3 rounded-lg">Log & Complete</button>`;
-                
-                allElements.logForm.onsubmit = (e) => {
-                    e.preventDefault();
-                    const sets = document.getElementById('log-sets').value;
-                    const reps = document.getElementById('log-reps').value;
-                    const weight = document.getElementById('log-weight').value;
-                    
-                    if (workoutIndex > -1) {
-                        workouts[selectedDate][workoutIndex] = { ...workouts[selectedDate][workoutIndex], completed: true, sets, reps, weight };
-                        closeModal(allElements.logModal);
-                        saveAndRerender();
-                    }
-                };
-                openModal(allElements.logModal);
+                 }
             };
-
+            
             const handleEdit = (workoutId) => {
                 const workout = findWorkoutById(workoutId);
                 if (!workout) return;
@@ -523,6 +618,8 @@
                 allElements.workoutNameInput.value = workout.name;
                 allElements.workoutTypeInput.value = workout.type;
                 allElements.workoutDurationInput.value = workout.duration;
+                allElements.workoutSetsInput.value = workout.totalSets || '';
+                allElements.setsInputContainer.style.display = workout.type === 'Strength' ? 'block' : 'none';
                 openModal(allElements.workoutModal);
             };
 
@@ -537,11 +634,116 @@
                 template.plan.forEach(item => {
                     const date = startOfWeek.add(item.d, 'day').format('YYYY-MM-DD');
                     if (!workouts[date]) workouts[date] = [];
-                    workouts[date].push({ id: `workout-${Date.now()}-${Math.random()}`, name: item.n, type: item.type, duration: item.min, completed: false });
+                    workouts[date].push({ 
+                        id: `workout-${Date.now()}-${Math.random()}`, 
+                        name: item.n, 
+                        type: item.type, 
+                        duration: item.min,
+                        totalSets: item.sets || 0,
+                        setsData: item.sets ? Array(item.sets).fill({ weight: '', reps: '', completed: false }) : [],
+                        completed: false 
+                    });
                 });
                 closeModal(allElements.templateModal);
                 saveAndRerender();
             };
+
+            // --- TRACKER MODAL LOGIC ---
+            const handleTrack = (workoutId) => {
+                const workout = findWorkoutById(workoutId);
+                if (!workout) return;
+                
+                currentWorkoutId = workoutId;
+                // Find the first uncompleted set to start with
+                let firstUncompleted = workout.setsData.findIndex(s => !s.completed);
+                currentSetIndex = firstUncompleted === -1 ? 0 : firstUncompleted;
+
+                allElements.trackerModalTitle.textContent = workout.name;
+                renderTrackerState();
+                openModal(allElements.trackerModal);
+            };
+
+            const renderTrackerState = () => {
+                const workout = findWorkoutById(currentWorkoutId);
+                if (!workout) return;
+
+                // Hide rest view, show set view
+                allElements.trackerSetView.classList.remove('hidden');
+                allElements.trackerRestView.classList.add('hidden');
+                
+                allElements.trackerProgressHeader.textContent = `Set ${currentSetIndex + 1} of ${workout.totalSets}`;
+                
+                const currentSetData = workout.setsData[currentSetIndex] || { weight: '', reps: '' };
+                allElements.trackerWeightInput.value = currentSetData.weight;
+                allElements.trackerRepsInput.value = currentSetData.reps;
+                
+                const prevSetData = workout.setsData[currentSetIndex - 1];
+                if(prevSetData && prevSetData.completed) {
+                    allElements.trackerPreviousSetData.textContent = `${prevSetData.reps} reps at ${prevSetData.weight} kg`;
+                } else {
+                     allElements.trackerPreviousSetData.textContent = '--';
+                }
+
+                allElements.prevSetBtn.disabled = currentSetIndex === 0;
+                allElements.nextSetBtn.disabled = currentSetIndex === workout.totalSets - 1;
+            };
+            
+            const logCurrentSetAndRest = () => {
+                const workoutIndex = findWorkoutIndexById(currentWorkoutId);
+                if(workoutIndex === -1) return;
+
+                const weight = allElements.trackerWeightInput.value;
+                const reps = allElements.trackerRepsInput.value;
+                
+                if(!weight || !reps) return; // Basic validation
+
+                let workout = workouts[selectedDate][workoutIndex];
+                workout.setsData[currentSetIndex] = { weight, reps, completed: true };
+                
+                saveAndRerender();
+                
+                // If it's the last set, don't start rest timer
+                if(currentSetIndex >= workout.totalSets - 1) {
+                    renderTrackerState();
+                    return;
+                }
+
+                allElements.trackerSetView.classList.add('hidden');
+                allElements.trackerRestView.classList.remove('hidden');
+                runRestCountdown(60);
+            };
+
+            const runRestCountdown = (duration) => {
+                clearInterval(restTimerInterval);
+                restTimeRemaining = duration;
+
+                const updateDisplay = () => {
+                    const minutes = String(Math.floor(restTimeRemaining / 60)).padStart(2, '0');
+                    const seconds = String(restTimeRemaining % 60).padStart(2, '0');
+                    allElements.restTimerDisplay.textContent = `${minutes}:${seconds}`;
+                };
+
+                updateDisplay();
+
+                restTimerInterval = setInterval(() => {
+                    restTimeRemaining--;
+                    updateDisplay();
+                    if (restTimeRemaining <= 0) {
+                        clearInterval(restTimerInterval);
+                        goToNextSet();
+                    }
+                }, 1000);
+            };
+
+            const goToNextSet = () => {
+                clearInterval(restTimerInterval);
+                const workout = findWorkoutById(currentWorkoutId);
+                if (workout && currentSetIndex < workout.totalSets - 1) {
+                    currentSetIndex++;
+                    renderTrackerState();
+                }
+            };
+
 
             // --- GEMINI API FUNCTIONS ---
             const callGemini = async (payload) => {
@@ -587,23 +789,18 @@ Keep the language clear and concise for a fitness enthusiast.`;
                 if (explanation) {
                     // A more robust markdown to HTML converter
                     let html = explanation
-                        // Bolding
                         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                        // Headings
                         .replace(/^### (.*$)/gim, '<h3 class="text-lg font-bold text-white mt-4 mb-2">$1</h3>')
-                        // Process entire list blocks at once
                         .replace(/^\s*(\d+\..+(?:\n\s*\d+\..+)*)/gm, (match) => {
                             const items = match.split('\n').map(line => 
                                 line.replace(/^\s*\d+\.\s*(.*)/, '<li>$1</li>')
                             ).join('');
                             return `<ol class="list-decimal list-inside space-y-2">${items}</ol>`;
                         })
-                        // Convert remaining newlines to <br> for paragraphs
                         .replace(/\n/g, '<br>');
 
                     allElements.explanationContent.innerHTML = html;
                     
-                    // Re-render LaTeX after updating content
                     if (window.MathJax) {
                         window.MathJax.typeset();
                     }
@@ -615,7 +812,7 @@ Keep the language clear and concise for a fitness enthusiast.`;
             allElements.aiGeneratorForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const errorEl = document.getElementById('ai-error-msg');
-                errorEl.textContent = ''; // Clear previous errors
+                errorEl.textContent = '';
 
                 allElements.aiSubmitText.textContent = "Generating...";
                 allElements.aiSpinner.classList.remove('hidden');
@@ -650,7 +847,6 @@ Keep the language clear and concise for a fitness enthusiast.`;
 
                 if (resultJson) {
                     try {
-                        // **FIX**: Clean the AI response before parsing to handle markdown code blocks or other text.
                         const jsonMatch = resultJson.match(/(\[[\s\S]*\])/);
                         const cleanedJson = jsonMatch ? jsonMatch[0] : resultJson;
 
@@ -659,13 +855,15 @@ Keep the language clear and concise for a fitness enthusiast.`;
 
                         if (!workouts[selectedDate]) workouts[selectedDate] = [];
                         newWorkouts.forEach(w => {
-                            if(w.name && w.type && w.duration) { // Basic validation
+                            if(w.name && w.type && w.duration) {
                                 workouts[selectedDate].push({
                                     id: `workout-${Date.now()}-${Math.random()}`,
                                     name: w.name,
                                     type: w.type,
                                     duration: w.duration,
-                                    completed: false
+                                    completed: false,
+                                    totalSets: w.type === 'Strength' ? 3 : 0,
+                                    setsData: w.type === 'Strength' ? Array(3).fill({weight: '', reps: '', completed: false}) : []
                                 });
                             }
                         });
@@ -684,11 +882,12 @@ Keep the language clear and concise for a fitness enthusiast.`;
                 allElements.aiSubmitBtn.disabled = false;
             });
             
-            // --- TIMER LOGIC ---
-            const startTimer = (workoutId) => {
+            // --- DURATION TIMER (CARDIO, ETC.) LOGIC ---
+            const startDurationTimer = (workoutId) => {
                 const workout = findWorkoutById(workoutId);
                 if (!workout) return;
                 
+                clearInterval(timerInterval);
                 timeRemaining = workout.duration * 60;
                 totalTime = timeRemaining;
                 isPaused = false;
@@ -703,11 +902,10 @@ Keep the language clear and concise for a fitness enthusiast.`;
                         updateTimerDisplay();
                         if (timeRemaining <= 0) {
                             clearInterval(timerInterval);
-                            // Auto-complete workout after timer finishes
-                            const workoutIndex = workouts[selectedDate].findIndex(w => w.id === workoutId);
+                            const workoutIndex = findWorkoutIndexById(workoutId);
                             if (workoutIndex > -1) workouts[selectedDate][workoutIndex].completed = true;
                             saveAndRerender();
-                            setTimeout(() => closeModal(allElements.timerModal), 1000); // Close after 1s
+                            setTimeout(() => closeModal(allElements.timerModal), 1000);
                         }
                     }
                 }, 1000);
@@ -741,6 +939,7 @@ Keep the language clear and concise for a fitness enthusiast.`;
                 renderWorkouts();
                 renderProgress();
                 renderTemplates();
+                renderMotivation();
 
                 // General Event Listeners
                 document.getElementById('prev-week').addEventListener('click', () => { currentDate = currentDate.subtract(1, 'week'); renderCalendar(); });
@@ -749,33 +948,83 @@ Keep the language clear and concise for a fitness enthusiast.`;
                     allElements.workoutModalTitle.textContent = "Add New Workout";
                     allElements.workoutForm.reset();
                     allElements.workoutIdInput.value = '';
+                    allElements.setsInputContainer.style.display = 'block';
                     openModal(allElements.workoutModal);
                 });
                 document.getElementById('ai-generate-btn').addEventListener('click', () => openModal(allElements.aiGeneratorModal));
                 document.getElementById('workout-templates-card').addEventListener('click', () => openModal(allElements.templateModal));
-                document.querySelectorAll('.close-modal-btn').forEach(btn => btn.addEventListener('click', (e) => closeModal(e.target.closest('.fixed'))));
-                document.querySelectorAll('.fixed').forEach(modal => modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(modal); }));
+                
+                document.querySelectorAll('.close-modal-btn').forEach(btn => btn.addEventListener('click', (e) => {
+                    const modal = e.target.closest('.fixed');
+                    closeModal(modal);
+                    if(modal.id === 'tracker-modal') saveAndRerender();
+                }));
+                document.querySelectorAll('.fixed').forEach(modal => modal.addEventListener('click', (e) => { 
+                    if (e.target === modal) {
+                        closeModal(modal);
+                        if(modal.id === 'tracker-modal') saveAndRerender();
+                    }
+                }));
 
+                allElements.workoutTypeInput.addEventListener('change', (e) => {
+                    allElements.setsInputContainer.style.display = e.target.value === 'Strength' ? 'block' : 'none';
+                });
+                
                 allElements.workoutForm.addEventListener('submit', (e) => {
                     e.preventDefault();
+                    const id = allElements.workoutIdInput.value || `workout-${Date.now()}-${Math.random()}`;
+                    const type = allElements.workoutTypeInput.value;
+                    const totalSets = type === 'Strength' ? parseInt(allElements.workoutSetsInput.value) || 0 : 0;
+                    
                     const workoutData = {
-                        // **FIX**: Use a unique ID for new workouts. Template literals `` are needed.
-                        id: allElements.workoutIdInput.value || `workout-${Date.now()}-${Math.random()}`,
+                        id: id,
                         name: allElements.workoutNameInput.value,
-                        type: allElements.workoutTypeInput.value,
+                        type: type,
                         duration: allElements.workoutDurationInput.value,
+                        totalSets: totalSets,
                     };
+                    
                     if (!workouts[selectedDate]) workouts[selectedDate] = [];
-                    const existingIndex = workouts[selectedDate].findIndex(w => w.id === workoutData.id);
+                    const existingIndex = findWorkoutIndexById(id);
+                    
                     if (existingIndex > -1) {
-                        workouts[selectedDate][existingIndex] = { ...workouts[selectedDate][existingIndex], ...workoutData };
+                        const existingWorkout = workouts[selectedDate][existingIndex];
+                        if(existingWorkout.totalSets !== totalSets) {
+                            const newSetsData = Array(totalSets).fill({ weight: '', reps: '', completed: false });
+                            for(let i=0; i < Math.min(existingWorkout.totalSets || 0, totalSets); i++) {
+                                newSetsData[i] = existingWorkout.setsData[i];
+                            }
+                            workoutData.setsData = newSetsData;
+                        }
+                        workouts[selectedDate][existingIndex] = { ...existingWorkout, ...workoutData };
                     } else {
-                        workouts[selectedDate].push({ ...workoutData, completed: false });
+                        workoutData.completed = false;
+                        workoutData.setsData = Array(totalSets).fill({ weight: '', reps: '', completed: false });
+                        workouts[selectedDate].push(workoutData);
                     }
                     closeModal(allElements.workoutModal);
                     saveAndRerender();
                 });
+                
+                // Tracker Modal Listeners
+                document.getElementById('log-set-btn').addEventListener('click', logCurrentSetAndRest);
+                document.getElementById('prev-set-btn').addEventListener('click', () => {
+                    if (currentSetIndex > 0) {
+                        currentSetIndex--;
+                        renderTrackerState();
+                    }
+                });
+                document.getElementById('next-set-btn').addEventListener('click', goToNextSet);
+                document.getElementById('skip-rest-btn').addEventListener('click', goToNextSet);
+                document.getElementById('add-time-btn').addEventListener('click', () => runRestCountdown(restTimeRemaining + 30));
+                document.getElementById('finish-workout-btn').addEventListener('click', () => {
+                    const workoutIndex = findWorkoutIndexById(currentWorkoutId);
+                    if(workoutIndex > -1) workouts[selectedDate][workoutIndex].completed = true;
+                    closeModal(allElements.trackerModal);
+                    saveAndRerender();
+                });
 
+                // Duration Timer Listeners
                 allElements.pauseResumeBtn.addEventListener('click', pauseResumeTimer);
                 document.getElementById('stop-timer-btn').addEventListener('click', stopTimer);
 
@@ -788,7 +1037,4 @@ Keep the language clear and concise for a fitness enthusiast.`;
 
 </body>
 </html>
-
-
-
 
