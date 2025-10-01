@@ -2,329 +2,817 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>JEE Ascent: Zenith</title>
-    <style>
-        body, html { margin: 0; padding: 0; overflow: hidden; height: 100%; width: 100%; background-color: #000; font-family: 'Poppins', sans-serif; }
-        canvas { display: block; }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>JEE Ascent: Zenith Edition</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* --- Basic Styling --- */
+        html, body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            background-color: #0c0a17; /* Dark background */
+            font-family: 'Poppins', sans-serif;
+        }
+        /* --- Canvas Styling --- */
+        canvas {
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+    </style>
 </head>
 <body>
-    <canvas id="jeeCanvas"></canvas>
+    <canvas id="appCanvas"></canvas>
 
     <script>
-        const canvas = document.getElementById('jeeCanvas');
+    // --- Application Entry Point ---
+    window.onload = () => {
+        const canvas = document.getElementById('appCanvas');
         const ctx = canvas.getContext('2d');
-
-        // --- App State & Data ---
-        let appState = 'loading', activeTab = 'dashboard', nextState = '', transitionAlpha = 0;
-        let uiElements = [], particles = [], lastTime = 0;
-        let scrollY = { syllabus: 0, revision: 0, mindset: 0 }, scrollBounds = { syllabus: 0, revision: 0, mindset: 0 };
-        let touchStart = { x: 0, y: 0, time: 0 }, isDragging = false;
-        let focusedElement = null;
-
-        let pomo = { mode: 'work', time: 25 * 60, isActive: false, startTime: 0, duration: 25 * 60 };
         
-        const jeeSyllabus = { /* Kept the same as previous version */
-            physics: ["Units & Dimensions", "Kinematics", "Laws of Motion", "Work, Energy, Power", "Rotational Motion", "Gravitation", "Properties of Solids & Liquids", "Thermodynamics", "Kinetics Theory of Gases", "Oscillations & Waves", "Electrostatics", "Current Electricity", "Magnetic Effects of Current", "EMI & AC", "EM Waves", "Optics", "Dual Nature of Matter", "Atoms & Nuclei", "Semiconductors"],
-            chemistry: ["Basic Concepts", "Structure of Atom", "Classification of Elements", "Chemical Bonding", "States of Matter", "Thermodynamics", "Equilibrium", "Redox Reactions", "Hydrogen", "s-Block", "p-Block", "Organic Basics", "Hydrocarbons", "Environmental", "Solid State", "Solutions", "Electrochemistry", "Chemical Kinetics", "Surface Chemistry", "Metallurgy", "d & f Block", "Coordination Compounds", "Haloalkanes", "Alcohols, Phenols", "Aldehydes, Ketones", "Amines", "Biomolecules", "Polymers"],
-            maths: ["Sets, Relations, Functions", "Complex Numbers", "Matrices & Determinants", "Permutations & Combinations", "Binomial Theorem", "Sequence & Series", "Calculus", "Integral Calculus", "Differential Equations", "Coordinate Geometry", "3D Geometry", "Vector Algebra", "Statistics & Probability", "Trigonometry", "Mathematical Reasoning"]
-        };
-        
-        let appData = { syllabus: {}, revisions: [], dailyGoal: { date: null, text: '', completed: false }, streak: 0, lastCompletionDate: null, totalFocusTime: 0, streakHistory: [] };
-        
-        const quotes = ["The secret of your future is hidden in your daily routine.", "A river cuts through rock, not because of its power, but its persistence.", "Success is the sum of small efforts, repeated day in and day out.", "The best way to predict the future is to create it.", "Believe you can and you're halfway there."];
-        const affirmations = ["I am focused and disciplined. My hard work will pay off.", "Every problem I solve makes me stronger.", "I am capable of achieving my dream rank.", "I learn from my mistakes and grow every day.", "I am building a brilliant future with my efforts today."];
-        const successTips = [
-            { title: "The Feynman Technique", tip: "To truly understand a concept, try to explain it in simple terms, as if you were teaching it to a child. Identify gaps in your understanding and revisit the material." },
-            { title: "Embrace Mock Tests", tip: "Don't fear mock tests. They are your best diagnostic tool. Analyze every mistake to understand the 'why' behind it, not just the 'what'."},
-            { title: "Quality over Quantity", tip: "Solving 20 problems with deep understanding is better than solving 50 superficially. Focus on the concept behind each question." }
-        ];
-        let dailyContent = {};
+        // --- Core Application Class ---
+        class JEEAscentApp {
+            constructor() {
+                this.canvas = canvas;
+                this.ctx = ctx;
+                this.lastTime = 0;
+                this.glowAnimation = 0; // For breathing glow effect
+                this.currentTab = 'Dashboard';
+                this.transition = { alpha: 1, state: 'in', targetTab: 'Dashboard' };
+                this.particles = [];
+                this.touch = { startX: 0, startY: 0, currentY: 0, isDragging: false, scrollOffset: 0, targetScroll: 0 };
+                this.activeInput = null; // For handling text input
+                this.keyboardVisible = false;
 
-        // --- Core Animation Loop ---
-        function animate(timestamp) {
-            const deltaTime = (timestamp - lastTime) / 1000 || 0;
-            lastTime = timestamp;
-            
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            drawAnimatedBackground(timestamp);
+                // --- Syllabus Data ---
+                this.syllabus = {
+                    Physics: ["Units and Measurements", "Kinematics", "Laws of Motion", "Work, Energy and Power", "Rotational Motion", "Gravitation", "Properties of Solids and Liquids", "Thermodynamics", "Kinetic Theory of Gases", "Oscillations and Waves", "Electrostatics", "Current Electricity", "Magnetic Effects of Current", "Electromagnetic Induction and AC", "Electromagnetic Waves", "Optics", "Dual Nature of Matter and Radiation", "Atoms and Nuclei", "Electronic Devices", "Communication Systems"],
+                    Chemistry: ["Basic Concepts of Chemistry", "Structure of Atom", "Classification of Elements", "Chemical Bonding", "States of Matter", "Thermodynamics", "Equilibrium", "Redox Reactions", "Hydrogen", "s-Block Elements", "p-Block Elements (Group 13 & 14)", "Organic Chemistry: Basic Principles", "Hydrocarbons", "Environmental Chemistry", "Solid State", "Solutions", "Electrochemistry", "Chemical Kinetics", "Surface Chemistry", "p-Block Elements (Group 15-18)", "d and f Block Elements", "Coordination Compounds", "Haloalkanes and Haloarenes", "Alcohols, Phenols and Ethers", "Aldehydes, Ketones and Carboxylic Acids", "Amines", "Biomolecules", "Polymers", "Chemistry in Everyday Life"],
+                    Mathematics: ["Sets, Relations and Functions", "Complex Numbers", "Matrices and Determinants", "Permutations and Combinations", "Binomial Theorem", "Sequence and Series", "Limit, Continuity and Differentiability", "Integral Calculus", "Differential Equations", "Coordinate Geometry", "Three Dimensional Geometry", "Vector Algebra", "Statistics and Probability", "Trigonometry", "Mathematical Reasoning"]
+                };
 
-            if (appState === 'loading') drawLoadingScreen();
-            else if (appState === 'transition') {
-                transitionAlpha = Math.min(1, transitionAlpha + 0.07); // Faster transition
-                ctx.globalAlpha = easeOutCubic(transitionAlpha);
-                drawScreen(nextState, deltaTime);
-                ctx.globalAlpha = 1;
-                if (transitionAlpha >= 1) { appState = nextState; activeTab = nextState; transitionAlpha = 0; }
-            } else {
-                drawScreen(appState, deltaTime);
+                // --- Motivational Content ---
+                this.quotes = ["The will to win, the desire to succeed, the urge to reach your full potential... these are the keys that will unlock the door to personal excellence.", "Believe you can and you're halfway there.", "Success is not final, failure is not fatal: it is the courage to continue that counts.", "The secret of getting ahead is getting started.", "Don't watch the clock; do what it does. Keep going."];
+                this.affirmations = ["I am focused and disciplined.", "Every challenge is an opportunity to grow stronger.", "I am capable of achieving my goals.", "I trust in my abilities and my preparation.", "I am calm, confident, and ready to succeed."];
+                this.tips = ["Solve previous year papers religiously.", "Focus on understanding concepts over rote learning.", "Consistent revision is more important than learning new topics at the last minute.", "Take scheduled breaks to avoid burnout.", "Analyze your mock tests to identify weak areas."];
+
+                // --- Application State ---
+                this.state = this.loadState();
+                
+                this.resizeCanvas();
+                this.initEventListeners();
+                this.gameLoop(0);
             }
-            
-            particles = particles.filter(p => p.life > 0);
-            particles.forEach(p => { p.update(deltaTime); p.draw(); });
 
-            drawNavBar();
-            requestAnimationFrame(animate);
-        }
-
-        function drawScreen(state, deltaTime) {
-            uiElements = [];
-            if (pomo.isActive) {
-                const elapsed = (Date.now() - pomo.startTime) / 1000;
-                pomo.time = Math.max(0, pomo.duration - elapsed);
-                if (pomo.time === 0) {
-                    pomo.isActive = false;
-                    try {
-                        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                        const oscillator = audioCtx.createOscillator();
-                        oscillator.type = 'sine';
-                        oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
-                        oscillator.connect(audioCtx.destination);
-                        oscillator.start();
-                        oscillator.stop(audioCtx.currentTime + 0.5);
-                    } catch(e) { console.error("Could not play sound:", e); }
-
-                    if (pomo.mode === 'work') {
-                        appData.totalFocusTime += pomo.duration; // Add completed session time
-                        pomo.mode = 'break';
-                        pomo.duration = 5 * 60;
-                    } else {
-                        pomo.mode = 'work';
-                        pomo.duration = 25 * 60;
-                    }
-                    pomo.time = pomo.duration;
-                    saveData();
-                }
-            }
-            switch(state) {
-                case 'dashboard': drawDashboard(deltaTime); break;
-                case 'revision': drawRevisionHub(); break;
-                case 'syllabus': drawSyllabus(); break;
-                case 'mindset': drawMindsetHub(); break;
-            }
-        }
-        
-        // --- Screen Drawing Functions ---
-        function drawDashboard() {
-            const w = canvas.width, h = canvas.height, pad = w * 0.08;
-            let currentY = h * 0.08;
-
-            // --- Streak & Quote ---
-            const breathingGlow = Math.sin(Date.now() * 0.002) * 5 + 10;
-            ctx.shadowColor = `rgba(255, 165, 0, 0.7)`;
-            ctx.shadowBlur = breathingGlow;
-            ctx.fillStyle = "#FFA500";
-            ctx.font = `700 ${getResponsiveFontSize(50)}px Poppins`;
-            ctx.textAlign = 'center';
-            ctx.fillText(`🔥 ${appData.streak}`, w / 2, currentY + 30);
-            ctx.shadowColor = 'transparent';
-            ctx.font = `600 ${getResponsiveFontSize(16)}px Poppins`;
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-            ctx.fillText("DAY STREAK", w/2, currentY + 65);
-            currentY += h * 0.12;
-
-            ctx.font = `italic 400 ${getResponsiveFontSize(15)}px Poppins`;
-            wrapText(`"${dailyContent.quote}"`, w / 2, currentY, w - pad*2, getResponsiveFontSize(20));
-            currentY += h * 0.12;
-            
-            // --- Pomodoro Timer ---
-            drawPomodoro(w, h, currentY);
-            currentY += h * 0.32;
-
-            // --- Daily Goal ---
-            drawDailyGoal(w, h, pad, currentY);
-        }
-
-        function drawRevisionHub() {
-            const w = canvas.width, h = canvas.height, pad = w * 0.08, navH = h * 0.1;
-            let currentY = h * 0.08;
-            
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'; ctx.font = `700 ${getResponsiveFontSize(28)}px Poppins`; ctx.textAlign = 'center'; ctx.fillText('Revision Hub', w / 2, currentY); currentY += h * 0.06;
-
-            const todayStr = new Date().toISOString().split('T')[0];
-            const dueToday = appData.revisions.filter(r => r.dueDate <= todayStr);
-            
-            let contentHeight = currentY;
-            ctx.save(); ctx.translate(0, scrollY.revision);
-
-            if(dueToday.length === 0) {
-                 ctx.font = `${getResponsiveFontSize(16)}px Poppins`; ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.fillText("You're all caught up for today!", w/2, h*0.3);
-                 contentHeight += h*0.3;
-            } else {
-                 ctx.textAlign = 'left'; ctx.font = `600 ${getResponsiveFontSize(18)}px Poppins`; ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'; ctx.fillText("Due for Revision", pad, contentHeight); contentHeight += h*0.05;
-                 dueToday.forEach(rev => {
-                    const item = { id: `rev-${rev.subject}-${rev.chapterName}-${rev.level}`, type: 'listItem', x: pad, y: contentHeight, w: w - pad*2, h: h * 0.08, isPressed: false, data: rev, onClick: () => { completeRevision(rev) } };
-                    uiElements.push(item); drawListItem(item, { title: rev.chapterName, subtitle: `${rev.subject.charAt(0).toUpperCase() + rev.subject.slice(1)} - Revision ${rev.level}`, action: 'check'});
-                    contentHeight += h * 0.08 + 15;
-                 });
-            }
-            ctx.restore();
-            scrollBounds.revision = Math.min(0, h - navH - contentHeight - pad);
-        }
-        
-        function drawSyllabus() {
-            const w = canvas.width, h = canvas.height, pad = w * 0.08, navH = h * 0.1;
-            let currentY = h * 0.08;
-            
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'; ctx.font = `700 ${getResponsiveFontSize(28)}px Poppins`; ctx.textAlign = 'center'; ctx.fillText('Syllabus Tracker', w / 2, currentY); currentY += h * 0.06;
-
-            ctx.save(); ctx.translate(0, scrollY.syllabus);
-            let contentHeight = currentY;
-            
-            for (const subject in appData.syllabus) {
-                ctx.textAlign = 'left'; ctx.font = `700 ${getResponsiveFontSize(20)}px Poppins`; ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'; ctx.fillText(subject.charAt(0).toUpperCase() + subject.slice(1), pad, contentHeight); contentHeight += h * 0.05;
-                appData.syllabus[subject].forEach(chapter => {
-                    const item = { id: `ch-${subject}-${chapter.name}`, type: 'listItem', x: pad, y: contentHeight, w: w - pad * 2, h: h * 0.08, isPressed: false, data: {subject, chapter}, onClick: () => { toggleChapterStatus(subject, chapter.name) } };
-                    uiElements.push(item); drawListItem(item, { title: chapter.name, subtitle: chapter.status === 'completed' ? `Completed on ${new Date(chapter.completionDate).toLocaleDateString()}` : 'Pending', action: chapter.status === 'completed' ? 'checked' : 'add'});
-                    contentHeight += h * 0.08 + 15;
+            // --- State Management ---
+            defaultState() {
+                const syllabusState = {};
+                Object.keys(this.syllabus).forEach(subject => {
+                    syllabusState[subject] = this.syllabus[subject].map(chapter => ({ name: chapter, status: 'Pending', completionDate: null }));
                 });
-                contentHeight += h * 0.02;
+
+                return {
+                    onboardingComplete: false,
+                    userName: '',
+                    streak: 0,
+                    lastCompletedDate: null,
+                    weeklyGoals: [{ text: '', done: false }, { text: '', done: false }, { text: '', done: false }],
+                    dailyMission: { text: '', done: false },
+                    pomodoro: { mode: 'work', time: 25 * 60, isRunning: false, totalFocusTime: 0 },
+                    syllabus: syllabusState,
+                    revisions: [],
+                    performance: [],
+                    completedDays: {}
+                };
             }
-            ctx.restore();
-            scrollBounds.syllabus = Math.min(0, h - navH - contentHeight - pad);
-        }
 
-        function drawMindsetHub() {
-            const w = canvas.width, h = canvas.height, pad = w * 0.08, navH = h * 0.1;
-            let currentY = h * 0.08;
+            loadState() {
+                const savedState = localStorage.getItem('jeeAscentData');
+                if (savedState) {
+                    const parsedState = JSON.parse(savedState);
+                    // Basic migration: ensure new features have default values
+                    if (!parsedState.performance) parsedState.performance = [];
+                    if (!parsedState.completedDays) parsedState.completedDays = {};
+                    return parsedState;
+                }
+                return this.defaultState();
+            }
 
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'; ctx.font = `700 ${getResponsiveFontSize(28)}px Poppins`; ctx.textAlign = 'center'; ctx.fillText('Mindset & Motivation', w / 2, currentY); currentY += h * 0.06;
+            saveState() {
+                localStorage.setItem('jeeAscentData', JSON.stringify(this.state));
+            }
+            
+            checkStreak() {
+                const today = new Date().toISOString().slice(0, 10);
+                if (this.state.dailyMission.done) {
+                    if (this.state.lastCompletedDate !== today) {
+                        const yesterday = new Date();
+                        yesterday.setDate(yesterday.getDate() - 1);
+                        if (this.state.lastCompletedDate === yesterday.toISOString().slice(0, 10)) {
+                            this.state.streak++;
+                        } else {
+                            this.state.streak = 1;
+                        }
+                        this.state.lastCompletedDate = today;
+                        this.state.completedDays[today] = true;
+                    }
+                }
+            }
 
-            ctx.save(); ctx.translate(0, scrollY.mindset);
-            let contentHeight = currentY;
+            // --- Canvas & Event Handling ---
+            resizeCanvas() {
+                this.dpr = window.devicePixelRatio || 1;
+                this.canvas.width = window.innerWidth * this.dpr;
+                this.canvas.height = window.innerHeight * this.dpr;
+                this.ctx.scale(this.dpr, this.dpr);
+                this.width = window.innerWidth;
+                this.height = window.innerHeight;
+            }
 
-            // Affirmation Card
-            ctx.textAlign = 'left';
-            ctx.font = `700 ${getResponsiveFontSize(18)}px Poppins`; ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'; ctx.fillText("Today's Affirmation", pad, contentHeight);
-            contentHeight += h * 0.04;
-            drawCard(pad, contentHeight, w - pad*2, h * 0.15, dailyContent.affirmation);
-            contentHeight += h * 0.15 + 20;
-
-            // Streak Calendar
-            ctx.font = `700 ${getResponsiveFontSize(18)}px Poppins`; ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'; ctx.fillText("Your Commitment", pad, contentHeight);
-            contentHeight += h * 0.04;
-            contentHeight = drawStreakCalendar(pad, contentHeight, w - pad*2, h);
-            contentHeight += 20;
-
-            // Progress Card
-            ctx.font = `700 ${getResponsiveFontSize(18)}px Poppins`; ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'; ctx.fillText("Your Progress", pad, contentHeight);
-            contentHeight += h * 0.04;
-            drawProgressCard(pad, contentHeight, w - pad*2, h * 0.15);
-            contentHeight += h * 0.15 + 20;
-
-            // Success Tip Card
-            ctx.font = `700 ${getResponsiveFontSize(18)}px Poppins`; ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'; ctx.fillText("Pro Tip", pad, contentHeight);
-            contentHeight += h * 0.04;
-            drawCard(pad, contentHeight, w - pad*2, h * 0.2, `"${dailyContent.tip.tip}"`, dailyContent.tip.title);
-            contentHeight += h * 0.2 + 20;
-
-            ctx.restore();
-            scrollBounds.mindset = Math.min(0, h - navH - contentHeight - pad);
-        }
-        
-        // --- UI Element Drawing ---
-        function drawNavBar() { const w = canvas.width, h = canvas.height, navH = h * 0.1; ctx.save(); ctx.filter = 'blur(15px)'; ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(0, h - navH, w, navH); ctx.restore(); ctx.fillStyle = 'rgba(255,255,255,0.1)'; ctx.fillRect(0, h - navH, w, 1); const tabs = [{ id: 'dashboard', icon: 'M1.5 8.366a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v5.5a.5.5 0 0 1-1 0V9.366H2v4.5a.5.5 0 0 1-1 0zM6.5 14V8.366a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v5.5a.5.5 0 0 1-1 0V9.366H7v4.5a.5.5 0 0 1-1 0m4-5.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v5.5a.5.5 0 0 1-1 0V9.366h-.5v4.5a.5.5 0 0 1-1 0zM1 2.828c.885-.37 2.154-.769 3.388-.893 1.234-.124 2.502.056 3.612.448.668.232 1.255.61 1.664 1.06.415.45.622 1.004.622 1.566v8.598a.5.5 0 0 1-.5.5H2.5a.5.5 0 0 1-.5-.5V3.725c0-.421.157-.779.43-1.008a.82.82 0 0 1 .57-.19zM14.5 2a.5.5 0 0 1 .5.5v11a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5z' }, { id: 'revision', icon: 'M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71zM8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0' }, { id: 'syllabus', icon: 'M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1z M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5z' }, { id: 'mindset', icon: 'M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10m0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6'}]; const itemWidth = w/tabs.length; tabs.forEach((tab, i) => { const x = i * itemWidth, isActive = activeTab === tab.id; const navButton = { id: `nav-${tab.id}`, type: 'navButton', x, y: h - navH, w: itemWidth, h: navH, isPressed: false, onClick: () => { if (activeTab !== tab.id) startTransition(tab.id); } }; uiElements.push(navButton); if(isActive){ ctx.fillStyle = "rgba(255,255,255,0.1)"; ctx.beginPath(); ctx.roundRect(x + itemWidth/2 - 22, h - navH/2 - 22, 44, 44, 15); ctx.fill(); } ctx.save(); ctx.translate(x + itemWidth/2 - 8, h - navH/2 - 8); ctx.scale(1.8, 1.8); ctx.fillStyle = isActive ? '#fff' : 'rgba(255,255,255,0.6)'; ctx.fill(new Path2D(tab.icon)); ctx.restore(); });}
-        function drawCard(x, y, w, h, text, title="") { ctx.fillStyle = 'rgba(255,255,255,0.1)'; ctx.beginPath(); ctx.roundRect(x,y,w,h,20); ctx.fill(); ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'; if(title){ ctx.font = `600 ${getResponsiveFontSize(14)}px Poppins`; ctx.textAlign='left'; ctx.fillText(title, x + 20, y + 25); ctx.font = `400 ${getResponsiveFontSize(15)}px Poppins`; wrapText(text, x + 20, y + 55, w-40, getResponsiveFontSize(20)); } else { ctx.font = `italic 600 ${getResponsiveFontSize(16)}px Poppins`; ctx.textAlign='center'; wrapText(text, x+w/2, y+h/2 - getResponsiveFontSize(10), w-40, getResponsiveFontSize(22));}}
-        function drawProgressCard(x,y,w,h) { ctx.fillStyle = 'rgba(255,255,255,0.1)'; ctx.beginPath(); ctx.roundRect(x,y,w,h,20); ctx.fill(); const chaptersCompleted = Object.values(appData.syllabus).flat().filter(c => c.status === 'completed').length; const revisionsDue = (appData.revisions.filter(r => r.dueDate <= new Date().toISOString().split('T')[0])).length; const focusHours = (appData.totalFocusTime / 3600).toFixed(1); const stats = [{label: 'Chapters Mastered', value: chaptersCompleted}, {label: 'Revisions Due', value: revisionsDue}, {label: 'Focus Hours', value: focusHours}]; stats.forEach((stat, i) => { const statX = x + (w/3)*i + w/6; ctx.fillStyle = '#fff'; ctx.font = `700 ${getResponsiveFontSize(22)}px Poppins`; ctx.textAlign='center'; ctx.fillText(stat.value, statX, y + h/2 - 5); ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.font = `400 ${getResponsiveFontSize(12)}px Poppins`; ctx.fillText(stat.label, statX, y + h/2 + 20);});}
-        
-        function drawStreakCalendar(x, y, w, h) {
-            ctx.fillStyle = 'rgba(255,255,255,0.1)';
-            ctx.beginPath();
-            const calendarHeight = w * 0.8;
-            ctx.roundRect(x, y, w, calendarHeight, 20);
-            ctx.fill();
-
-            const today = new Date();
-            const month = today.getMonth();
-            const year = today.getFullYear();
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
-            const firstDayOfMonth = new Date(year, month, 1).getDay();
-
-            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-            ctx.font = `600 ${getResponsiveFontSize(16)}px Poppins`;
-            ctx.textAlign = 'center';
-            ctx.fillText(monthNames[month] + " " + year, x + w/2, y + 30);
-
-            const dayHeaders = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-            const cellWidth = w / 7.5;
-            const startX = x + (w - cellWidth * 7) / 2;
-            dayHeaders.forEach((day, i) => {
-                ctx.font = `400 ${getResponsiveFontSize(12)}px Poppins`;
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-                ctx.fillText(day, startX + i * cellWidth + cellWidth / 2, y + 60);
-            });
-
-            for (let i = 0; i < daysInMonth; i++) {
-                const day = i + 1;
-                const col = (firstDayOfMonth + i) % 7;
-                const row = Math.floor((firstDayOfMonth + i) / 7);
-                const cellX = startX + col * cellWidth;
-                const cellY = y + 75 + row * cellWidth * 0.9;
-                const cellCenterX = cellX + cellWidth/2;
-                const cellCenterY = cellY + (cellWidth * 0.9)/2;
+            initEventListeners() {
+                window.addEventListener('resize', () => this.resizeCanvas());
+                this.canvas.addEventListener('click', (e) => this.handleTap(e));
                 
-                const dateStr = new Date(year, month, day).toISOString().split('T')[0];
-                if (appData.streakHistory && appData.streakHistory.includes(dateStr)) {
-                     ctx.beginPath();
-                     ctx.arc(cellCenterX, cellCenterY, cellWidth * 0.35, 0, Math.PI * 2);
-                     ctx.fillStyle = 'rgba(255, 165, 0, 0.5)';
-                     ctx.fill();
+                // Touch events for scrolling
+                this.canvas.addEventListener('touchstart', (e) => this.handleTouchStart(e), { passive: false });
+                this.canvas.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: false });
+                this.canvas.addEventListener('touchend', (e) => this.handleTouchEnd(e));
+
+                // Keyboard events for text input
+                window.addEventListener('keydown', (e) => this.handleKeyPress(e));
+            }
+            
+            getEventCoordinates(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                const x = (e.clientX || e.touches[0].clientX) - rect.left;
+                const y = (e.clientY || e.touches[0].clientY) - rect.top;
+                return { x, y };
+            }
+
+            handleTap(e) {
+                const { x, y } = this.getEventCoordinates(e);
+                
+                // Don't register taps while dragging
+                if (this.touch.isDragging) return;
+
+                if (this.state.onboardingComplete) {
+                    this.checkUICollision(x, y, this.currentTab);
+                    this.checkTabCollision(x, y);
+                } else {
+                    this.checkUICollision(x, y, 'Onboarding');
+                }
+            }
+            
+            handleTouchStart(e) {
+                e.preventDefault();
+                const { x, y } = this.getEventCoordinates(e);
+                this.touch.startX = x;
+                this.touch.startY = y;
+                this.touch.currentY = y;
+                this.touch.isDragging = false;
+                this.touch.targetScroll = this.touch.scrollOffset;
+            }
+            
+            handleTouchMove(e) {
+                e.preventDefault();
+                const { y } = this.getEventCoordinates(e);
+                const deltaY = y - this.touch.currentY;
+                if (Math.abs(deltaY) > 5) this.touch.isDragging = true;
+                
+                this.touch.targetScroll += deltaY;
+
+                // Clamp scrolling
+                const scrollableHeight = this.getScrollableHeight(this.currentTab);
+                const maxScroll = 0;
+                const minScroll = Math.min(0, this.height - scrollableHeight - 150);
+                this.touch.targetScroll = Math.max(minScroll, Math.min(maxScroll, this.touch.targetScroll));
+
+                this.touch.currentY = y;
+            }
+            
+            handleTouchEnd(e) {
+                setTimeout(() => { this.touch.isDragging = false; }, 100);
+            }
+            
+            handleKeyPress(e) {
+                if (!this.activeInput) return;
+
+                if (e.key === 'Enter') {
+                    if (this.activeInput.multiline) {
+                        this.activeInput.value += '\n';
+                    } else {
+                        if (this.activeInput.onEnter) this.activeInput.onEnter();
+                        this.activeInput = null;
+                        this.keyboardVisible = false;
+                    }
+                } else if (e.key === 'Backspace') {
+                    this.activeInput.value = this.activeInput.value.slice(0, -1);
+                } else if (e.key.length === 1) { // Regular character
+                    this.activeInput.value += e.key;
+                }
+                 if(this.activeInput) this.state[this.activeInput.stateKey] = this.activeInput.value
+            }
+
+
+            // --- UI Collision & Interaction ---
+            checkUICollision(x, y, screen) {
+                // This is a simplified collision detection system. 
+                // A more robust system would use a list of interactive elements.
+                const w = this.width;
+                const h = this.height;
+                const centerX = w / 2;
+
+                switch(screen) {
+                    case 'Onboarding':
+                        // Button to submit name
+                        if (y > h * 0.55 && y < h * 0.55 + 50 && x > centerX - 75 && x < centerX + 75) {
+                            if (this.state.userName.trim().length > 0) {
+                                this.state.onboardingComplete = true;
+                                this.saveState();
+                            }
+                        } else if (y > h * 0.45 && y < h * 0.45 + 50) { // Text input area
+                            this.activeInput = {
+                                value: this.state.userName,
+                                stateKey: 'userName',
+                                onEnter: () => {
+                                    if(this.state.userName.trim().length > 0) {
+                                        this.state.onboardingComplete = true;
+                                        this.saveState();
+                                    }
+                                },
+                                multiline: false
+                            };
+                            this.keyboardVisible = true;
+                        }
+                        break;
+                    
+                    case 'Dashboard':
+                        // Pomodoro Timer
+                        if (Math.sqrt((x-centerX)**2 + (y-h*0.45)**2) < 60){
+                            this.state.pomodoro.isRunning = !this.state.pomodoro.isRunning;
+                        }
+                        // Daily Mission
+                        if (x > w * 0.1 && x < w * 0.9 && y > h * 0.65 && y < h * 0.72) {
+                             this.activeInput = {
+                                value: this.state.dailyMission.text,
+                                stateKey: 'dailyMission.text',
+                                onEnter: () => {},
+                                multiline: false
+                            };
+                        } else if (x > centerX - 75 && x < centerX + 75 && y > h*0.74 && y < h * 0.74 + 40 && this.state.dailyMission.text && !this.state.dailyMission.done) {
+                            this.state.dailyMission.done = true;
+                            this.spawnParticles(centerX, h*0.76);
+                            this.checkStreak();
+                        }
+                        break;
+                    
+                     case 'Syllabus':
+                        let yOffset = 80 + this.touch.scrollOffset;
+                        Object.keys(this.state.syllabus).forEach(subject => {
+                            yOffset += 50;
+                            this.state.syllabus[subject].forEach(chapter => {
+                                if (x > w * 0.1 && x < w * 0.9 && y > yOffset && y < yOffset + 45) {
+                                    if (chapter.status === 'Pending') {
+                                        chapter.status = 'Completed';
+                                        chapter.completionDate = new Date().toISOString();
+                                        this.scheduleRevisions(chapter.name, subject);
+                                    } else {
+                                        chapter.status = 'Pending';
+                                        this.removeRevisions(chapter.name, subject);
+                                        chapter.completionDate = null;
+                                    }
+                                }
+                                yOffset += 55;
+                            });
+                            yOffset += 20;
+                        });
+                        break;
+                    
+                    case 'Revision':
+                        let revYOffset = 80 + this.touch.scrollOffset;
+                        this.getDueRevisions().forEach(rev => {
+                             if (x > w * 0.1 && x < w * 0.9 && y > revYOffset && y < revYOffset + 50) {
+                                // Find the original revision and mark it as done
+                                const originalRev = this.state.revisions.find(r => r.id === rev.id);
+                                if(originalRev) originalRev.done = true;
+                                this.spawnParticles(centerX, revYOffset + 25);
+                            }
+                            revYOffset += 60;
+                        });
+                        break;
+                }
+            }
+
+            checkTabCollision(x, y) {
+                const tabWidth = this.width / 5;
+                const tabY = this.height - 60;
+                if (y > tabY) {
+                    const tabIndex = Math.floor(x / tabWidth);
+                    const tabs = ['Dashboard', 'Syllabus', 'Revision', 'Performance', 'Mindset'];
+                    const newTab = tabs[tabIndex];
+                    if (newTab && newTab !== this.currentTab) {
+                        this.changeTab(newTab);
+                    }
+                }
+            }
+            
+            changeTab(tabName) {
+                if (this.transition.state !== 'in') return;
+                this.transition.state = 'out';
+                this.transition.targetTab = tabName;
+                this.touch.scrollOffset = 0; // Reset scroll on tab change
+                this.touch.targetScroll = 0;
+            }
+
+            // --- Revision Logic ---
+            scheduleRevisions(chapterName, subject) {
+                const now = new Date();
+                const revisionDays = [1, 7, 30, 90];
+                revisionDays.forEach(days => {
+                    const revisionDate = new Date(now);
+                    revisionDate.setDate(revisionDate.getDate() + days);
+                    this.state.revisions.push({
+                        id: `${subject}-${chapterName}-${days}`,
+                        subject,
+                        chapterName,
+                        dueDate: revisionDate.toISOString(),
+                        done: false
+                    });
+                });
+            }
+            
+            removeRevisions(chapterName, subject) {
+                this.state.revisions = this.state.revisions.filter(rev => rev.chapterName !== chapterName || rev.subject !== subject);
+            }
+            
+            getDueRevisions() {
+                const today = new Date();
+                return this.state.revisions.filter(rev => {
+                    const dueDate = new Date(rev.dueDate);
+                    return !rev.done && dueDate <= today;
+                }).sort((a,b) => new Date(a.dueDate) - new Date(b.dueDate));
+            }
+
+            // --- Particle System ---
+            spawnParticles(x, y) {
+                for (let i = 0; i < 50; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = Math.random() * 5 + 2;
+                    this.particles.push({
+                        x: x,
+                        y: y,
+                        vx: Math.cos(angle) * speed,
+                        vy: Math.sin(angle) * speed,
+                        life: 100,
+                        size: Math.random() * 3 + 1,
+                        color: `hsla(${Math.random() * 360}, 100%, 70%, 1)`
+                    });
+                }
+            }
+
+            updateParticles() {
+                for (let i = this.particles.length - 1; i >= 0; i--) {
+                    const p = this.particles[i];
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.1; // gravity
+                    p.life--;
+                    if (p.life <= 0) {
+                        this.particles.splice(i, 1);
+                    }
+                }
+            }
+
+            // --- Drawing Utilities ---
+            drawRoundedRect(x, y, w, h, r, color) {
+                this.ctx.fillStyle = color;
+                this.ctx.beginPath();
+                this.ctx.moveTo(x + r, y);
+                this.ctx.arcTo(x + w, y, x + w, y + h, r);
+                this.ctx.arcTo(x + w, y + h, x, y + h, r);
+                this.ctx.arcTo(x, y + h, x, y, r);
+                this.ctx.arcTo(x, y, x + w, y, r);
+                this.ctx.closePath();
+                this.ctx.fill();
+            }
+
+            drawText(text, x, y, size, color, align = 'center', weight = 'normal', maxWidth) {
+                this.ctx.font = `${weight} ${size}px Poppins`;
+                this.ctx.fillStyle = color;
+                this.ctx.textAlign = align;
+                if (maxWidth) {
+                    this.ctx.fillText(text, x, y, maxWidth);
+                } else {
+                    this.ctx.fillText(text, x, y);
+                }
+            }
+            
+            wrapText(text, x, y, maxWidth, lineHeight, color, size, weight = 'normal', align = 'center') {
+                const words = text.split(' ');
+                let line = '';
+                this.ctx.font = `${weight} ${size}px Poppins`;
+                this.ctx.fillStyle = color;
+                this.ctx.textAlign = align;
+                let testY = y;
+
+                for (let n = 0; n < words.length; n++) {
+                    const testLine = line + words[n] + ' ';
+                    const metrics = this.ctx.measureText(testLine);
+                    const testWidth = metrics.width;
+                    if (testWidth > maxWidth && n > 0) {
+                        this.ctx.fillText(line, x, testY);
+                        line = words[n] + ' ';
+                        testY += lineHeight;
+                    } else {
+                        line = testLine;
+                    }
+                }
+                this.ctx.fillText(line, x, testY);
+            }
+
+            // --- Getters ---
+            getScrollableHeight(tab) {
+                let h = this.height; // default
+                switch (tab) {
+                    case 'Syllabus':
+                        h = 150; // Initial padding
+                        Object.keys(this.state.syllabus).forEach(subject => {
+                            h += 50; // Subject header
+                            h += this.state.syllabus[subject].length * 55; // Chapters
+                            h += 20; // Padding
+                        });
+                        break;
+                    case 'Revision':
+                         h = 100 + this.getDueRevisions().length * 60;
+                         break;
+                    case 'Performance':
+                        // ... calculate based on tests ...
+                        break;
+                    case 'Mindset':
+                        // ... calculate based on mindset widgets ...
+                        break;
+                }
+                return h;
+            }
+
+            // --- Screen Drawing Methods ---
+            drawOnboarding() {
+                const w = this.width;
+                const h = this.height;
+                const centerX = w / 2;
+                
+                this.drawText("Welcome to JEE Ascent", centerX, h * 0.2, 28, '#FFF', 'center', '600');
+                this.drawText("What should we call you?", centerX, h * 0.35, 18, '#aaa');
+
+                // Draw text input box
+                this.drawRoundedRect(w * 0.1, h * 0.45, w * 0.8, 50, 10, 'rgba(255, 255, 255, 0.1)');
+                this.drawText(this.state.userName + (this.activeInput ? '_' : ''), centerX, h * 0.45 + 32, 20, '#FFF');
+                
+                // Draw button
+                this.drawRoundedRect(centerX - 75, h * 0.55, 150, 50, 25, '#8a2be2');
+                this.drawText("Let's Begin", centerX, h * 0.55 + 32, 18, '#FFF');
+            }
+
+            drawDashboard() {
+                const w = this.width;
+                const h = this.height;
+                const centerX = w / 2;
+
+                // Greeting
+                this.drawText(`Let's conquer the day, ${this.state.userName}!`, centerX, 70, 22, '#FFF', 'center', '600');
+
+                // Streak Counter
+                const glow = 10 + Math.sin(this.glowAnimation) * 5;
+                this.ctx.shadowBlur = glow;
+                this.ctx.shadowColor = 'rgba(255, 215, 0, 0.7)';
+                this.drawText(this.state.streak, centerX, h * 0.2, 70, '#FFD700', 'center', '700');
+                this.drawText('Day Streak', centerX, h * 0.2 + 30, 18, '#FFD700');
+                this.ctx.shadowBlur = 0; // Reset glow
+
+                // Quote of the day
+                const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
+                const quote = this.quotes[dayOfYear % this.quotes.length];
+                this.drawRoundedRect(w*0.1, h*0.28, w*0.8, 100, 15, 'rgba(255,255,255,0.05)');
+                this.wrapText(`"${quote}"`, centerX, h*0.28 + 30, w*0.7, 22, '#DDD', 14, 'normal');
+
+                // Pomodoro Timer
+                const {mode, time, isRunning} = this.state.pomodoro;
+                const minutes = Math.floor(time / 60);
+                const seconds = time % 60;
+                const progress = time / ((mode === 'work' ? 25 : 5) * 60);
+                
+                this.ctx.strokeStyle = '#8a2be2';
+                this.ctx.lineWidth = 8;
+                this.ctx.beginPath();
+                this.ctx.arc(centerX, h*0.48, 60, -Math.PI/2, -Math.PI/2 + (1-progress) * 2 * Math.PI);
+                this.ctx.stroke();
+
+                this.drawText(`${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`, centerX, h*0.48 + 10, 30, '#FFF', 'center', '600');
+                this.drawText(isRunning ? 'PAUSE' : 'START', centerX, h*0.48 + 40, 14, '#AAA', 'center');
+
+                // Daily Mission
+                 this.drawRoundedRect(w * 0.1, h * 0.65, w * 0.8, 50, 10, 'rgba(255, 255, 255, 0.05)');
+                 this.drawText("Today's Main Goal:", w*0.15, h * 0.65 - 10, 14, '#AAA', 'left');
+                 this.drawText(this.state.dailyMission.text || 'Tap to set mission...', w*0.15, h * 0.65 + 32, 16, '#FFF', 'left');
+                 if(this.state.dailyMission.text) {
+                     this.drawRoundedRect(centerX-75, h*0.74, 150, 40, 20, this.state.dailyMission.done ? '#28a745' : '#8a2be2');
+                     this.drawText(this.state.dailyMission.done ? 'Completed!' : 'Mark as Done', centerX, h*0.74+26, 16, '#FFF');
+                 }
+            }
+
+            drawSyllabus() {
+                 const w = this.width;
+                 const h = this.height;
+                 const centerX = w/2;
+                 this.drawText('Syllabus Hub', centerX, 40, 24, '#FFF', 'center', '600');
+
+                 this.ctx.save();
+                 this.ctx.translate(0, this.touch.scrollOffset);
+
+                 let yOffset = 80;
+                 Object.keys(this.state.syllabus).forEach(subject => {
+                    this.drawText(subject, centerX, yOffset + 20, 20, '#8a2be2', 'center', '600');
+                    yOffset += 50;
+
+                    this.state.syllabus[subject].forEach(chapter => {
+                         this.drawRoundedRect(w * 0.1, yOffset, w * 0.8, 45, 10, chapter.status === 'Completed' ? 'rgba(40, 167, 69, 0.3)' : 'rgba(255, 255, 255, 0.05)');
+                         this.drawText(chapter.name, w * 0.15, yOffset + 28, 14, '#FFF', 'left', '400', w * 0.6);
+                         if (chapter.status === 'Completed') {
+                              this.drawText('✔', w*0.85, yOffset + 28, 16, '#28a745', 'right');
+                         }
+                         yOffset += 55;
+                    });
+                     yOffset += 20;
+                 });
+                this.ctx.restore();
+            }
+
+            drawRevision() {
+                const w = this.width;
+                const h = this.height;
+                const centerX = w / 2;
+                this.drawText('Revision Hub', centerX, 40, 24, '#FFF', 'center', '600');
+
+                const dueRevisions = this.getDueRevisions();
+                
+                if (dueRevisions.length === 0) {
+                    this.drawText("You're all caught up!", centerX, h / 2, 20, '#AAA');
+                    this.drawText("Great work!", centerX, h / 2 + 30, 16, '#AAA');
+                    return;
+                }
+                
+                this.ctx.save();
+                this.ctx.translate(0, this.touch.scrollOffset);
+
+                let yOffset = 80;
+                dueRevisions.forEach(rev => {
+                    this.drawRoundedRect(w * 0.1, yOffset, w * 0.8, 50, 10, 'rgba(255, 215, 0, 0.1)');
+                    this.drawText(rev.chapterName, w * 0.15, yOffset + 22, 14, '#FFD700', 'left');
+                    this.drawText(rev.subject, w * 0.15, yOffset + 40, 12, '#AAA', 'left');
+                    
+                    const dueDate = new Date(rev.dueDate);
+                    const today = new Date();
+                    const diffDays = Math.ceil((today - dueDate) / (1000 * 60 * 60 * 24));
+                    const dueText = diffDays <= 0 ? "Due Today" : `${diffDays} days overdue`;
+                    this.drawText(dueText, w * 0.85, yOffset + 32, 12, diffDays > 0 ? '#ff4d4d' : '#FFD700', 'right');
+
+                    yOffset += 60;
+                });
+                
+                this.ctx.restore();
+            }
+
+            drawPerformance() {
+                 this.drawText('Performance Hub', this.width/2, 40, 24, '#FFF', 'center', '600');
+                 this.drawText('Coming Soon!', this.width/2, this.height/2, 20, '#AAA', 'center', '400');
+            }
+
+            drawMindset() {
+                const w = this.width;
+                const h = this.height;
+                const centerX = w/2;
+                this.drawText('Mindset Hub', centerX, 40, 24, '#FFF', 'center', '600');
+
+                // Daily Affirmation
+                const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
+                const affirmation = this.affirmations[dayOfYear % this.affirmations.length];
+                this.drawRoundedRect(w*0.1, 80, w*0.8, 80, 15, 'rgba(138, 43, 226, 0.2)');
+                this.wrapText(affirmation, centerX, 110, w * 0.7, 24, '#e0b0ff', 18, '500');
+
+                // Progress Card
+                this.drawRoundedRect(w*0.1, 180, w*0.8, 120, 15, 'rgba(255,255,255,0.05)');
+                const totalChapters = Object.values(this.state.syllabus).flat().length;
+                const completedChapters = Object.values(this.state.syllabus).flat().filter(c => c.status === 'Completed').length;
+                const completionPercentage = totalChapters > 0 ? (completedChapters / totalChapters) : 0;
+                
+                // Pie Chart
+                this.ctx.strokeStyle = '#555';
+                this.ctx.lineWidth = 10;
+                this.ctx.beginPath();
+                this.ctx.arc(w*0.28, 240, 35, 0, 2 * Math.PI);
+                this.ctx.stroke();
+
+                this.ctx.strokeStyle = '#8a2be2';
+                this.ctx.beginPath();
+                this.ctx.arc(w*0.28, 240, 35, -Math.PI/2, -Math.PI/2 + completionPercentage * 2 * Math.PI);
+                this.ctx.stroke();
+                this.drawText(`${Math.round(completionPercentage*100)}%`, w*0.28, 245, 16, '#FFF', 'center', '600');
+                
+                // Stats Text
+                this.drawText('Syllabus', w*0.28, 290, 12, '#AAA');
+                this.drawText(completedChapters.toString(), w * 0.55, 230, 24, '#FFF', 'center', '600');
+                this.drawText('Chapters Done', w*0.55, 250, 12, '#AAA');
+                
+                const focusHours = (this.state.pomodoro.totalFocusTime / 3600).toFixed(1);
+                this.drawText(focusHours, w*0.8, 230, 24, '#FFF', 'center', '600');
+                this.drawText('Focus Hours', w*0.8, 250, 12, '#AAA');
+
+                // Streak Calendar
+                this.drawText('Commitment Calendar', centerX, 330, 18, '#FFF', '600');
+                this.drawCalendar(w * 0.1, 350, w*0.8);
+            }
+            
+            drawCalendar(x, y, width) {
+                const today = new Date();
+                const month = today.getMonth();
+                const year = today.getFullYear();
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+                const firstDayOfMonth = new Date(year, month, 1).getDay();
+                
+                const daySize = width / 7;
+                const days = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+                
+                // Draw day headers
+                for (let i = 0; i < 7; i++) {
+                    this.drawText(days[i], x + i * daySize + daySize / 2, y + 15, 12, '#888');
                 }
 
-                if(day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
-                    ctx.strokeStyle = '#FFA500';
-                    ctx.lineWidth = 2;
-                    ctx.beginPath();
-                    ctx.arc(cellCenterX, cellCenterY, cellWidth * 0.4, 0, Math.PI * 2);
-                    ctx.stroke();
+                let currentDay = 1;
+                for (let row = 0; row < 6; row++) {
+                    for (let col = 0; col < 7; col++) {
+                        if ((row === 0 && col < firstDayOfMonth) || currentDay > daysInMonth) {
+                            continue;
+                        }
+                        const dayX = x + col * daySize + daySize / 2;
+                        const dayY = y + 30 + row * daySize + daySize / 2;
+                        
+                        const dateString = `${year}-${(month + 1).toString().padStart(2,'0')}-${currentDay.toString().padStart(2,'0')}`;
+
+                        // Highlight completed day
+                        if (this.state.completedDays[dateString]) {
+                            this.ctx.fillStyle = 'rgba(138, 43, 226, 0.5)';
+                            this.ctx.beginPath();
+                            this.ctx.arc(dayX, dayY - 5, daySize * 0.3, 0, 2 * Math.PI);
+                            this.ctx.fill();
+                        }
+
+                        // Highlight today
+                        if (currentDay === today.getDate()){
+                           this.ctx.strokeStyle = '#8a2be2';
+                           this.ctx.lineWidth = 1;
+                           this.ctx.beginPath();
+                           this.ctx.arc(dayX, dayY - 5, daySize*0.4, 0, 2 * Math.PI);
+                           this.ctx.stroke();
+                        }
+                        
+                        this.drawText(currentDay.toString(), dayX, dayY, 12, '#FFF');
+                        currentDay++;
+                    }
+                }
+
+            }
+
+            drawTabs() {
+                const tabs = ['Dashboard', 'Syllabus', 'Revision', 'Performance', 'Mindset'];
+                const icons = ['🏠', '📚', '🔄', '📊', '🧠']; // Simple emoji icons
+                const tabWidth = this.width / tabs.length;
+                const tabY = this.height - 60;
+                
+                this.drawRoundedRect(0, tabY, this.width, 60, 0, 'rgba(30, 30, 50, 0.8)');
+                this.ctx.fillStyle = 'rgba(0,0,0,0.2)';
+                this.ctx.fillRect(0,tabY, this.width, 1);
+
+
+                for (let i = 0; i < tabs.length; i++) {
+                    const tab = tabs[i];
+                    const icon = icons[i];
+                    const x = i * tabWidth + tabWidth / 2;
+                    
+                    if (tab === this.currentTab) {
+                        this.ctx.shadowBlur = 10 + Math.sin(this.glowAnimation) * 3;
+                        this.ctx.shadowColor = '#8a2be2';
+                        this.drawText(icon, x, tabY + 30, 24, '#FFF');
+                         this.ctx.shadowBlur = 0;
+                        this.drawText(tab, x, tabY + 50, 10, '#FFF');
+                    } else {
+                        this.drawText(icon, x, tabY + 35, 20, '#888');
+                    }
+                }
+            }
+            
+            drawParticles() {
+                this.particles.forEach(p => {
+                    this.ctx.fillStyle = p.color;
+                    this.ctx.beginPath();
+                    this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    this.ctx.fill();
+                });
+            }
+
+            // --- Main Game Loop ---
+            gameLoop(timestamp) {
+                const deltaTime = timestamp - this.lastTime;
+                this.lastTime = timestamp;
+
+                // --- Update Logic ---
+                this.glowAnimation += 0.05;
+                
+                // Smooth scrolling
+                this.touch.scrollOffset += (this.touch.targetScroll - this.touch.scrollOffset) * 0.1;
+                
+                // Pomodoro Timer
+                if (this.state.pomodoro.isRunning && this.state.pomodoro.time > 0) {
+                    this.state.pomodoro.time--;
+                    if(this.state.pomodoro.mode === 'work') this.state.pomodoro.totalFocusTime++;
+                } else if (this.state.pomodoro.time <= 0) {
+                     this.state.pomodoro.isRunning = false;
+                     if (this.state.pomodoro.mode === 'work') {
+                         this.state.pomodoro.mode = 'break';
+                         this.state.pomodoro.time = 5 * 60;
+                     } else {
+                         this.state.pomodoro.mode = 'work';
+                         this.state.pomodoro.time = 25 * 60;
+                     }
                 }
                 
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-                ctx.font = `600 ${getResponsiveFontSize(14)}px Poppins`;
-                ctx.fillText(day, cellCenterX, cellCenterY);
+                this.updateParticles();
+                this.saveState();
+
+                // --- Drawing Logic ---
+                // Clear canvas
+                this.ctx.clearRect(0, 0, this.width, this.height);
+
+                // Draw dynamic gradient background
+                const bgGradient = this.ctx.createLinearGradient(0, 0, this.width, this.height);
+                const hue = (timestamp / 100) % 360;
+                bgGradient.addColorStop(0, `hsl(${hue}, 40%, 10%)`);
+                bgGradient.addColorStop(1, `hsl(${hue + 60}, 40%, 15%)`);
+                this.ctx.fillStyle = bgGradient;
+                this.ctx.fillRect(0, 0, this.width, this.height);
+
+                // Handle screen transitions
+                if (this.transition.state === 'out') {
+                    this.transition.alpha -= 0.1;
+                    if (this.transition.alpha <= 0) {
+                        this.transition.alpha = 0;
+                        this.transition.state = 'in';
+                        this.currentTab = this.transition.targetTab;
+                    }
+                } else if (this.transition.state === 'in') {
+                    if (this.transition.alpha < 1) {
+                       this.transition.alpha += 0.1;
+                    } else {
+                       this.transition.alpha = 1;
+                    }
+                }
+
+                this.ctx.globalAlpha = this.transition.alpha;
+
+                // Draw current screen
+                if (!this.state.onboardingComplete) {
+                    this.drawOnboarding();
+                } else {
+                    switch (this.currentTab) {
+                        case 'Dashboard': this.drawDashboard(); break;
+                        case 'Syllabus': this.drawSyllabus(); break;
+                        case 'Revision': this.drawRevision(); break;
+                        case 'Performance': this.drawPerformance(); break;
+                        case 'Mindset': this.drawMindset(); break;
+                    }
+                    this.drawTabs();
+                }
+                
+                this.drawParticles();
+                this.ctx.globalAlpha = 1;
+
+
+                requestAnimationFrame((t) => this.gameLoop(t));
             }
-            return y + calendarHeight;
         }
 
-        function drawButton(el) { const pressOffset = el.isPressed ? 4 : 0; ctx.fillStyle = 'rgba(0,0,0,0.15)'; ctx.beginPath(); ctx.roundRect(el.x, el.y + 4, el.w, el.h, el.h / 2); ctx.fill(); const gradient = ctx.createLinearGradient(el.x, el.y, el.x + el.w, el.y); gradient.addColorStop(0, '#ffffff'); gradient.addColorStop(1, '#f0f4f8'); ctx.fillStyle = gradient; ctx.beginPath(); ctx.roundRect(el.x, el.y + pressOffset, el.w, el.h, el.h / 2); ctx.fill(); ctx.fillStyle = '#4A90E2'; ctx.font = `700 ${getResponsiveFontSize(16)}px Poppins`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(el.text, el.x + el.w / 2, el.y + el.h / 2 + pressOffset); }
-        function drawInput(el) { ctx.fillStyle = 'rgba(255, 255, 255, 0.1)'; ctx.beginPath(); ctx.roundRect(el.x, el.y, el.w, el.h, 15); ctx.fill(); if (focusedElement === el) { ctx.shadowColor = '#4A90E2'; ctx.shadowBlur = 15; ctx.strokeStyle = '#4A90E2'; } else { ctx.strokeStyle = 'rgba(255,255,255,0.2)'; } ctx.lineWidth = 2; ctx.stroke(); ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.fillStyle = '#fff'; ctx.font = `${getResponsiveFontSize(16)}px Poppins`; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; let displayText = el.value || ''; if(!displayText && focusedElement !== el) { ctx.fillStyle = 'rgba(255,255,255,0.5)'; displayText = el.placeholder || ''; } ctx.fillText(displayText, el.x + 20, el.y + el.h / 2); if (focusedElement === el && Math.floor(Date.now() / 500) % 2 === 0) { const textWidth = ctx.measureText(el.value).width; ctx.beginPath(); ctx.moveTo(el.x + 20 + textWidth, el.y + el.h * 0.25); ctx.lineTo(el.x + 20 + textWidth, el.y + el.h * 0.75); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke(); } }
-        function drawListItem(item, content) { const { x, y, w, h } = item; ctx.fillStyle = item.isPressed ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.1)'; ctx.beginPath(); ctx.roundRect(x, y, w, h, 15); ctx.fill(); ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'; ctx.font = `600 ${getResponsiveFontSize(16)}px Poppins`; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(content.title, x + 20, y + h/2 - 10); ctx.fillStyle = 'rgba(255, 255, 255, 0.6)'; ctx.font = `${getResponsiveFontSize(12)}px Poppins`; ctx.fillText(content.subtitle, x + 20, y + h/2 + 12); const iconX = x + w - 45, iconY = y + h/2; ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.lineCap = 'round'; if (content.action === 'add') { ctx.beginPath(); ctx.moveTo(iconX - 8, iconY); ctx.lineTo(iconX + 8, iconY); ctx.moveTo(iconX, iconY - 8); ctx.lineTo(iconX, iconY + 8); ctx.stroke(); } else if (content.action === 'checked') { ctx.fillStyle = '#50E3C2'; ctx.beginPath(); ctx.arc(iconX, iconY, 12, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#0a192f'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(iconX - 6, iconY); ctx.lineTo(iconX - 2, iconY + 4); ctx.lineTo(iconX + 6, iconY - 4); ctx.stroke(); } else if (content.action === 'check') { ctx.beginPath(); ctx.arc(iconX, iconY, 12, 0, Math.PI * 2); ctx.stroke(); } }
-        function drawGoalDisplay(currentY, goalH, w, pad) { ctx.fillStyle = 'rgba(255,255,255,0.1)'; ctx.beginPath(); ctx.roundRect(pad, currentY, w - pad * 2, goalH * 1.5, 20); ctx.fill(); ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'; ctx.font = `600 ${getResponsiveFontSize(16)}px Poppins`; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; wrapText(appData.dailyGoal.text, pad + 20, currentY + (goalH * 1.5) / 2 - getResponsiveFontSize(10), w - pad * 2 - (appData.dailyGoal.completed ? 80:40), getResponsiveFontSize(20)); if(appData.dailyGoal.completed){ const checkX = w - pad - 40, checkY = currentY + (goalH * 1.5) / 2; ctx.strokeStyle = '#50E3C2'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(checkX - 10, checkY); ctx.lineTo(checkX - 3, checkY + 7); ctx.lineTo(checkX + 10, checkY - 8); ctx.stroke();}}
-        function drawPomodoro(w,h,currentY) { const timerRadius = w * 0.22; ctx.save(); ctx.translate(w / 2, currentY + timerRadius); const progress = pomo.time / pomo.duration; ctx.lineWidth = 12; ctx.strokeStyle = "rgba(255, 255, 255, 0.2)"; ctx.beginPath(); ctx.arc(0, 0, timerRadius, 0, Math.PI * 2); ctx.stroke(); ctx.strokeStyle = "#fff"; ctx.shadowColor = 'rgba(255,255,255,0.7)'; ctx.shadowBlur = 15; ctx.lineCap = 'round'; ctx.beginPath(); ctx.arc(0, 0, timerRadius, -Math.PI / 2, -Math.PI / 2 + progress * Math.PI * 2); ctx.stroke(); ctx.shadowColor = 'transparent'; ctx.fillStyle = "#fff"; ctx.textAlign = 'center'; ctx.font = `700 ${getResponsiveFontSize(40)}px Poppins`; const minutes = Math.floor(pomo.time / 60).toString().padStart(2, '0'); const seconds = Math.floor(pomo.time % 60).toString().padStart(2, '0'); ctx.fillText(`${minutes}:${seconds}`, 0, 5); ctx.font = `600 ${getResponsiveFontSize(16)}px Poppins`; ctx.fillText(pomo.mode === 'work' ? 'Focus Session' : 'Short Break', 0, timerRadius * 0.55); ctx.restore(); const timerButton = { id: 'pomoBtn', type: 'button', x: w/2 - 60, y: currentY + timerRadius * 2 + 20, w: 120, h: 50, text: pomo.isActive ? 'PAUSE' : 'START', isPressed: false, onClick: () => { pomo.isActive = !pomo.isActive; if (pomo.isActive) { pomo.startTime = Date.now() - ((pomo.duration - pomo.time) * 1000); } else { if(pomo.mode === 'work') { const elapsedSinceStart = (Date.now() - pomo.startTime)/1000; appData.totalFocusTime += elapsedSinceStart - (pomo.duration - pomo.time); saveData();}}}}; uiElements.push(timerButton); drawButton(timerButton);}
-        function drawDailyGoal(w,h,pad,currentY) { ctx.textAlign = 'left'; ctx.font = `700 ${getResponsiveFontSize(18)}px Poppins`; ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'; ctx.fillText("Today's Mission", pad, currentY); currentY += h * 0.04; const todayStr = new Date().toISOString().split('T')[0]; const goalH = h * 0.07; if (appData.dailyGoal.date !== todayStr || !appData.dailyGoal.text) { const input = { id: 'goalInput', type: 'input', value: '', placeholder: "What's your main goal?", x: pad, y: currentY, w: w - pad * 2, h: goalH }; uiElements.push(input); drawInput(input); const btnW = w * 0.5; const button = { id: 'setGoalBtn', type: 'button', text: 'Set Mission', x: (w - btnW) / 2, y: currentY + goalH + h * 0.02, w: btnW, h: goalH, isPressed: false, onClick: () => { const goalInput = uiElements.find(el => el.id === 'goalInput'); if (goalInput.value.trim()) { appData.dailyGoal = { text: goalInput.value.trim(), date: todayStr, completed: false }; saveData(); } } }; uiElements.push(button); drawButton(button); } else { drawGoalDisplay(currentY, goalH, w, pad); if (!appData.dailyGoal.completed) { const btnW = w * 0.7; const button = { id: 'completeGoalBtn', type: 'button', text: 'Mission Accomplished!', x: (w - btnW) / 2, y: currentY + goalH * 1.5 + h * 0.02, w: btnW, h: goalH, isPressed: false, onClick: () => { createConfetti(w / 2, h / 2); appData.dailyGoal.completed = true; if (appData.lastCompletionDate !== todayStr) { if (!appData.streakHistory.includes(todayStr)) appData.streakHistory.push(todayStr); const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1); if (appData.lastCompletionDate === yesterday.toISOString().split('T')[0]) { appData.streak++; } else { appData.streak = 1; } appData.lastCompletionDate = todayStr; } saveData(); }}; uiElements.push(button); drawButton(button); } } }
-
-        // --- Init, Utils, & Full Logic ---
-        function init() { window.addEventListener('resize', resizeCanvas, false); resizeCanvas(); canvas.addEventListener('touchstart', handleTouchStart, { passive: false }); canvas.addEventListener('touchmove', handleTouchMove, { passive: false }); canvas.addEventListener('touchend', handleTouchEnd, { passive: false }); canvas.addEventListener('mousedown', handleTouchStart); canvas.addEventListener('mousemove', (e) => { if(e.buttons === 1) handleTouchMove(e); }); canvas.addEventListener('mouseup', handleTouchEnd); setupDailyContent(); setTimeout(() => { if (loadData()) { startTransition('dashboard'); } else { initializeSyllabus(); startTransition('dashboard'); } }, 1500); animate(0); }
-        function setupDailyContent() { const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24)); dailyContent = { quote: quotes[dayOfYear % quotes.length], affirmation: affirmations[dayOfYear % affirmations.length], tip: successTips[dayOfYear % successTips.length] };}
-        function getResponsiveFontSize(baseSize) { return Math.max(12, baseSize * (canvas.width / 414)); }
-        function wrapText(text, x, y, maxWidth, lineHeight) { const words = text.split(' '); let line = ''; let testY = y; for(let n = 0; n < words.length; n++) { const testLine = line + words[n] + ' '; const metrics = ctx.measureText(testLine); const testWidth = metrics.width; if (testWidth > maxWidth && n > 0) { ctx.fillText(line, x, testY); line = words[n] + ' '; testY += lineHeight; } else { line = testLine; } } ctx.fillText(line, x, testY); return testY; }
-        function saveData() { localStorage.setItem('jeeAscentZenithData', JSON.stringify(appData)); }
-        function loadData() { const d = localStorage.getItem('jeeAscentZenithData'); if(d) { appData = JSON.parse(d); if(!appData.revisions) appData.revisions = []; if(!appData.totalFocusTime) appData.totalFocusTime=0; if(!appData.streakHistory) appData.streakHistory = []; return true; } return false; }
-        function startTransition(state) { if (appState !== 'transition') { nextState = state; appState = 'transition'; transitionAlpha = 0; } }
-        function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-        function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
-        function drawLoadingScreen() { ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.font = `700 ${getResponsiveFontSize(32)}px Poppins`; ctx.fillText("JEE Ascent: Zenith", canvas.width/2, canvas.height/2 - 20); }
-        function drawAnimatedBackground(time) { const grad = ctx.createLinearGradient(0,0,canvas.width, canvas.height); const color1 = `hsl(220, 50%, ${10 + 5*Math.sin(time*0.0001)}%)`; const color2 = `hsl(215, 60%, ${15 + 5*Math.cos(time*0.0001)}%)`; grad.addColorStop(0, color1); grad.addColorStop(1, color2); ctx.fillStyle = grad; ctx.fillRect(0,0,canvas.width,canvas.height); }
-        class Particle { constructor(x, y) { this.x = x; this.y = y; this.size = Math.random() * 7 + 3; this.speedX = Math.random() * 6 - 3; this.speedY = Math.random() * -15 - 5; this.color = `hsl(${Math.random() * 360}, 90%, 60%)`; this.life = 1; this.gravity = 0.4; } update(dt) { this.speedY += this.gravity * dt * 60; this.x += this.speedX * dt * 60; this.y += this.speedY * dt * 60; this.life -= 0.02 * dt * 60; } draw() { ctx.fillStyle = this.color; ctx.globalAlpha = Math.max(0, this.life); ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1; } }
-        function createConfetti(x, y) { for (let i = 0; i < 100; i++) particles.push(new Particle(x, y)); }
-        function handleTouchStart(e) { e.preventDefault(); isDragging = false; const rect = canvas.getBoundingClientRect(); const x = e.touches ? e.touches[0].clientX - rect.left : e.clientX - rect.left; const y = e.touches ? e.touches[0].clientY - rect.top : e.clientY - rect.top; touchStart = { x, y, time: Date.now() }; const currentScroll = scrollY[activeTab] || 0; let clickedOnInput = false; uiElements.forEach(el => { const elY = el.y + ((el.type === 'listItem' || el.type === 'card') ? currentScroll : 0); if (x > el.x && x < el.x + el.w && y > elY && y < elY + el.h) { if(el.type === 'input') { focusedElement = el; clickedOnInput = true; } el.isPressed = true; } }); if (!clickedOnInput) focusedElement = null; }
-        function handleTouchMove(e) { e.preventDefault(); if (touchStart.y === null) return; isDragging = true; const y = e.touches ? e.touches[0].clientY - canvas.getBoundingClientRect().top : e.clientY - canvas.getBoundingClientRect().top; const deltaY = y - touchStart.y; if(appState === 'syllabus' || appState === 'revision' || appState === 'mindset') { scrollY[appState] += deltaY; scrollY[appState] = Math.min(0, scrollY[appState]); scrollY[appState] = Math.max(scrollBounds[appState], scrollY[appState]); } touchStart.y = y; }
-        function handleTouchEnd(e) { e.preventDefault(); const x = e.changedTouches ? e.changedTouches[0].clientX - canvas.getBoundingClientRect().left : e.clientX - canvas.getBoundingClientRect().left; const y = e.changedTouches ? e.changedTouches[0].clientY - canvas.getBoundingClientRect().top : e.clientY - canvas.getBoundingClientRect().top; const currentScroll = scrollY[activeTab] || 0; if(!isDragging){ uiElements.forEach(el => { const elY = el.y + ((el.type === 'listItem' || el.type === 'card') ? currentScroll : 0); if (el.isPressed && x > el.x && x < el.x + el.w && y > elY && y < elY + el.h) { if(el.onClick) el.onClick(); } }); } uiElements.forEach(el => el.isPressed = false); isDragging = false; }
-        function initializeSyllabus() { if (Object.keys(appData.syllabus).length > 0) return; for (const subject in jeeSyllabus) { appData.syllabus[subject] = jeeSyllabus[subject].map(name => ({ name, status: 'pending', completionDate: null, })); } }
-        const revisionSchedule = [1, 7, 30, 90];
-        function scheduleRevisions(subject, chapterName, completionDate) { const baseDate = new Date(completionDate); revisionSchedule.forEach((days, index) => { const dueDate = new Date(baseDate); dueDate.setDate(dueDate.getDate() + days); appData.revisions.push({ subject, chapterName, dueDate: dueDate.toISOString().split('T')[0], level: index + 1 }); }); }
-        function toggleChapterStatus(subject, chapterName) { const chapter = appData.syllabus[subject].find(c => c.name === chapterName); if (!chapter) return; if (chapter.status === 'pending') { chapter.status = 'completed'; chapter.completionDate = new Date().toISOString(); scheduleRevisions(subject, chapterName, chapter.completionDate); } else { chapter.status = 'pending'; chapter.completionDate = null; appData.revisions = appData.revisions.filter(r => !(r.subject === subject && r.chapterName === chapterName)); } saveData(); }
-        function completeRevision(revision) { appData.revisions = appData.revisions.filter(r => r !== revision); saveData(); }
-
-        init();
+        // Initialize the app
+        new JEEAscentApp();
+    };
     </script>
 </body>
 </html>
+
 
 
 
