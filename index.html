@@ -41,12 +41,12 @@
 
         /* Print Specific Styles */
         @media print {
-            /* Hide the input form and buttons when printing */
-            #input-form {
+            /* Hide the input form, controls, and print button when printing */
+            #input-form, #view-controls, #print-action-button {
                 display: none !important;
             }
-            /* Ensure the ticket preview takes full width for the PDF */
-            #ticket-preview {
+            /* Ensure the preview takes full width for the PDF */
+            #ticket-preview, #payment-slip-preview {
                 width: 100% !important;
                 max-width: none !important;
                 box-shadow: none !important;
@@ -60,6 +60,17 @@
                 margin: 0 !important;
             }
         }
+        /* Custom signature line style for the slip */
+        .signature-line {
+            height: 1px;
+            background-color: #cbd5e1;
+            margin-top: 1rem;
+        }
+        .item-input-group > input {
+            padding: 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+        }
     </style>
 </head>
 <body class="p-4 md:p-8">
@@ -67,30 +78,55 @@
     <div class="max-w-7xl mx-auto flex flex-col lg:flex-row gap-8">
 
         <!-- 1. INPUT FORM AREA -->
-        <div id="input-form" class="w-full lg:w-1/2 bg-white p-6 md:p-8 rounded-xl shadow-lg border border-gray-200 h-fit sticky top-8">
+        <div id="input-form" class="w-full lg:w-1/2 bg-white p-6 md:p-8 rounded-xl shadow-lg border border-gray-200 h-fit">
             <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center border-b pb-3">
-                <i data-lucide="edit" class="w-6 h-6 mr-3 text-indigo-600"></i> Edit Ticket Details
+                <i data-lucide="edit" class="w-6 h-6 mr-3 text-indigo-600"></i> Edit Ticket & Invoice Details
             </h2>
             
             <div class="space-y-4">
                 
-                <!-- Reference Number & Client Name -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <!-- Company Branding -->
+                <fieldset class="border p-4 rounded-md space-y-3">
+                    <legend class="text-sm font-medium text-indigo-700 px-2">Company Branding & Contact</legend>
+                    <div>
+                        <label for="companyName" class="block text-sm font-medium text-gray-700">Company Name</label>
+                        <input type="text" id="companyName" value="Feasibility Media Solutions" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label for="logoUrl" class="block text-sm font-medium text-gray-700">Company Logo URL (must be square)</label>
+                        <input type="text" id="logoUrl" value="https://placehold.co/100x100/312e81/ffffff?text=feasibility" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label for="contactDetails" class="block text-sm font-medium text-gray-700">Company Contact / Footer Details</label>
+                        <textarea id="contactDetails" rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500">Address: 123 Tech Lane, Mumbai, IN | Email: contact@feasibility.com | Phone: +91 98765 43210</textarea>
+                    </div>
+                </fieldset>
+
+                <!-- Reference, Client, Invoice -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                         <label for="refNum" class="block text-sm font-medium text-gray-700">Reference Number</label>
                         <input type="text" id="refNum" value="FM-HS-20251013-001" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500">
                     </div>
                     <div>
+                        <label for="invoiceNum" class="block text-sm font-medium text-gray-700">Invoice Number</label>
+                        <input type="text" id="invoiceNum" value="INV-2025-0042" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div>
                         <label for="clientName" class="block text-sm font-medium text-gray-700">Client Name</label>
-                        <input type="text" id="clientName" value="Hafid Shekh" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500">
+                        <input type="text" id="clientName" value="" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500">
                     </div>
                 </div>
 
                 <!-- Date & Priority -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
-                        <label for="creationDate" class="block text-sm font-medium text-gray-700">Creation Date (e.g., IST)</label>
-                        <input type="text" id="creationDate" value="2025-10-13 15:30 IST" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500">
+                        <label for="creationDate" class="block text-sm font-medium text-gray-700">Issue Date (e.g., 2025-10-13)</label>
+                        <input type="text" id="creationDate" value="2025-10-13" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label for="taxRate" class="block text-sm font-medium text-gray-700">Tax Rate (%)</label>
+                        <input type="number" id="taxRate" value="18" min="0" max="100" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500">
                     </div>
                     <div>
                         <label for="priority" class="block text-sm font-medium text-gray-700">Priority</label>
@@ -103,158 +139,389 @@
                     </div>
                 </div>
 
-                <!-- Service, Plan & Amount Paid -->
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
-                        <label for="service" class="block text-sm font-medium text-gray-700">Service/Project</label>
-                        <input type="text" id="service" value="Feasibility Media Assessment" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500">
+                <!-- Itemized Services Section -->
+                <fieldset class="border p-4 rounded-md space-y-3">
+                    <legend class="text-sm font-medium text-indigo-700 px-2">Itemized Services (Invoice Line Items)</legend>
+                    <div id="lineItemsContainer" class="space-y-3">
+                        <!-- Default Row -->
+                        <div class="grid grid-cols-12 gap-2 item-input-group">
+                            <input type="text" value="Feasibility Assessment" placeholder="Description" data-type="description" class="col-span-6" oninput="calculateTotal()">
+                            <input type="number" value="1" min="1" placeholder="Qty" data-type="quantity" class="col-span-2 text-center" oninput="calculateTotal()">
+                            <input type="number" value="20000" min="0" placeholder="Price" data-type="price" class="col-span-3 text-right" oninput="calculateTotal()">
+                            <button onclick="removeItemRow(this)" class="col-span-1 flex items-center justify-center text-red-600 hover:text-red-800 bg-gray-100 rounded-md">
+                                <i data-lucide="x" class="w-4 h-4"></i>
+                            </button>
+                        </div>
                     </div>
+                    <button onclick="addItemRow()" type="button" class="mt-2 w-full flex items-center justify-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-gray-50 hover:bg-gray-100 transition duration-150">
+                        <i data-lucide="plus" class="w-4 h-4 mr-1"></i> Add Line Item
+                    </button>
+                </fieldset>
+                
+                <!-- Status and Authorization -->
+                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                         <label for="planType" class="block text-sm font-medium text-gray-700">Plan Type</label>
                         <input type="text" id="planType" value="Pro Plan" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500">
                     </div>
                     <div>
-                        <label for="amountPaid" class="block text-sm font-medium text-gray-700">Amount Paid</label>
-                        <input type="text" id="amountPaid" value="20,000" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500">
+                        <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
+                        <select id="status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="New">New - Awaiting Scoping</option>
+                            <option value="In Progress" selected>In Progress - Payment Received</option>
+                            <option value="On Hold">On Hold</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="authorizedBy" class="block text-sm font-medium text-gray-700">Authorized By (Name/Title)</label>
+                        <input type="text" id="authorizedBy" value="Aryaveer Mishra, CEO" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500">
                     </div>
                 </div>
 
-                <!-- Status -->
+                <!-- Project Description -->
                 <div>
-                    <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
-                    <select id="status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500">
-                        <option value="New">New - Awaiting Scoping</option>
-                        <option value="In Progress" selected>In Progress - Payment Received</option>
-                        <option value="On Hold">On Hold</option>
-                        <option value="Completed">Completed</option>
-                        <option value="Cancelled">Cancelled</option>
-                    </select>
-                </div>
-
-                <!-- Description -->
-                <div>
-                    <label for="description" class="block text-sm font-medium text-gray-700">Project Description</label>
-                    <textarea id="description" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500">This ticket reflects the confirmed Pro Plan agreement. The client has submitted a payment of 20,000. This foundational analysis is crucial before moving into the planning and execution phases.</textarea>
+                    <label for="description" class="block text-sm font-medium text-gray-700">Project/Service Description</label>
+                    <textarea id="description" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500">This document confirms the services rendered under the Pro Plan. The foundational analysis is complete and payment has been processed.</textarea>
                 </div>
             </div>
 
-            <!-- Print Button -->
-            <button onclick="window.print()" class="mt-6 w-full flex items-center justify-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
-                <i data-lucide="printer" class="w-5 h-5 mr-2"></i> Print Ticket (PDF Ready)
+            <!-- Print Button (Prints Active View) -->
+            <button id="print-action-button" onclick="printActiveView()" class="mt-6 w-full flex items-center justify-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
+                <i data-lucide="printer" class="w-5 h-5 mr-2"></i> Print Active View (PDF Ready)
             </button>
         </div>
 
-        <!-- 2. TICKET PREVIEW AREA -->
-        <!-- This is the content that will be printed -->
-        <div id="ticket-preview" class="w-full lg:w-1/2 bg-white shadow-2xl rounded-xl p-8 space-y-8 border-b-4 border-indigo-700 max-w-4xl lg:max-w-none">
+        <!-- 2. PREVIEW AREA (Ticket/Slip) -->
+        <div class="w-full lg:w-1/2">
+             <!-- View Toggle Controls -->
+            <div id="view-controls" class="mb-4 flex rounded-lg shadow-md overflow-hidden border border-gray-300">
+                <button id="viewTicketButton" onclick="toggleView('ticket')" class="flex-1 px-4 py-3 text-center font-semibold text-sm transition-colors duration-150 bg-indigo-600 text-white hover:bg-indigo-700 rounded-l-lg">
+                    <i data-lucide="file-text" class="w-4 h-4 mr-2 inline-block"></i> Project Ticket
+                </button>
+                <button id="viewSlipButton" onclick="toggleView('slip')" class="flex-1 px-4 py-3 text-center font-semibold text-sm transition-colors duration-150 text-gray-700 bg-white hover:bg-gray-100 rounded-r-lg">
+                    <i data-lucide="receipt" class="w-4 h-4 mr-2 inline-block"></i> Payment Slip (Invoice)
+                </button>
+            </div>
 
-            <!-- Header -->
-            <header class="pb-4 border-b border-gray-100">
-                <div class="flex items-center space-x-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-600"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
-                    <h1 id="previewRefTitle" class="text-3xl font-extrabold text-gray-900">Project Ticket: FM-HS-20251013-001</h1>
-                </div>
-                <p id="previewSubtitle" class="text-lg text-gray-500 mt-1 pl-12">Feasibility Media Assessment for Hafid Shekh</p>
-            </header>
+            <!-- TICKET PREVIEW -->
+            <div id="ticket-preview" class="bg-white shadow-2xl rounded-xl p-6 md:p-8 space-y-8 border-b-4 border-indigo-700 max-w-4xl lg:max-w-none">
 
-            <!-- Ticket Details Grid -->
-            <section class="bg-gray-50 p-6 rounded-lg border border-gray-200">
-                <h2 class="text-xl font-bold text-gray-800 mb-5 border-b border-gray-200 pb-2">Key Information</h2>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-6">
-
-                    <!-- Ref Number -->
-                    <div class="p-4 bg-white rounded-lg shadow-md border-l-4 border-indigo-500">
-                        <p class="text-xs font-medium text-gray-500 uppercase tracking-widest flex items-center">
-                            <i data-lucide="hash" class="w-4 h-4 mr-2 text-indigo-500"></i> Reference Number
-                        </p>
-                        <p id="previewRefNum" class="text-xl font-extrabold text-indigo-700 mt-1">FM-HS-20251013-001</p>
+                <!-- Header (Company Branding) -->
+                <header class="pb-4 border-b border-gray-100 flex items-start justify-between">
+                    <div>
+                        <h1 id="previewCompanyName" class="text-xl font-bold text-gray-900">Feasibility Media Solutions</h1>
+                        <p class="text-xs text-gray-500 mt-0.5">Project Documentation</p>
                     </div>
+                    <img id="previewLogo" src="https://placehold.co/100x100/312e81/ffffff?text=feasibility" alt="Company Logo" class="w-12 h-12 rounded-lg object-cover">
+                </header>
 
-                    <!-- Client Name -->
-                    <div class="p-4 bg-white rounded-lg shadow-md border-l-4 border-gray-300">
-                        <p class="text-xs font-medium text-gray-500 uppercase tracking-widest flex items-center">
-                            <i data-lucide="user" class="w-4 h-4 mr-2 text-gray-500"></i> Client Name
-                        </p>
-                        <p id="previewClientName" class="text-xl font-semibold text-gray-800 mt-1">Hafid Shekh</p>
+                <!-- Ticket Summary -->
+                <section class="bg-gray-50 p-4 md:p-6 rounded-lg border border-gray-200">
+                    <h2 class="text-lg md:text-xl font-bold text-gray-800 mb-5 border-b border-gray-200 pb-2">Ticket Summary</h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
+
+                        <div class="p-3 bg-white rounded-lg shadow-md border-l-4 border-pink-700">
+                            <p class="text-xs font-medium text-gray-500 uppercase tracking-widest flex items-center">
+                                <i data-lucide="banknote" class="w-4 h-4 mr-2 text-pink-700"></i> Total Amount Due
+                            </p>
+                            <p id="previewTotalAmount" class="text-lg font-extrabold text-pink-800 mt-1">23,600</p>
+                        </div>
+                        
+                        <!-- Ref Number -->
+                        <div class="p-3 bg-white rounded-lg shadow-md border-l-4 border-indigo-500">
+                            <p class="text-xs font-medium text-gray-500 uppercase tracking-widest flex items-center">
+                                <i data-lucide="hash" class="w-4 h-4 mr-2 text-indigo-500"></i> Reference Number
+                            </p>
+                            <p id="previewRefNum" class="text-lg font-extrabold text-indigo-700 mt-1">FM-HS-20251013-001</p>
+                        </div>
+
+                        <!-- Client Name -->
+                        <div class="p-3 bg-white rounded-lg shadow-md border-l-4 border-gray-300">
+                            <p class="text-xs font-medium text-gray-500 uppercase tracking-widest flex items-center">
+                                <i data-lucide="user" class="w-4 h-4 mr-2 text-gray-500"></i> Client Name
+                            </p>
+                            <p id="previewClientName" class="text-lg font-semibold text-gray-800 mt-1"></p>
+                        </div>
+                        
+                        <!-- Status -->
+                        <div id="previewStatusContainer" class="p-3 bg-white rounded-lg shadow-md border-l-4 border-blue-500">
+                            <p class="text-xs font-medium text-gray-500 uppercase tracking-widest flex items-center">
+                                <i data-lucide="loader-2" class="w-4 h-4 mr-2 text-blue-500"></i> Status
+                            </p>
+                            <span id="previewStatusBadge" class="inline-flex items-center px-2 py-1 mt-1 text-sm font-bold rounded-full status-badge-in-progress">
+                                In Progress - Payment Received
+                            </span>
+                        </div>
+                        
+                        <!-- Invoice Number -->
+                         <div class="p-3 bg-white rounded-lg shadow-md border-l-4 border-pink-500">
+                            <p class="text-xs font-medium text-gray-500 uppercase tracking-widest flex items-center">
+                                <i data-lucide="file-check" class="w-4 h-4 mr-2 text-pink-500"></i> Invoice Number
+                            </p>
+                            <p id="previewInvoiceNum" class="text-lg font-extrabold text-pink-700 mt-1">INV-2025-0042</p>
+                        </div>
+
+                        <!-- Issue Date -->
+                        <div class="p-3 bg-white rounded-lg shadow-md border-l-4 border-gray-300">
+                            <p class="text-xs font-medium text-gray-500 uppercase tracking-widest flex items-center">
+                                <i data-lucide="calendar" class="w-4 h-4 mr-2 text-gray-500"></i> Issue Date
+                            </p>
+                            <p id="previewCreationDate" class="text-lg font-semibold text-gray-800 mt-1">2025-10-13</p>
+                        </div>
+
                     </div>
-
-                    <!-- Creation Date -->
-                    <div class="p-4 bg-white rounded-lg shadow-md border-l-4 border-gray-300">
-                        <p class="text-xs font-medium text-gray-500 uppercase tracking-widest flex items-center">
-                            <i data-lucide="calendar" class="w-4 h-4 mr-2 text-gray-500"></i> Creation Date
-                        </p>
-                        <p id="previewCreationDate" class="text-xl font-semibold text-gray-800 mt-1">2025-10-13 15:30 IST</p>
+                </section>
+                
+                <!-- Service Description -->
+                <section class="space-y-4 pt-4">
+                    <h2 class="text-lg md:text-xl font-bold text-gray-800 border-b border-gray-200 pb-2 flex items-center">
+                        <i data-lucide="info" class="w-5 h-5 mr-2 text-gray-600"></i> Project Description & Service Breakdown
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                            <p class="text-xs font-medium text-gray-500 uppercase">Plan Type</p>
+                            <p id="previewPlanType" class="text-lg font-semibold text-gray-800 mt-1">Pro Plan</p>
+                        </div>
+                        <div class="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                            <p class="text-xs font-medium text-gray-500 uppercase">Priority</p>
+                            <p id="previewPriority" class="text-lg font-semibold text-gray-800 mt-1">Standard</p>
+                        </div>
                     </div>
-
-                    <!-- Priority -->
-                    <div class="p-4 bg-white rounded-lg shadow-md border-l-4 border-yellow-500">
-                        <p class="text-xs font-medium text-gray-500 uppercase tracking-widest flex items-center">
-                            <i data-lucide="zap" class="w-4 h-4 mr-2 text-yellow-500"></i> Priority
-                        </p>
-                        <p id="previewPriority" class="text-xl font-semibold text-gray-800 mt-1">Standard</p>
-                    </div>
-
-                    <!-- Service/Project -->
-                    <div class="p-4 bg-white rounded-lg shadow-md border-l-4 border-gray-300">
-                        <p class="text-xs font-medium text-gray-500 uppercase tracking-widest flex items-center">
-                            <i data-lucide="monitor" class="w-4 h-4 mr-2 text-gray-500"></i> Service/Project
-                        </p>
-                        <p id="previewService" class="text-xl font-semibold text-gray-800 mt-1">Feasibility Media Assessment</p>
+                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        <p id="previewDescription" class="text-gray-700 leading-relaxed text-sm md:text-base">This document confirms the services rendered under the Pro Plan. The foundational analysis is complete and payment has been processed.</p>
                     </div>
                     
-                    <!-- Plan Type -->
-                    <div class="p-4 bg-white rounded-lg shadow-md border-l-4 border-purple-500">
-                        <p class="text-xs font-medium text-gray-500 uppercase tracking-widest flex items-center">
-                            <i data-lucide="award" class="w-4 h-4 mr-2 text-purple-500"></i> Plan Type
-                        </p>
-                        <p id="previewPlanType" class="text-xl font-semibold text-purple-700 mt-1">Pro Plan</p>
+                    <!-- Itemized Table Preview for Ticket -->
+                    <div class="pt-4">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                                    <th class="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-16">Qty</th>
+                                    <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Price</th>
+                                    <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="previewLineItems" class="bg-white divide-y divide-gray-200">
+                                <!-- Itemized rows will be injected here by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+                
+                <!-- Footer -->
+                <footer class="pt-6 border-t border-gray-200 text-center">
+                    <p id="previewContactFooter" class="text-sm text-gray-600 leading-relaxed">Address: 123 Tech Lane, Mumbai, IN | Email: contact@feasibility.com | Phone: +91 98765 43210</p>
+                </footer>
+            </div>
+
+            <!-- PAYMENT SLIP PREVIEW (INVOICE) -->
+            <div id="payment-slip-preview" class="bg-white shadow-2xl rounded-xl p-6 md:p-8 space-y-8 border-b-4 border-teal-700 hidden max-w-4xl lg:max-w-none">
+                <!-- Header (Company Branding) -->
+                <header class="pb-4 border-b border-gray-100 flex items-start justify-between">
+                    <div>
+                        <h1 id="slipCompanyName" class="text-xl font-bold text-gray-900">Feasibility Media Solutions</h1>
+                        <p class="text-xs text-gray-500 mt-0.5">Official Payment Confirmation Slip / Tax Invoice</p>
+                    </div>
+                    <img id="slipLogo" src="https://placehold.co/100x100/312e81/ffffff?text=feasibility" alt="Company Logo" class="w-12 h-12 rounded-lg object-cover">
+                </header>
+
+                <section class="bg-teal-50 p-4 md:p-6 rounded-lg border border-teal-200 space-y-6">
+                    <h2 class="text-lg md:text-xl font-bold text-teal-800 border-b border-teal-300 pb-2 flex items-center">
+                        <i data-lucide="file-check" class="w-5 h-5 mr-2"></i> Financial Summary
+                    </h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- Invoice Number -->
+                         <div class="p-3 bg-white rounded-lg shadow-inner border-l-4 border-pink-500">
+                            <p class="text-sm font-medium text-gray-500 uppercase">Invoice Number</p>
+                            <p id="slipInvoiceNum" class="text-lg font-extrabold text-pink-700 mt-1">INV-2025-0042</p>
+                        </div>
+                        <!-- Ref Number -->
+                        <div class="p-3 bg-white rounded-lg shadow-inner border-l-4 border-indigo-500">
+                            <p class="text-sm font-medium text-gray-500 uppercase">Reference Number</p>
+                            <p id="slipRefNum" class="text-lg font-extrabold text-indigo-700 mt-1">FM-HS-20251013-001</p>
+                        </div>
+                        <!-- Date -->
+                        <div class="p-3 bg-white rounded-lg shadow-inner border-l-4 border-teal-500">
+                            <p class="text-sm font-medium text-gray-500 uppercase">Issue Date</p>
+                            <p id="slipCreationDate" class="text-lg font-extrabold text-gray-800 mt-1">2025-10-13</p>
+                        </div>
                     </div>
 
-                    <!-- Amount Paid -->
-                    <div class="p-4 bg-white rounded-lg shadow-md border-l-4 border-pink-500">
-                        <p class="text-xs font-medium text-gray-500 uppercase tracking-widest flex items-center">
-                            <i data-lucide="wallet" class="w-4 h-4 mr-2 text-pink-500"></i> Amount Paid
-                        </p>
-                        <p id="previewAmountPaid" class="text-xl font-semibold text-pink-700 mt-1">20,000</p>
+                    <!-- Itemized Table Preview for Slip -->
+                    <div class="border border-teal-300 rounded-lg overflow-hidden">
+                        <div class="bg-teal-100 p-3">
+                            <p class="text-sm font-bold text-teal-800">Itemized Services</p>
+                        </div>
+                         <table class="min-w-full divide-y divide-gray-200 bg-white">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                                    <th class="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-16">Qty</th>
+                                    <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Price</th>
+                                    <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="slipLineItems" class="divide-y divide-gray-200">
+                                <!-- Itemized rows will be injected here by JS -->
+                            </tbody>
+                        </table>
                     </div>
                     
-                    <!-- Status -->
-                    <div id="previewStatusContainer" class="p-4 bg-white rounded-lg shadow-md border-l-4 border-blue-500">
-                        <p class="text-xs font-medium text-gray-500 uppercase tracking-widest flex items-center">
-                            <i data-lucide="loader-2" class="w-4 h-4 mr-2 text-blue-500"></i> Status
-                        </p>
-                        <span id="previewStatusBadge" class="inline-flex items-center px-3 py-1 mt-1 text-base font-bold rounded-full status-badge-in-progress">
-                            In Progress - Payment Received
-                        </span>
+                    <!-- Financial Totals Breakdown -->
+                    <div class="space-y-2 pt-2">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-medium text-teal-800">Subtotal (Base Fee)</span>
+                            <span id="slipSubtotal" class="text-lg font-semibold text-teal-800">20,000</span>
+                        </div>
+                         <div class="flex justify-between items-center border-t border-teal-100 pt-2">
+                            <span class="text-sm font-medium text-gray-600">Tax (<span id="slipTaxRate">18%</span>)</span>
+                            <span id="slipTaxAmount" class="text-lg font-semibold text-gray-800">3,600</span>
+                        </div>
+                         <div class="flex justify-between items-center p-4 bg-teal-300 rounded-md border-t border-teal-400 mt-4">
+                            <span class="text-base font-bold text-teal-900 uppercase">Total Amount Paid</span>
+                            <span id="slipTotalAmount" class="text-2xl font-black text-teal-900">23,600</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="space-y-4 pt-4">
+                    <h2 class="text-lg md:text-xl font-bold text-gray-800 border-b border-gray-200 pb-2 flex items-center">
+                        <i data-lucide="user-check" class="w-5 h-5 mr-2 text-gray-600"></i> Authorization
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <p class="text-sm font-medium text-gray-500 uppercase">Client</p>
+                            <p id="slipClientName" class="text-lg md:text-xl font-semibold text-gray-800 mt-1"></p>
+                        </div>
+                         <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <p class="text-sm font-medium text-gray-500 uppercase">Payment Method (Assumed)</p>
+                            <!-- NOTE: Payment Method input was removed as it's not strictly necessary for the ticket, but keeping the display here for clarity -->
+                            <p id="slipPaymentMethod" class="text-lg md:text-xl font-semibold text-gray-800 mt-1">Bank Transfer (IMPS)</p>
+                        </div>
                     </div>
 
-                </div>
-            </section>
-
-            <!-- Project Description -->
-            <section class="space-y-4 pt-4">
-                <h2 class="text-xl font-bold text-gray-800 border-b border-gray-200 pb-2 flex items-center">
-                    <i data-lucide="info" class="w-5 h-5 mr-2 text-gray-600"></i> Project Description
-                </h2>
-                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                    <p id="previewDescription" class="text-gray-700 leading-relaxed">This ticket reflects the confirmed Pro Plan agreement. The client has submitted a payment of 20,000. This foundational analysis is crucial before moving into the planning and execution phases.</p>
-                </div>
-            </section>
+                    <!-- Authorization -->
+                    <div class="pt-6">
+                        <p class="text-sm text-gray-700">This certifies that the total amount shown above has been received and processed.</p>
+                        <div class="signature-line w-2/3"></div>
+                        <p id="slipAuthorizedBy" class="text-sm font-semibold text-gray-800 mt-2">Aryaveer Mishra, CEO</p>
+                        <p id="slipCompanyNameFooterText" class="text-xs text-gray-500">For Feasibility Media Solutions</p>
+                    </div>
+                </section>
+                
+                <!-- Footer -->
+                <footer class="pt-6 border-t border-gray-200 text-center">
+                    <p id="slipContactFooter" class="text-sm text-gray-600 leading-relaxed">Address: 123 Tech Lane, Mumbai, IN | Email: contact@feasibility.com | Phone: +91 98765 43210</p>
+                </footer>
+            </div>
         </div>
     </div>
 
     <script>
         // Mapping of input fields to preview elements
         const fields = [
-            { input: 'refNum', preview: 'previewRefNum', title: 'previewRefTitle', prefix: 'Project Ticket: ' },
-            { input: 'clientName', preview: 'previewClientName', subtitle: 'previewSubtitle', subtitlePrefix: ' for '},
+            // Company and Branding
+            { input: 'companyName', preview: 'previewCompanyName' },
+            { input: 'logoUrl', preview: 'previewLogo' },
+            { input: 'contactDetails', preview: 'previewContactFooter' },
+            // Core Details
+            { input: 'refNum', preview: 'previewRefNum' },
+            { input: 'invoiceNum', preview: 'previewInvoiceNum' },
+            { input: 'clientName', preview: 'previewClientName' },
             { input: 'creationDate', preview: 'previewCreationDate' },
             { input: 'priority', preview: 'previewPriority' },
-            { input: 'service', preview: 'previewService', subtitle: 'previewSubtitle' },
             { input: 'planType', preview: 'previewPlanType' },
-            { input: 'amountPaid', preview: 'previewAmountPaid' },
             { input: 'description', preview: 'previewDescription' },
+            { input: 'authorizedBy', preview: 'slipAuthorizedBy' },
+            // Tax Rate is handled by calculateTotal
         ];
+
+        // Helper to format numbers with commas (Indian style assumed)
+        const formatNumber = (num) => num.toLocaleString('en-IN', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 2,
+        });
+
+        // Function to create a new item row
+        function addItemRow(desc = "", qty = 1, price = 0) {
+            const container = document.getElementById('lineItemsContainer');
+            const newRow = document.createElement('div');
+            newRow.className = 'grid grid-cols-12 gap-2 item-input-group';
+            newRow.innerHTML = `
+                <input type="text" value="${desc}" placeholder="Description" data-type="description" class="col-span-6" oninput="calculateTotal()">
+                <input type="number" value="${qty}" min="1" placeholder="Qty" data-type="quantity" class="col-span-2 text-center" oninput="calculateTotal()">
+                <input type="number" value="${price}" min="0" placeholder="Price" data-type="price" class="col-span-3 text-right" oninput="calculateTotal()">
+                <button onclick="removeItemRow(this)" class="col-span-1 flex items-center justify-center text-red-600 hover:text-red-800 bg-gray-100 rounded-md">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            `;
+            container.appendChild(newRow);
+            // Re-initialize lucide icons for the new button
+            lucide.createIcons();
+            calculateTotal();
+        }
+
+        // Function to remove an item row
+        function removeItemRow(button) {
+            button.closest('.item-input-group').remove();
+            calculateTotal();
+        }
+
+        // Function to calculate tax and total based on line items
+        function calculateTotal() {
+            const taxRateInput = document.getElementById('taxRate');
+            const taxRate = parseFloat(taxRateInput.value) || 0; 
+            const itemContainers = document.querySelectorAll('#lineItemsContainer .item-input-group');
+            let subtotal = 0;
+            let itemData = [];
+            
+            // 1. Calculate Subtotal from all line items
+            itemContainers.forEach(container => {
+                const desc = container.querySelector('[data-type="description"]').value;
+                const qty = parseInt(container.querySelector('[data-type="quantity"]').value) || 0;
+                const price = parseFloat(container.querySelector('[data-type="price"]').value) || 0;
+                
+                const itemTotal = qty * price;
+                subtotal += itemTotal;
+
+                itemData.push({ desc, qty, price, total: itemTotal });
+            });
+            
+            // 2. Calculate Tax and Total
+            const taxAmount = subtotal * (taxRate / 100);
+            const totalAmount = subtotal + taxAmount;
+            
+            // 3. Update Preview Documents (Line Items Table)
+            const previewBody = document.getElementById('previewLineItems');
+            const slipBody = document.getElementById('slipLineItems');
+            previewBody.innerHTML = '';
+            slipBody.innerHTML = '';
+
+            itemData.forEach(item => {
+                const rowHtml = `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900">${item.desc || '—'}</td>
+                        <td class="px-3 py-2 whitespace-nowrap text-sm text-center text-gray-700">${item.qty}</td>
+                        <td class="px-3 py-2 whitespace-nowrap text-sm text-right text-gray-700">${formatNumber(item.price)}</td>
+                        <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-right text-gray-800">${formatNumber(item.total)}</td>
+                    </tr>
+                `;
+                previewBody.insertAdjacentHTML('beforeend', rowHtml);
+                slipBody.insertAdjacentHTML('beforeend', rowHtml);
+            });
+
+
+            // 4. Update Financial Summary
+            document.getElementById('previewTotalAmount').textContent = formatNumber(totalAmount);
+            document.getElementById('slipSubtotal').textContent = formatNumber(subtotal);
+            document.getElementById('slipTaxRate').textContent = taxRate + '%';
+            document.getElementById('slipTaxAmount').textContent = formatNumber(taxAmount);
+            document.getElementById('slipTotalAmount').textContent = formatNumber(totalAmount);
+        }
 
         // Function to update the preview from the input values
         function updatePreview() {
@@ -264,28 +531,33 @@
 
                 const value = inputElement.value;
 
-                // Update the main content elements
-                if (f.preview) {
-                    document.getElementById(f.preview).textContent = value;
-                }
+                // Update the main content elements (text content)
+                if (f.preview && f.input !== 'logoUrl') {
+                    const previewElement = document.getElementById(f.preview);
+                    const slipElement = document.getElementById('slip' + f.preview.substring(7)); // Handle slip elements
 
-                // Update the title/subtitle elements (complex logic)
-                if (f.title && f.input === 'refNum') {
-                    const titleElement = document.getElementById(f.title);
-                    if (titleElement) titleElement.textContent = f.prefix + value;
+                    if (previewElement) previewElement.textContent = value;
+                    if (slipElement) slipElement.textContent = value;
                 }
-                if (f.subtitle) {
-                    const subtitleElement = document.getElementById(f.subtitle);
-                    const clientName = document.getElementById('clientName').value;
-                    const service = document.getElementById('service').value;
-                    if (subtitleElement && clientName && service) {
-                        subtitleElement.textContent = service + ' for ' + clientName;
-                    }
+                
+                // Update the logo image source
+                if (f.input === 'logoUrl') {
+                    document.getElementById('previewLogo').src = value;
+                    document.getElementById('slipLogo').src = value;
                 }
+                
             });
 
-            // Handle Status update separately due to styling
+            // Complex logic updates
+            const companyName = document.getElementById('companyName').value;
+            document.getElementById('slipCompanyName').textContent = companyName;
+            document.getElementById('slipCompanyNameFooterText').textContent = 'For ' + companyName;
+
+            // Handle Status update (styling)
             updateStatusBadge();
+            
+            // Handle Financial calculation based on line items
+            calculateTotal();
         }
 
         // Function to handle status change and update badge style
@@ -303,37 +575,64 @@
             statusBadge.textContent = selectedText;
 
             // Remove previous classes
-            statusBadge.className = 'inline-flex items-center px-3 py-1 mt-1 text-base font-bold rounded-full';
-            statusContainer.className = 'p-4 bg-white rounded-lg shadow-md border-l-4';
+            statusBadge.className = 'inline-flex items-center px-2 py-1 mt-1 text-sm font-bold rounded-full';
+            statusContainer.className = 'p-3 bg-white rounded-lg shadow-md border-l-4';
+            const statusIcon = document.querySelector('#previewStatusContainer i');
 
             // Apply new classes based on status
             switch (selectedValue) {
                 case 'New':
                     statusBadge.classList.add('status-badge-new');
                     statusContainer.classList.add('border-l-4', 'border-green-500');
-                    document.querySelector('#previewStatusContainer i').classList.remove('text-blue-500', 'text-yellow-500');
-                    document.querySelector('#previewStatusContainer i').classList.add('text-green-500');
+                    if(statusIcon) { statusIcon.className = 'w-4 h-4 mr-2 text-green-500'; }
                     break;
                 case 'In Progress':
                     statusBadge.classList.add('status-badge-in-progress');
                     statusContainer.classList.add('border-l-4', 'border-blue-500');
-                    document.querySelector('#previewStatusContainer i').classList.remove('text-green-500', 'text-yellow-500');
-                    document.querySelector('#previewStatusContainer i').classList.add('text-blue-500');
+                    if(statusIcon) { statusIcon.className = 'w-4 h-4 mr-2 text-blue-500'; }
                     break;
                 case 'Completed':
                     statusBadge.classList.add('status-badge-completed');
                     statusContainer.classList.add('border-l-4', 'border-teal-500');
-                    document.querySelector('#previewStatusContainer i').classList.remove('text-blue-500', 'text-yellow-500');
-                    document.querySelector('#previewStatusContainer i').classList.add('text-teal-500');
+                    if(statusIcon) { statusIcon.className = 'w-4 h-4 mr-2 text-teal-500'; }
                     break;
                 default:
                     statusBadge.classList.add('status-badge-default');
                     statusContainer.classList.add('border-l-4', 'border-red-500');
-                    document.querySelector('#previewStatusContainer i').classList.remove('text-blue-500', 'text-green-500');
-                    document.querySelector('#previewStatusContainer i').classList.add('text-red-500');
+                    if(statusIcon) { statusIcon.className = 'w-4 h-4 mr-2 text-red-500'; }
                     break;
             }
         }
+        
+        // Function to toggle between the ticket and payment slip views
+        function toggleView(view) {
+            const ticketPreview = document.getElementById('ticket-preview');
+            const paymentSlipPreview = document.getElementById('payment-slip-preview');
+            const ticketButton = document.getElementById('viewTicketButton');
+            const slipButton = document.getElementById('viewSlipButton');
+
+            if (view === 'ticket') {
+                ticketPreview.classList.remove('hidden');
+                paymentSlipPreview.classList.add('hidden');
+                ticketButton.classList.add('bg-indigo-600', 'text-white');
+                ticketButton.classList.remove('bg-white', 'text-gray-700');
+                slipButton.classList.remove('bg-indigo-600', 'text-white');
+                slipButton.classList.add('bg-white', 'text-gray-700');
+            } else if (view === 'slip') {
+                ticketPreview.classList.add('hidden');
+                paymentSlipPreview.classList.remove('hidden');
+                ticketButton.classList.remove('bg-indigo-600', 'text-white');
+                ticketButton.classList.add('bg-white', 'text-gray-700');
+                slipButton.classList.add('bg-indigo-600', 'text-white');
+                slipButton.classList.remove('bg-white', 'text-gray-700');
+            }
+        }
+
+        // Function to print the currently active view
+        function printActiveView() {
+            window.print();
+        }
+
 
         // Attach event listeners to all input fields
         document.addEventListener('DOMContentLoaded', () => {
@@ -344,6 +643,9 @@
             document.querySelectorAll('#input-form input, #input-form select, #input-form textarea').forEach(element => {
                 element.addEventListener('input', updatePreview);
             });
+            
+            // Set initial view to Project Ticket
+            toggleView('ticket');
 
             // Initialize Lucide icons
             lucide.createIcons();
