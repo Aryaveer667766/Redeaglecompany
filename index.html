@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive Project Ticket Editor</title>
+    <title>Project Manager Dashboard</title>
     <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Load Lucide Icons for visual detail -->
@@ -18,58 +18,57 @@
         }
 
         /* Custom Status Colors */
-        .status-badge-in-progress {
-            background-color: #dbeafe; /* blue-100 */
-            color: #1e40af; /* blue-900 */
-            border: 1px solid #93c5fd; /* blue-300 */
-        }
-        .status-badge-new {
-            background-color: #d1fae5;
-            color: #065f46;
-            border: 1px solid #a7f3d0;
-        }
-        .status-badge-completed {
-            background-color: #e0f2f1;
-            color: #00796b;
-            border: 1px solid #80cbc4;
-        }
-        .status-badge-default {
-            background-color: #fecaca;
-            color: #b91c1c;
-            border: 1px solid #fca5a5;
-        }
+        .status-badge-in-progress { background-color: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
+        .status-badge-new { background-color: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+        .status-badge-completed { background-color: #e0f2f1; color: #00796b; border: 1px solid #80cbc4; }
+        .status-badge-default { background-color: #fecaca; color: #b91c1c; border: 1px solid #fca5a5; }
 
         /* Print Specific Styles */
         @media print {
-            /* Hide the input form, controls, and print button when printing */
-            #input-form, #view-controls, #print-action-button {
+            #input-form, #view-controls, #print-action-button, #chat-toggle, #freelancer-chat {
                 display: none !important;
             }
-            /* Ensure the preview takes full width for the PDF */
             #ticket-preview, #payment-slip-preview {
-                width: 100% !important;
-                max-width: none !important;
-                box-shadow: none !important;
-                padding: 0 !important;
-                margin: 0 !important;
-                border-width: 0 !important;
+                width: 100% !important; max-width: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; border-width: 0 !important;
             }
-            body {
-                background-color: white !important;
-                padding: 0 !important;
-                margin: 0 !important;
-            }
+            body { background-color: white !important; padding: 0 !important; margin: 0 !important; }
         }
-        /* Custom signature line style for the slip */
-        .signature-line {
-            height: 1px;
-            background-color: #cbd5e1;
-            margin-top: 1rem;
+        
+        /* Chat Widget Styles (from previous AI chat file) */
+        .freelancer-chat-container {
+            transition: all 0.3s ease-in-out;
+            transform: scale(0.95);
+            opacity: 0;
+            pointer-events: none;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
         }
-        .item-input-group > input {
-            padding: 0.5rem;
-            border: 1px solid #d1d5db;
-            border-radius: 0.375rem;
+
+        .freelancer-chat-container.active {
+            transform: scale(1);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .user-message {
+            background-color: #3b82f6; /* Blue 500 */
+            color: white;
+            border-radius: 1rem 1rem 0 1rem;
+            max-width: 80%;
+        }
+
+        .ai-message {
+            background-color: #f3f4f6; /* Gray 100 */
+            color: #1f2937; /* Gray 800 */
+            border-radius: 1rem 1rem 1rem 0;
+            max-width: 80%;
+        }
+
+        /* Ensure smooth scrolling for messages */
+        .message-container {
+            scrollbar-width: none; /* Firefox */
+        }
+        .message-container::-webkit-scrollbar {
+            display: none; /* Chrome/Safari */
         }
     </style>
 </head>
@@ -90,15 +89,15 @@
                     <legend class="text-sm font-medium text-indigo-700 px-2">Company Branding & Contact</legend>
                     <div>
                         <label for="companyName" class="block text-sm font-medium text-gray-700">Company Name</label>
-                        <input type="text" id="companyName" value="Feasibility Media Solutions" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500">
+                        <input type="text" id="companyName" value="Feasibility Media Solutions" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500" oninput="updatePreview()">
                     </div>
                     <div>
                         <label for="logoUrl" class="block text-sm font-medium text-gray-700">Company Logo URL (must be square)</label>
-                        <input type="text" id="logoUrl" value="https://placehold.co/100x100/312e81/ffffff?text=feasibility" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500">
+                        <input type="text" id="logoUrl" value="https://placehold.co/100x100/312e81/ffffff?text=feasibility" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500" oninput="updatePreview()">
                     </div>
                     <div>
                         <label for="contactDetails" class="block text-sm font-medium text-gray-700">Company Contact / Footer Details</label>
-                        <textarea id="contactDetails" rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500">Address: 123 Tech Lane, Mumbai, IN | Email: contact@feasibility.com | Phone: +91 98765 43210</textarea>
+                        <textarea id="contactDetails" rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500" oninput="updatePreview()">Address: 123 Tech Lane, Mumbai, IN | Email: contact@feasibility.com | Phone: +91 98765 43210</textarea>
                     </div>
                 </fieldset>
 
@@ -106,38 +105,32 @@
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                         <label for="refNum" class="block text-sm font-medium text-gray-700">Reference Number</label>
-                        <input type="text" id="refNum" value="FM-HS-20251013-001" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500">
+                        <input type="text" id="refNum" value="FM-HS-20251013-001" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500" oninput="updatePreview()">
                     </div>
                     <div>
                         <label for="invoiceNum" class="block text-sm font-medium text-gray-700">Invoice Number</label>
-                        <input type="text" id="invoiceNum" value="INV-2025-0042" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500">
+                        <input type="text" id="invoiceNum" value="INV-2025-0042" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500" oninput="updatePreview()">
                     </div>
                     <div>
                         <label for="clientName" class="block text-sm font-medium text-gray-700">Client Name</label>
-                        <input type="text" id="clientName" value="" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500">
+                        <input type="text" id="clientName" value="Client Innovations Ltd." class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500" oninput="updatePreview()">
                     </div>
                 </div>
-
-                <!-- Date & Priority -->
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
-                        <label for="creationDate" class="block text-sm font-medium text-gray-700">Issue Date (e.g., 2025-10-13)</label>
-                        <input type="text" id="creationDate" value="2025-10-13" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500">
+                
+                <!-- Freelancer AI Setup -->
+                <fieldset class="border p-4 rounded-md space-y-3">
+                    <legend class="text-sm font-medium text-pink-700 px-2">Freelancer Expert AI Setup</legend>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="freelancerNameAI" class="block text-sm font-medium text-gray-700">AI Freelancer Name</label>
+                            <input type="text" id="freelancerNameAI" value="Rajiv Menon" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-pink-500 focus:border-pink-500" oninput="updatePreview()">
+                        </div>
+                        <div>
+                            <label for="freelancerAvatarLetter" class="block text-sm font-medium text-gray-700">Avatar Letter (Max 1 char)</label>
+                            <input type="text" id="freelancerAvatarLetter" value="R" maxlength="1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-pink-500 focus:border-pink-500" oninput="updatePreview()">
+                        </div>
                     </div>
-                    <div>
-                        <label for="taxRate" class="block text-sm font-medium text-gray-700">Tax Rate (%)</label>
-                        <input type="number" id="taxRate" value="18" min="0" max="100" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500">
-                    </div>
-                    <div>
-                        <label for="priority" class="block text-sm font-medium text-gray-700">Priority</label>
-                        <select id="priority" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500">
-                            <option value="Low">Low</option>
-                            <option value="Standard" selected>Standard</option>
-                            <option value="High">High</option>
-                            <option value="Urgent">Urgent</option>
-                        </select>
-                    </div>
-                </div>
+                </fieldset>
 
                 <!-- Itemized Services Section -->
                 <fieldset class="border p-4 rounded-md space-y-3">
@@ -145,9 +138,9 @@
                     <div id="lineItemsContainer" class="space-y-3">
                         <!-- Default Row -->
                         <div class="grid grid-cols-12 gap-2 item-input-group">
-                            <input type="text" value="Feasibility Assessment" placeholder="Description" data-type="description" class="col-span-6" oninput="calculateTotal()">
-                            <input type="number" value="1" min="1" placeholder="Qty" data-type="quantity" class="col-span-2 text-center" oninput="calculateTotal()">
-                            <input type="number" value="20000" min="0" placeholder="Price" data-type="price" class="col-span-3 text-right" oninput="calculateTotal()">
+                            <input type="text" value="Feasibility Assessment" placeholder="Description" data-type="description" class="col-span-6 border p-2 rounded-md" oninput="calculateTotal()">
+                            <input type="number" value="1" min="1" placeholder="Qty" data-type="quantity" class="col-span-2 text-center border p-2 rounded-md" oninput="calculateTotal()">
+                            <input type="number" value="20000" min="0" placeholder="Price" data-type="price" class="col-span-3 text-right border p-2 rounded-md" oninput="calculateTotal()">
                             <button onclick="removeItemRow(this)" class="col-span-1 flex items-center justify-center text-red-600 hover:text-red-800 bg-gray-100 rounded-md">
                                 <i data-lucide="x" class="w-4 h-4"></i>
                             </button>
@@ -157,16 +150,20 @@
                         <i data-lucide="plus" class="w-4 h-4 mr-1"></i> Add Line Item
                     </button>
                 </fieldset>
-                
-                <!-- Status and Authorization -->
-                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+                <!-- Date, Tax & Status -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
-                        <label for="planType" class="block text-sm font-medium text-gray-700">Plan Type</label>
-                        <input type="text" id="planType" value="Pro Plan" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500">
+                        <label for="creationDate" class="block text-sm font-medium text-gray-700">Issue Date (e.g., 2025-10-13)</label>
+                        <input type="text" id="creationDate" value="2025-10-13" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500" oninput="updatePreview()">
+                    </div>
+                    <div>
+                        <label for="taxRate" class="block text-sm font-medium text-gray-700">Tax Rate (%)</label>
+                        <input type="number" id="taxRate" value="18" min="0" max="100" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500" oninput="calculateTotal()">
                     </div>
                     <div>
                         <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
-                        <select id="status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500">
+                        <select id="status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500" oninput="updatePreview()">
                             <option value="New">New - Awaiting Scoping</option>
                             <option value="In Progress" selected>In Progress - Payment Received</option>
                             <option value="On Hold">On Hold</option>
@@ -174,16 +171,28 @@
                             <option value="Cancelled">Cancelled</option>
                         </select>
                     </div>
+                </div>
+
+                <!-- Authorization and Description -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label for="authorizedBy" class="block text-sm font-medium text-gray-700">Authorized By (Name/Title)</label>
-                        <input type="text" id="authorizedBy" value="Aryaveer Mishra, CEO" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500">
+                        <input type="text" id="authorizedBy" value="Aryaveer Mishra, CEO" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500" oninput="updatePreview()">
+                    </div>
+                    <div>
+                        <label for="priority" class="block text-sm font-medium text-gray-700">Priority</label>
+                        <select id="priority" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500" oninput="updatePreview()">
+                            <option value="Low">Low</option>
+                            <option value="Standard" selected>Standard</option>
+                            <option value="High">High</option>
+                            <option value="Urgent">Urgent</option>
+                        </select>
                     </div>
                 </div>
 
-                <!-- Project Description -->
                 <div>
                     <label for="description" class="block text-sm font-medium text-gray-700">Project/Service Description</label>
-                    <textarea id="description" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500">This document confirms the services rendered under the Pro Plan. The foundational analysis is complete and payment has been processed.</textarea>
+                    <textarea id="description" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500" oninput="updatePreview()">This document confirms the services rendered under the Pro Plan. The foundational analysis is complete and payment has been processed.</textarea>
                 </div>
             </div>
 
@@ -197,17 +206,16 @@
         <div class="w-full lg:w-1/2">
              <!-- View Toggle Controls -->
             <div id="view-controls" class="mb-4 flex rounded-lg shadow-md overflow-hidden border border-gray-300">
-                <button id="viewTicketButton" onclick="toggleView('ticket')" class="flex-1 px-4 py-3 text-center font-semibold text-sm transition-colors duration-150 bg-indigo-600 text-white hover:bg-indigo-700 rounded-l-lg">
+                <button id="viewTicketButton" onclick="toggleView('ticket')" class="flex-1 px-4 py-3 text-center font-semibold text-sm transition-colors duration-150 bg-indigo-600 text-white hover:bg-indigo-700">
                     <i data-lucide="file-text" class="w-4 h-4 mr-2 inline-block"></i> Project Ticket
                 </button>
-                <button id="viewSlipButton" onclick="toggleView('slip')" class="flex-1 px-4 py-3 text-center font-semibold text-sm transition-colors duration-150 text-gray-700 bg-white hover:bg-gray-100 rounded-r-lg">
-                    <i data-lucide="receipt" class="w-4 h-4 mr-2 inline-block"></i> Payment Slip (Invoice)
+                <button id="viewSlipButton" onclick="toggleView('slip')" class="flex-1 px-4 py-3 text-center font-semibold text-sm transition-colors duration-150 text-gray-700 bg-white hover:bg-gray-100">
+                    <i data-lucide="receipt" class="w-4 h-4 mr-2 inline-block"></i> Payment Slip
                 </button>
             </div>
 
             <!-- TICKET PREVIEW -->
             <div id="ticket-preview" class="bg-white shadow-2xl rounded-xl p-6 md:p-8 space-y-8 border-b-4 border-indigo-700 max-w-4xl lg:max-w-none">
-
                 <!-- Header (Company Branding) -->
                 <header class="pb-4 border-b border-gray-100 flex items-start justify-between">
                     <div>
@@ -221,31 +229,24 @@
                 <section class="bg-gray-50 p-4 md:p-6 rounded-lg border border-gray-200">
                     <h2 class="text-lg md:text-xl font-bold text-gray-800 mb-5 border-b border-gray-200 pb-2">Ticket Summary</h2>
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
-
                         <div class="p-3 bg-white rounded-lg shadow-md border-l-4 border-pink-700">
                             <p class="text-xs font-medium text-gray-500 uppercase tracking-widest flex items-center">
                                 <i data-lucide="banknote" class="w-4 h-4 mr-2 text-pink-700"></i> Total Amount Due
                             </p>
                             <p id="previewTotalAmount" class="text-lg font-extrabold text-pink-800 mt-1">23,600</p>
                         </div>
-                        
-                        <!-- Ref Number -->
                         <div class="p-3 bg-white rounded-lg shadow-md border-l-4 border-indigo-500">
                             <p class="text-xs font-medium text-gray-500 uppercase tracking-widest flex items-center">
                                 <i data-lucide="hash" class="w-4 h-4 mr-2 text-indigo-500"></i> Reference Number
                             </p>
                             <p id="previewRefNum" class="text-lg font-extrabold text-indigo-700 mt-1">FM-HS-20251013-001</p>
                         </div>
-
-                        <!-- Client Name -->
                         <div class="p-3 bg-white rounded-lg shadow-md border-l-4 border-gray-300">
                             <p class="text-xs font-medium text-gray-500 uppercase tracking-widest flex items-center">
                                 <i data-lucide="user" class="w-4 h-4 mr-2 text-gray-500"></i> Client Name
                             </p>
-                            <p id="previewClientName" class="text-lg font-semibold text-gray-800 mt-1"></p>
+                            <p id="previewClientName" class="text-lg font-semibold text-gray-800 mt-1">Client Innovations Ltd.</p>
                         </div>
-                        
-                        <!-- Status -->
                         <div id="previewStatusContainer" class="p-3 bg-white rounded-lg shadow-md border-l-4 border-blue-500">
                             <p class="text-xs font-medium text-gray-500 uppercase tracking-widest flex items-center">
                                 <i data-lucide="loader-2" class="w-4 h-4 mr-2 text-blue-500"></i> Status
@@ -254,36 +255,27 @@
                                 In Progress - Payment Received
                             </span>
                         </div>
-                        
-                        <!-- Invoice Number -->
-                         <div class="p-3 bg-white rounded-lg shadow-md border-l-4 border-pink-500">
+                        <div class="p-3 bg-white rounded-lg shadow-md border-l-4 border-pink-500">
                             <p class="text-xs font-medium text-gray-500 uppercase tracking-widest flex items-center">
                                 <i data-lucide="file-check" class="w-4 h-4 mr-2 text-pink-500"></i> Invoice Number
                             </p>
                             <p id="previewInvoiceNum" class="text-lg font-extrabold text-pink-700 mt-1">INV-2025-0042</p>
                         </div>
-
-                        <!-- Issue Date -->
                         <div class="p-3 bg-white rounded-lg shadow-md border-l-4 border-gray-300">
                             <p class="text-xs font-medium text-gray-500 uppercase tracking-widest flex items-center">
                                 <i data-lucide="calendar" class="w-4 h-4 mr-2 text-gray-500"></i> Issue Date
                             </p>
                             <p id="previewCreationDate" class="text-lg font-semibold text-gray-800 mt-1">2025-10-13</p>
                         </div>
-
                     </div>
                 </section>
                 
-                <!-- Service Description -->
+                <!-- Service Description & Table -->
                 <section class="space-y-4 pt-4">
                     <h2 class="text-lg md:text-xl font-bold text-gray-800 border-b border-gray-200 pb-2 flex items-center">
                         <i data-lucide="info" class="w-5 h-5 mr-2 text-gray-600"></i> Project Description & Service Breakdown
                     </h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                            <p class="text-xs font-medium text-gray-500 uppercase">Plan Type</p>
-                            <p id="previewPlanType" class="text-lg font-semibold text-gray-800 mt-1">Pro Plan</p>
-                        </div>
                         <div class="p-3 bg-gray-50 rounded-lg border border-gray-200">
                             <p class="text-xs font-medium text-gray-500 uppercase">Priority</p>
                             <p id="previewPriority" class="text-lg font-semibold text-gray-800 mt-1">Standard</p>
@@ -293,7 +285,6 @@
                         <p id="previewDescription" class="text-gray-700 leading-relaxed text-sm md:text-base">This document confirms the services rendered under the Pro Plan. The foundational analysis is complete and payment has been processed.</p>
                     </div>
                     
-                    <!-- Itemized Table Preview for Ticket -->
                     <div class="pt-4">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-100">
@@ -334,24 +325,20 @@
                     </h2>
                     
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <!-- Invoice Number -->
                          <div class="p-3 bg-white rounded-lg shadow-inner border-l-4 border-pink-500">
                             <p class="text-sm font-medium text-gray-500 uppercase">Invoice Number</p>
                             <p id="slipInvoiceNum" class="text-lg font-extrabold text-pink-700 mt-1">INV-2025-0042</p>
                         </div>
-                        <!-- Ref Number -->
                         <div class="p-3 bg-white rounded-lg shadow-inner border-l-4 border-indigo-500">
                             <p class="text-sm font-medium text-gray-500 uppercase">Reference Number</p>
                             <p id="slipRefNum" class="text-lg font-extrabold text-indigo-700 mt-1">FM-HS-20251013-001</p>
                         </div>
-                        <!-- Date -->
                         <div class="p-3 bg-white rounded-lg shadow-inner border-l-4 border-teal-500">
                             <p class="text-sm font-medium text-gray-500 uppercase">Issue Date</p>
                             <p id="slipCreationDate" class="text-lg font-extrabold text-gray-800 mt-1">2025-10-13</p>
                         </div>
                     </div>
 
-                    <!-- Itemized Table Preview for Slip -->
                     <div class="border border-teal-300 rounded-lg overflow-hidden">
                         <div class="bg-teal-100 p-3">
                             <p class="text-sm font-bold text-teal-800">Itemized Services</p>
@@ -371,7 +358,6 @@
                         </table>
                     </div>
                     
-                    <!-- Financial Totals Breakdown -->
                     <div class="space-y-2 pt-2">
                         <div class="flex justify-between items-center">
                             <span class="text-sm font-medium text-teal-800">Subtotal (Base Fee)</span>
@@ -395,91 +381,153 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
                             <p class="text-sm font-medium text-gray-500 uppercase">Client</p>
-                            <p id="slipClientName" class="text-lg md:text-xl font-semibold text-gray-800 mt-1"></p>
+                            <p id="slipClientName" class="text-lg md:text-xl font-semibold text-gray-800 mt-1">Client Innovations Ltd.</p>
                         </div>
                          <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
                             <p class="text-sm font-medium text-gray-500 uppercase">Payment Method (Assumed)</p>
-                            <!-- NOTE: Payment Method input was removed as it's not strictly necessary for the ticket, but keeping the display here for clarity -->
                             <p id="slipPaymentMethod" class="text-lg md:text-xl font-semibold text-gray-800 mt-1">Bank Transfer (IMPS)</p>
                         </div>
                     </div>
 
-                    <!-- Authorization -->
                     <div class="pt-6">
                         <p class="text-sm text-gray-700">This certifies that the total amount shown above has been received and processed.</p>
-                        <div class="signature-line w-2/3"></div>
+                        <div class="h-px bg-gray-300 w-2/3 mt-6"></div>
                         <p id="slipAuthorizedBy" class="text-sm font-semibold text-gray-800 mt-2">Aryaveer Mishra, CEO</p>
                         <p id="slipCompanyNameFooterText" class="text-xs text-gray-500">For Feasibility Media Solutions</p>
                     </div>
                 </section>
                 
-                <!-- Footer -->
                 <footer class="pt-6 border-t border-gray-200 text-center">
                     <p id="slipContactFooter" class="text-sm text-gray-600 leading-relaxed">Address: 123 Tech Lane, Mumbai, IN | Email: contact@feasibility.com | Phone: +91 98765 43210</p>
                 </footer>
             </div>
         </div>
     </div>
+    
+    <!-- 3. AI CHAT WIDGET -->
+    
+    <!-- Floating Chat Button -->
+    <button id="chat-toggle" onclick="toggleChat()" class="fixed bottom-6 right-6 z-50 bg-indigo-600 hover:bg-indigo-700 text-white p-4 rounded-full shadow-lg transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-indigo-500 focus:ring-opacity-50">
+        <!-- SVG Icon for Chat/Message -->
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16l3-3m0 0l3 3m-3-3v8m0-8a9 9 0 11-8 8.825m8-8.825A9 9 0 0112 3a9 9 0 018 8.825"></path>
+        </svg>
+    </button>
+
+    <!-- Chat Window Container -->
+    <div id="freelancer-chat" class="freelancer-chat-container fixed bottom-20 right-6 z-40 w-full max-w-sm h-[85vh] md:h-[600px] bg-white rounded-xl flex flex-col overflow-hidden shadow-2xl">
+        
+        <!-- Chat Header -->
+        <div class="p-4 bg-indigo-600 border-b border-indigo-700 flex items-center justify-between text-white">
+            <div class="flex items-center">
+                <div class="relative w-10 h-10 mr-3">
+                    <!-- Freelancer Avatar/Icon -->
+                    <div id="chat-avatar-letter" class="w-full h-full rounded-full bg-indigo-800 flex items-center justify-center text-white font-bold text-lg shadow-md">
+                        R
+                    </div>
+                    <!-- Online Status Dot -->
+                    <span class="absolute right-0 bottom-0 w-3 h-3 bg-green-400 rounded-full border-2 border-indigo-600"></span>
+                </div>
+                <div>
+                    <h3 id="chat-header-name" class="text-lg font-semibold">Rajiv Menon</h3>
+                    <p class="text-xs text-indigo-200">Online | Your dedicated project advisor</p>
+                </div>
+            </div>
+            <!-- Close Button -->
+            <button onclick="toggleChat()" class="text-indigo-200 hover:text-white p-1 rounded-full">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+
+        <!-- Message History -->
+        <div id="message-container" class="message-container flex-grow p-4 space-y-4 overflow-y-auto bg-gray-50">
+            <!-- Initial Greeting Message -->
+            <div class="flex justify-start">
+                <div class="ai-message p-3 text-sm">
+                    Hello! I'm Rajiv Menon, your dedicated project expert. How can I help you scope a new project, optimize your pricing, or communicate with a client today?
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Input -->
+        <div class="p-4 border-t border-gray-200 bg-white">
+            <div class="relative">
+                <input id="chat-input" type="text" placeholder="Type your question..." onkeydown="handleInput(event)" class="w-full py-3 pl-4 pr-12 text-sm bg-gray-100 border border-gray-300 rounded-full focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
+                <button id="send-button" onclick="sendMessage()" class="absolute right-0 top-0 h-full px-4 text-indigo-600 hover:text-indigo-800 disabled:text-gray-400 disabled:cursor-not-allowed" disabled>
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                </button>
+            </div>
+            <div id="error-message" class="text-red-500 text-xs mt-1 hidden"></div>
+        </div>
+
+        <!-- Loading Indicator (Spinner) -->
+        <div id="loading-indicator" class="hidden absolute inset-0 bg-white bg-opacity-70 flex items-center justify-center">
+            <svg class="animate-spin h-8 w-8 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+        </div>
+    </div>
 
     <script>
-        // Mapping of input fields to preview elements
+        // --- Shared Application Variables ---
+        const chatContainer = document.getElementById('freelancer-chat');
+        const messageContainer = document.getElementById('message-container');
+        const chatInput = document.getElementById('chat-input');
+        const sendButton = document.getElementById('send-button');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const errorMessageDiv = document.getElementById('error-message');
+        const apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent";
+        const apiKey = ""; // API key is handled by the environment
+
+        // --- TICKET & INVOICE EDITOR LOGIC ---
+
         const fields = [
-            // Company and Branding
             { input: 'companyName', preview: 'previewCompanyName' },
             { input: 'logoUrl', preview: 'previewLogo' },
             { input: 'contactDetails', preview: 'previewContactFooter' },
-            // Core Details
             { input: 'refNum', preview: 'previewRefNum' },
             { input: 'invoiceNum', preview: 'previewInvoiceNum' },
             { input: 'clientName', preview: 'previewClientName' },
             { input: 'creationDate', preview: 'previewCreationDate' },
             { input: 'priority', preview: 'previewPriority' },
-            { input: 'planType', preview: 'previewPlanType' },
             { input: 'description', preview: 'previewDescription' },
             { input: 'authorizedBy', preview: 'slipAuthorizedBy' },
-            // Tax Rate is handled by calculateTotal
         ];
 
-        // Helper to format numbers with commas (Indian style assumed)
         const formatNumber = (num) => num.toLocaleString('en-IN', {
             minimumFractionDigits: 0,
             maximumFractionDigits: 2,
         });
 
-        // Function to create a new item row
         function addItemRow(desc = "", qty = 1, price = 0) {
             const container = document.getElementById('lineItemsContainer');
             const newRow = document.createElement('div');
             newRow.className = 'grid grid-cols-12 gap-2 item-input-group';
             newRow.innerHTML = `
-                <input type="text" value="${desc}" placeholder="Description" data-type="description" class="col-span-6" oninput="calculateTotal()">
-                <input type="number" value="${qty}" min="1" placeholder="Qty" data-type="quantity" class="col-span-2 text-center" oninput="calculateTotal()">
-                <input type="number" value="${price}" min="0" placeholder="Price" data-type="price" class="col-span-3 text-right" oninput="calculateTotal()">
+                <input type="text" value="${desc}" placeholder="Description" data-type="description" class="col-span-6 border p-2 rounded-md" oninput="calculateTotal()">
+                <input type="number" value="${qty}" min="1" placeholder="Qty" data-type="quantity" class="col-span-2 text-center border p-2 rounded-md" oninput="calculateTotal()">
+                <input type="number" value="${price}" min="0" placeholder="Price" data-type="price" class="col-span-3 text-right border p-2 rounded-md" oninput="calculateTotal()">
                 <button onclick="removeItemRow(this)" class="col-span-1 flex items-center justify-center text-red-600 hover:text-red-800 bg-gray-100 rounded-md">
                     <i data-lucide="x" class="w-4 h-4"></i>
                 </button>
             `;
             container.appendChild(newRow);
-            // Re-initialize lucide icons for the new button
             lucide.createIcons();
             calculateTotal();
         }
 
-        // Function to remove an item row
         function removeItemRow(button) {
             button.closest('.item-input-group').remove();
             calculateTotal();
         }
 
-        // Function to calculate tax and total based on line items
         function calculateTotal() {
-            const taxRateInput = document.getElementById('taxRate');
-            const taxRate = parseFloat(taxRateInput.value) || 0; 
+            const taxRate = parseFloat(document.getElementById('taxRate').value) || 0; 
             const itemContainers = document.querySelectorAll('#lineItemsContainer .item-input-group');
             let subtotal = 0;
             let itemData = [];
             
-            // 1. Calculate Subtotal from all line items
             itemContainers.forEach(container => {
                 const desc = container.querySelector('[data-type="description"]').value;
                 const qty = parseInt(container.querySelector('[data-type="quantity"]').value) || 0;
@@ -491,11 +539,10 @@
                 itemData.push({ desc, qty, price, total: itemTotal });
             });
             
-            // 2. Calculate Tax and Total
             const taxAmount = subtotal * (taxRate / 100);
             const totalAmount = subtotal + taxAmount;
             
-            // 3. Update Preview Documents (Line Items Table)
+            // Update Preview Tables
             const previewBody = document.getElementById('previewLineItems');
             const slipBody = document.getElementById('slipLineItems');
             previewBody.innerHTML = '';
@@ -514,8 +561,7 @@
                 slipBody.insertAdjacentHTML('beforeend', rowHtml);
             });
 
-
-            // 4. Update Financial Summary
+            // Update Financial Summary
             document.getElementById('previewTotalAmount').textContent = formatNumber(totalAmount);
             document.getElementById('slipSubtotal').textContent = formatNumber(subtotal);
             document.getElementById('slipTaxRate').textContent = taxRate + '%';
@@ -523,7 +569,6 @@
             document.getElementById('slipTotalAmount').textContent = formatNumber(totalAmount);
         }
 
-        // Function to update the preview from the input values
         function updatePreview() {
             fields.forEach(f => {
                 const inputElement = document.getElementById(f.input);
@@ -531,16 +576,14 @@
 
                 const value = inputElement.value;
 
-                // Update the main content elements (text content)
                 if (f.preview && f.input !== 'logoUrl') {
                     const previewElement = document.getElementById(f.preview);
-                    const slipElement = document.getElementById('slip' + f.preview.substring(7)); // Handle slip elements
+                    const slipElement = document.getElementById('slip' + f.preview.substring(7));
 
                     if (previewElement) previewElement.textContent = value;
                     if (slipElement) slipElement.textContent = value;
                 }
                 
-                // Update the logo image source
                 if (f.input === 'logoUrl') {
                     document.getElementById('previewLogo').src = value;
                     document.getElementById('slipLogo').src = value;
@@ -553,14 +596,16 @@
             document.getElementById('slipCompanyName').textContent = companyName;
             document.getElementById('slipCompanyNameFooterText').textContent = 'For ' + companyName;
 
-            // Handle Status update (styling)
+            // AI Chat Header Updates
+            const freelancerNameAI = document.getElementById('freelancerNameAI').value || 'Freelancer Expert';
+            const avatarLetter = (document.getElementById('freelancerAvatarLetter').value || 'F').toUpperCase().substring(0, 1);
+            document.getElementById('chat-header-name').textContent = freelancerNameAI;
+            document.getElementById('chat-avatar-letter').textContent = avatarLetter;
+
             updateStatusBadge();
-            
-            // Handle Financial calculation based on line items
             calculateTotal();
         }
 
-        // Function to handle status change and update badge style
         function updateStatusBadge() {
             const statusInput = document.getElementById('status');
             const statusBadge = document.getElementById('previewStatusBadge');
@@ -571,15 +616,11 @@
             const selectedValue = statusInput.value;
             const selectedText = statusInput.options[statusInput.selectedIndex].textContent;
 
-            // Update text content
             statusBadge.textContent = selectedText;
-
-            // Remove previous classes
             statusBadge.className = 'inline-flex items-center px-2 py-1 mt-1 text-sm font-bold rounded-full';
             statusContainer.className = 'p-3 bg-white rounded-lg shadow-md border-l-4';
             const statusIcon = document.querySelector('#previewStatusContainer i');
 
-            // Apply new classes based on status
             switch (selectedValue) {
                 case 'New':
                     statusBadge.classList.add('status-badge-new');
@@ -604,51 +645,161 @@
             }
         }
         
-        // Function to toggle between the ticket and payment slip views
         function toggleView(view) {
-            const ticketPreview = document.getElementById('ticket-preview');
-            const paymentSlipPreview = document.getElementById('payment-slip-preview');
-            const ticketButton = document.getElementById('viewTicketButton');
-            const slipButton = document.getElementById('viewSlipButton');
+            const views = {
+                ticket: document.getElementById('ticket-preview'),
+                slip: document.getElementById('payment-slip-preview'),
+            };
+            const buttons = {
+                ticket: document.getElementById('viewTicketButton'),
+                slip: document.getElementById('viewSlipButton'),
+            };
 
-            if (view === 'ticket') {
-                ticketPreview.classList.remove('hidden');
-                paymentSlipPreview.classList.add('hidden');
-                ticketButton.classList.add('bg-indigo-600', 'text-white');
-                ticketButton.classList.remove('bg-white', 'text-gray-700');
-                slipButton.classList.remove('bg-indigo-600', 'text-white');
-                slipButton.classList.add('bg-white', 'text-gray-700');
-            } else if (view === 'slip') {
-                ticketPreview.classList.add('hidden');
-                paymentSlipPreview.classList.remove('hidden');
-                ticketButton.classList.remove('bg-indigo-600', 'text-white');
-                ticketButton.classList.add('bg-white', 'text-gray-700');
-                slipButton.classList.add('bg-indigo-600', 'text-white');
-                slipButton.classList.remove('bg-white', 'text-gray-700');
+            Object.values(views).forEach(v => v.classList.add('hidden'));
+            Object.values(buttons).forEach(b => {
+                b.classList.remove('bg-indigo-600', 'text-white');
+                b.classList.add('bg-white', 'text-gray-700');
+            });
+            
+            if (views[view]) {
+                views[view].classList.remove('hidden');
+                buttons[view].classList.add('bg-indigo-600', 'text-white');
+                buttons[view].classList.remove('bg-white', 'text-gray-700');
             }
         }
 
-        // Function to print the currently active view
         function printActiveView() {
             window.print();
         }
 
+        // --- AI CHAT WIDGET LOGIC ---
 
-        // Attach event listeners to all input fields
-        document.addEventListener('DOMContentLoaded', () => {
-            // Initial call to set up the preview with default values
-            updatePreview();
+        function toggleChat() {
+            chatContainer.classList.toggle('active');
+        }
 
-            // Attach listeners to update on change
-            document.querySelectorAll('#input-form input, #input-form select, #input-form textarea').forEach(element => {
-                element.addEventListener('input', updatePreview);
-            });
+        chatInput.addEventListener('input', () => {
+            sendButton.disabled = chatInput.value.trim() === '';
+        });
+
+        function handleInput(event) {
+            if (event.key === 'Enter' && !sendButton.disabled) {
+                sendMessage();
+            }
+        }
+
+        function appendMessage(text, sender) {
+            const isUser = sender === 'user';
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `flex ${isUser ? 'justify-end' : 'justify-start'}`;
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = `${isUser ? 'user-message' : 'ai-message'} p-3 text-sm`;
             
-            // Set initial view to Project Ticket
-            toggleView('ticket');
+            const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+            const formattedText = text.replace(linkRegex, (match, linkText, url) => {
+                return `<a href="${url}" target="_blank" class="text-blue-200 hover:text-blue-100 underline">${linkText}</a>`;
+            });
 
-            // Initialize Lucide icons
+            contentDiv.innerHTML = formattedText.replace(/\n/g, '<br>');
+            
+            messageDiv.appendChild(contentDiv);
+            messageContainer.appendChild(messageDiv);
+            messageContainer.scrollTop = messageContainer.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const userPrompt = chatInput.value.trim();
+            if (!userPrompt) return;
+
+            appendMessage(userPrompt, 'user');
+            chatInput.value = '';
+            sendButton.disabled = true;
+            errorMessageDiv.classList.add('hidden');
+            loadingIndicator.classList.remove('hidden');
+
+            try {
+                const aiResponseText = await generateFreelancerResponse(userPrompt);
+                appendMessage(aiResponseText, 'ai');
+            } catch (error) {
+                console.error("Gemini API Error:", error);
+                errorMessageDiv.textContent = "Error: Could not get a response. Try again later.";
+                errorMessageDiv.classList.remove('hidden');
+                appendMessage("Sorry, I'm currently unable to connect with the server. Please check your connection or try again.", 'ai');
+            } finally {
+                loadingIndicator.classList.add('hidden');
+                sendButton.disabled = chatInput.value.trim() === '';
+                chatInput.focus();
+            }
+        }
+
+        async function generateFreelancerResponse(userQuery) {
+            const freelancerName = document.getElementById('freelancerNameAI').value || 'Freelancer Expert';
+            
+            // System prompt is customized with the user's chosen name
+            const systemPrompt = `You are '${freelancerName}', a world-class freelance expert specializing in digital projects. Your role is to provide expert, professional, and concise advice related to project strategy, client communication, pricing, and contracts. Maintain a helpful, confident, and professional tone, as if you are a real person responding. Keep your responses focused and actionable. Use markdown for formatting like bold or lists. Sign off your responses with your name, '${freelancerName}'.`;
+
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                tools: [{ "google_search": {} }], 
+                systemInstruction: {
+                    parts: [{ text: systemPrompt }]
+                },
+            };
+
+            const maxRetries = 3;
+            let delay = 1000;
+
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    const response = await fetch(`${apiUrl}?key=${apiKey}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        if (response.status === 429 && i < maxRetries - 1) {
+                            await new Promise(resolve => setTimeout(resolve, delay));
+                            delay *= 2;
+                            continue; 
+                        }
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    const candidate = result.candidates?.[0];
+
+                    if (candidate && candidate.content?.parts?.[0]?.text) {
+                        return candidate.content.parts[0].text;
+                    } else {
+                        throw new Error("Invalid response format from API.");
+                    }
+
+                } catch (error) {
+                    if (i === maxRetries - 1) {
+                        throw error;
+                    }
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    delay *= 2;
+                }
+            }
+        }
+
+        // --- Initialization ---
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updatePreview();
+            toggleView('ticket');
             lucide.createIcons();
+            
+            // Attach listeners for main form updates (already done inline for line items)
+            document.querySelectorAll('#input-form input, #input-form select, #input-form textarea').forEach(element => {
+                // Ensure only inputs not covered by inline handlers fire this generic one
+                if (!element.getAttribute('oninput')) {
+                    element.addEventListener('input', updatePreview);
+                }
+            });
         });
     </script>
 
