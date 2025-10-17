@@ -3,805 +3,349 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project Manager Dashboard</title>
-    <!-- Load Tailwind CSS -->
+    <title>Feasibility Media | Secure Meeting Room</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Load Lucide Icons for visual detail -->
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Favicon for realism -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📡</text></svg>">
     <style>
-        /* Set default font to Inter for a modern look */
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f8fafc;
-            min-height: 100vh;
+            background-color: #111827; /* gray-900 */
+        }
+        .pulse {
+            animation: pulse-animation 1.5s infinite;
+        }
+        @keyframes pulse-animation {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        .main-container {
+            max-width: 1600px;
+            height: calc(100vh - 4rem);
+        }
+        .active-speaker-border {
+            border: 3px solid #3b82f6; /* blue-500 */
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
+            transition: all 0.3s ease-in-out;
+        }
+        .control-btn:hover {
+            transform: scale(1.05);
+            background-color: #4b5563; /* gray-600 */
+        }
+        .chat-message {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* Audio wave animation for speaker */
+        .audio-wave {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            display: flex;
+            align-items: flex-end;
+            height: 20px;
+        }
+        .audio-wave span {
+            display: block;
+            width: 3px;
+            margin-right: 2px;
+            background-color: #ffffff;
+            animation: wave-animation 1.2s infinite ease-in-out;
+        }
+        .audio-wave span:nth-child(2) { animation-delay: -1.0s; }
+        .audio-wave span:nth-child(3) { animation-delay: -0.8s; }
+        .audio-wave span:nth-child(4) { animation-delay: -0.6s; }
+        
+        @keyframes wave-animation {
+            0%, 100% { height: 2px; }
+            50% { height: 20px; }
         }
 
-        /* Custom Status Colors */
-        .status-badge-in-progress { background-color: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
-        .status-badge-new { background-color: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
-        .status-badge-completed { background-color: #e0f2f1; color: #00796b; border: 1px solid #80cbc4; }
-        .status-badge-default { background-color: #fecaca; color: #b91c1c; border: 1px solid #fca5a5; }
+        /* Connection Quality Indicator */
+        .conn-good { color: #22c55e; } /* green-500 */
+        .conn-ok { color: #f59e0b; } /* amber-500 */
+        .conn-bad { color: #ef4444; } /* red-500 */
 
-        /* Print Specific Styles */
-        @media print {
-            #input-form, #view-controls, #print-action-button, #chat-toggle, #freelancer-chat {
-                display: none !important;
-            }
-            #ticket-preview, #payment-slip-preview {
-                width: 100% !important; max-width: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; border-width: 0 !important;
-            }
-            body { background-color: white !important; padding: 0 !important; margin: 0 !important; }
+        /* Raised Hand */
+        .hand-raised-icon {
+            display: none; /* Hidden by default */
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background-color: rgba(245, 158, 11, 0.8); /* amber-500 with opacity */
+            padding: 6px;
+            border-radius: 9999px;
+            animation: hand-pop 0.5s ease-out;
+        }
+        @keyframes hand-pop {
+            from { transform: scale(0.5); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
         }
         
-        /* Chat Widget Styles (from previous AI chat file) */
-        .freelancer-chat-container {
-            transition: all 0.3s ease-in-out;
-            transform: scale(0.95);
-            opacity: 0;
-            pointer-events: none;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-        }
-
-        .freelancer-chat-container.active {
-            transform: scale(1);
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        .user-message {
-            background-color: #3b82f6; /* Blue 500 */
-            color: white;
-            border-radius: 1rem 1rem 0 1rem;
-            max-width: 80%;
-        }
-
-        .ai-message {
-            background-color: #f3f4f6; /* Gray 100 */
-            color: #1f2937; /* Gray 800 */
-            border-radius: 1rem 1rem 1rem 0;
-            max-width: 80%;
-        }
-
-        /* Ensure smooth scrolling for messages */
-        .message-container {
-            scrollbar-width: none; /* Firefox */
-        }
-        .message-container::-webkit-scrollbar {
-            display: none; /* Chrome/Safari */
+        /* Chat Reaction */
+        .chat-reaction {
+            background-color: #374151; /* gray-700 */
+            border: 1px solid #4b5563; /* gray-600 */
+            border-radius: 16px;
+            padding: 2px 8px;
+            font-size: 12px;
+            margin-top: 4px;
         }
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="bg-gray-900 text-slate-200 flex flex-col items-center justify-center min-h-screen p-4 sm:p-8">
 
-    <div class="max-w-7xl mx-auto flex flex-col lg:flex-row gap-8">
+    <div class="w-full main-container bg-gray-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+        <!-- Header -->
+        <header class="flex items-center justify-between p-3 border-b border-gray-700 bg-gray-800 z-10 flex-shrink-0">
+            <div class="flex items-center space-x-3">
+                 <svg class="h-8 w-8 text-blue-500" xmlns="http://www.w.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9V3m0 18a9 9 0 009-9m-9 9a9 9 0 00-9-9" />
+                  </svg>
+                <h1 class="text-xl font-bold text-slate-100">Feasibility Media | Project Nova</h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="flex items-center text-red-400 font-semibold bg-red-900/50 px-3 py-1 rounded-full text-xs">
+                    <span class="h-2 w-2 bg-red-500 rounded-full mr-2 pulse"></span>
+                    RECORDING
+                </div>
+                <div id="current-time" class="text-sm font-medium text-slate-400 bg-gray-700 px-3 py-1 rounded-md hidden md:block">
+                    <!-- Time will be injected here -->
+                </div>
+            </div>
+        </header>
 
-        <!-- 1. INPUT FORM AREA -->
-        <div id="input-form" class="w-full lg:w-1/2 bg-white p-6 md:p-8 rounded-xl shadow-lg border border-gray-200 h-fit">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center border-b pb-3">
-                <i data-lucide="edit" class="w-6 h-6 mr-3 text-indigo-600"></i> Edit Ticket & Invoice Details
-            </h2>
+        <!-- Main Content -->
+        <main class="flex-grow flex flex-col lg:flex-row overflow-hidden">
             
-            <div class="space-y-4">
-                
-                <!-- Company Branding -->
-                <fieldset class="border p-4 rounded-md space-y-3">
-                    <legend class="text-sm font-medium text-indigo-700 px-2">Company Branding & Contact</legend>
-                    <div>
-                        <label for="companyName" class="block text-sm font-medium text-gray-700">Company Name</label>
-                        <input type="text" id="companyName" value="Feasibility Media Solutions" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500" oninput="updatePreview()">
-                    </div>
-                    <div>
-                        <label for="logoUrl" class="block text-sm font-medium text-gray-700">Company Logo URL (must be square)</label>
-                        <input type="text" id="logoUrl" value="https://placehold.co/100x100/312e81/ffffff?text=feasibility" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500" oninput="updatePreview()">
-                    </div>
-                    <div>
-                        <label for="contactDetails" class="block text-sm font-medium text-gray-700">Company Contact / Footer Details</label>
-                        <textarea id="contactDetails" rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500" oninput="updatePreview()">Address: 123 Tech Lane, Mumbai, IN | Email: contact@feasibility.com | Phone: +91 98765 43210</textarea>
-                    </div>
-                </fieldset>
-
-                <!-- Reference, Client, Invoice -->
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
-                        <label for="refNum" class="block text-sm font-medium text-gray-700">Reference Number</label>
-                        <input type="text" id="refNum" value="FM-HS-20251013-001" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500" oninput="updatePreview()">
-                    </div>
-                    <div>
-                        <label for="invoiceNum" class="block text-sm font-medium text-gray-700">Invoice Number</label>
-                        <input type="text" id="invoiceNum" value="INV-2025-0042" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500" oninput="updatePreview()">
-                    </div>
-                    <div>
-                        <label for="clientName" class="block text-sm font-medium text-gray-700">Client Name</label>
-                        <input type="text" id="clientName" value="Client Innovations Ltd." class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500" oninput="updatePreview()">
+            <!-- Main Panel: Screen Share & Controls -->
+            <div class="w-full lg:w-3/4 p-4 flex flex-col">
+                <!-- Screen Share View -->
+                <div id="screen-share-view" class="flex-grow rounded-lg bg-gray-900 p-4 flex items-center justify-center border-2 border-blue-500 shadow-lg">
+                    <div class="bg-white text-gray-800 w-full h-full p-8 rounded-md flex flex-col">
+                        <h2 class="text-3xl font-bold text-blue-700 mb-2">Q3 Market Expansion Analysis</h2>
+                        <p class="text-sm text-gray-500 mb-6">Presented by Rohan Desai</p>
+                        <div class="flex-grow flex items-center space-x-8">
+                            <div class="w-1/2">
+                                <h3 class="font-semibold text-lg mb-3">Key Performance Indicators</h3>
+                                <ul class="list-disc list-inside space-y-2 text-gray-700">
+                                    <li><span class="font-semibold text-green-600">+15%</span> Growth in DACH Region</li>
+                                    <li><span class="font-semibold text-green-600">+12%</span> Growth in APAC Markets</li>
+                                    <li><span class="font-semibold text-blue-600">2.1M</span> Engagements on EU Campaign</li>
+                                    <li><span class="font-semibold text-orange-500">-5%</span> Churn Rate QoQ</li>
+                                </ul>
+                            </div>
+                            <div class="w-1/2">
+                                <h3 class="font-semibold text-lg mb-3">Projected Growth (Q4)</h3>
+                                <!-- Simple bar chart placeholder -->
+                                <div class="space-y-3">
+                                    <div class="flex items-center">
+                                        <span class="w-16">EU:</span>
+                                        <div class="w-full bg-gray-200 rounded-full h-4"><div class="bg-blue-500 h-4 rounded-full" style="width: 70%"></div></div>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <span class="w-16">APAC:</span>
+                                        <div class="w-full bg-gray-200 rounded-full h-4"><div class="bg-green-500 h-4 rounded-full" style="width: 85%"></div></div>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <span class="w-16">NA:</span>
+                                        <div class="w-full bg-gray-200 rounded-full h-4"><div class="bg-purple-500 h-4 rounded-full" style="width: 60%"></div></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                         <div class="mt-auto text-xs text-gray-400">Internal & Confidential | Slide 4 of 12</div>
                     </div>
                 </div>
                 
-                <!-- Freelancer AI Setup -->
-                <fieldset class="border p-4 rounded-md space-y-3">
-                    <legend class="text-sm font-medium text-pink-700 px-2">Freelancer Expert AI Setup</legend>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label for="freelancerNameAI" class="block text-sm font-medium text-gray-700">AI Freelancer Name</label>
-                            <input type="text" id="freelancerNameAI" value="Rajiv Menon" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-pink-500 focus:border-pink-500" oninput="updatePreview()">
-                        </div>
-                        <div>
-                            <label for="freelancerAvatarLetter" class="block text-sm font-medium text-gray-700">Avatar Letter (Max 1 char)</label>
-                            <input type="text" id="freelancerAvatarLetter" value="R" maxlength="1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-pink-500 focus:border-pink-500" oninput="updatePreview()">
-                        </div>
+                <!-- Video Strip -->
+                <div class="flex-shrink-0 pt-4 flex space-x-3 overflow-x-auto">
+                    <div class="video-tile relative rounded-lg overflow-hidden bg-gray-900 w-40 h-24 flex-shrink-0" data-name="Rohan Desai (Presenting)">
+                        <img src="https://placehold.co/400x300/a5b4fc/ffffff?text=RD" alt="Rohan Desai" class="w-full h-full object-cover">
+                        <div class="absolute bottom-0 left-0 bg-black/50 px-2 py-0.5 rounded-tr-lg text-xs"><p class="font-semibold text-white">Rohan Desai</p></div>
+                        <div class="audio-wave" style="height: 15px;"><span></span><span></span><span></span></div>
                     </div>
-                </fieldset>
-
-                <!-- Itemized Services Section -->
-                <fieldset class="border p-4 rounded-md space-y-3">
-                    <legend class="text-sm font-medium text-indigo-700 px-2">Itemized Services (Invoice Line Items)</legend>
-                    <div id="lineItemsContainer" class="space-y-3">
-                        <!-- Default Row -->
-                        <div class="grid grid-cols-12 gap-2 item-input-group">
-                            <input type="text" value="Feasibility Assessment" placeholder="Description" data-type="description" class="col-span-6 border p-2 rounded-md" oninput="calculateTotal()">
-                            <input type="number" value="1" min="1" placeholder="Qty" data-type="quantity" class="col-span-2 text-center border p-2 rounded-md" oninput="calculateTotal()">
-                            <input type="number" value="20000" min="0" placeholder="Price" data-type="price" class="col-span-3 text-right border p-2 rounded-md" oninput="calculateTotal()">
-                            <button onclick="removeItemRow(this)" class="col-span-1 flex items-center justify-center text-red-600 hover:text-red-800 bg-gray-100 rounded-md">
-                                <i data-lucide="x" class="w-4 h-4"></i>
-                            </button>
-                        </div>
+                    <div class="video-tile relative rounded-lg overflow-hidden bg-gray-900 w-40 h-24 flex-shrink-0 active-speaker-border" data-name="Yuki Tanaka">
+                        <img src="https://placehold.co/400x300/fb923c/ffffff?text=YT" alt="Yuki Tanaka" class="w-full h-full object-cover">
+                        <div class="absolute bottom-0 left-0 bg-black/50 px-2 py-0.5 rounded-tr-lg text-xs"><p class="font-semibold text-white">Yuki Tanaka</p></div>
+                        <div class="hand-raised-icon" id="yuki-hand"><svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M10 3.5a1.5 1.5 0 011.493 1.355c.371.1.72.26.995.488a1.5 1.5 0 01.332 2.122c-.6.89-1.39 1.63-2.32 2.23a.5.5 0 01-.612 0c-.93-.6-1.72-1.34-2.32-2.23a1.5 1.5 0 01.332-2.122c.276-.228.624-.388.995-.488A1.5 1.5 0 0110 3.5zM7.5 7.5c0 .354-.127.69-.356.964a.5.5 0 01-.707-.708A2.492 2.492 0 007.5 7.5zm5.357.256a.5.5 0 01.707.708A2.5 2.5 0 0012.5 7.5c0-.354.127-.69.356-.964a.5.5 0 01.707.708zM4.5 9.5a.5.5 0 000 1h11a.5.5 0 000-1h-11z"></path></svg></div>
                     </div>
-                    <button onclick="addItemRow()" type="button" class="mt-2 w-full flex items-center justify-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-gray-50 hover:bg-gray-100 transition duration-150">
-                        <i data-lucide="plus" class="w-4 h-4 mr-1"></i> Add Line Item
-                    </button>
-                </fieldset>
-
-                <!-- Date, Tax & Status -->
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
-                        <label for="creationDate" class="block text-sm font-medium text-gray-700">Issue Date (e.g., 2025-10-13)</label>
-                        <input type="text" id="creationDate" value="2025-10-13" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500" oninput="updatePreview()">
+                    <div class="video-tile relative rounded-lg overflow-hidden bg-gray-900 w-40 h-24 flex-shrink-0" data-name="Aryaveer Mishra (You)">
+                        <img src="https://placehold.co/400x300/60a5fa/ffffff?text=AM" alt="Aryaveer Mishra" class="w-full h-full object-cover">
+                        <div class="absolute bottom-0 left-0 bg-black/50 px-2 py-0.5 rounded-tr-lg text-xs"><p class="font-semibold text-white">You</p></div>
                     </div>
-                    <div>
-                        <label for="taxRate" class="block text-sm font-medium text-gray-700">Tax Rate (%)</label>
-                        <input type="number" id="taxRate" value="18" min="0" max="100" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500" oninput="calculateTotal()">
-                    </div>
-                    <div>
-                        <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
-                        <select id="status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500" oninput="updatePreview()">
-                            <option value="New">New - Awaiting Scoping</option>
-                            <option value="In Progress" selected>In Progress - Payment Received</option>
-                            <option value="On Hold">On Hold</option>
-                            <option value="Completed">Completed</option>
-                            <option value="Cancelled">Cancelled</option>
-                        </select>
+                    <div class="video-tile relative rounded-lg overflow-hidden bg-gray-900 w-40 h-24 flex-shrink-0" data-name="Hans Schmidt">
+                        <img src="https://placehold.co/400x300/34d399/ffffff?text=HS" alt="Hans Schmidt" class="w-full h-full object-cover">
+                        <div class="absolute bottom-0 left-0 bg-black/50 px-2 py-0.5 rounded-tr-lg text-xs"><p class="font-semibold text-white">Hans Schmidt</p></div>
                     </div>
                 </div>
 
-                <!-- Authorization and Description -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label for="authorizedBy" class="block text-sm font-medium text-gray-700">Authorized By (Name/Title)</label>
-                        <input type="text" id="authorizedBy" value="Aryaveer Mishra, CEO" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500" oninput="updatePreview()">
+                 <!-- Action Buttons -->
+                <div class="flex-shrink-0 pt-4 mt-auto">
+                    <div class="flex items-center justify-center space-x-2 sm:space-x-4 bg-gray-900/70 p-3 rounded-full max-w-md mx-auto">
+                        <button class="p-3 bg-gray-700 rounded-full shadow-lg transition-transform control-btn" title="Mute Microphone"><svg class="h-6 w-6 text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg></button>
+                        <button class="p-3 bg-gray-700 rounded-full shadow-lg transition-transform control-btn" title="Stop Camera"><svg class="h-6 w-6 text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg></button>
+                        <button class="p-3 bg-gray-700 rounded-full shadow-lg transition-transform control-btn" title="Raise Hand"><svg class="h-6 w-6 text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11"></path></svg></button>
+                        <button class="px-4 sm:px-6 py-3 bg-red-600 text-white font-semibold rounded-full shadow-lg hover:bg-red-700 transition-colors flex items-center space-x-2" title="Leave Meeting">
+                             <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                             <span class="hidden sm:inline">Leave</span>
+                        </button>
                     </div>
-                    <div>
-                        <label for="priority" class="block text-sm font-medium text-gray-700">Priority</label>
-                        <select id="priority" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500" oninput="updatePreview()">
-                            <option value="Low">Low</option>
-                            <option value="Standard" selected>Standard</option>
-                            <option value="High">High</option>
-                            <option value="Urgent">Urgent</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div>
-                    <label for="description" class="block text-sm font-medium text-gray-700">Project/Service Description</label>
-                    <textarea id="description" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-indigo-500 focus:border-indigo-500" oninput="updatePreview()">This document confirms the services rendered under the Pro Plan. The foundational analysis is complete and payment has been processed.</textarea>
                 </div>
             </div>
 
-            <!-- Print Button (Prints Active View) -->
-            <button id="print-action-button" onclick="printActiveView()" class="mt-6 w-full flex items-center justify-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
-                <i data-lucide="printer" class="w-5 h-5 mr-2"></i> Print Active View (PDF Ready)
-            </button>
-        </div>
-
-        <!-- 2. PREVIEW AREA (Ticket/Slip) -->
-        <div class="w-full lg:w-1/2">
-             <!-- View Toggle Controls -->
-            <div id="view-controls" class="mb-4 flex rounded-lg shadow-md overflow-hidden border border-gray-300">
-                <button id="viewTicketButton" onclick="toggleView('ticket')" class="flex-1 px-4 py-3 text-center font-semibold text-sm transition-colors duration-150 bg-indigo-600 text-white hover:bg-indigo-700">
-                    <i data-lucide="file-text" class="w-4 h-4 mr-2 inline-block"></i> Project Ticket
-                </button>
-                <button id="viewSlipButton" onclick="toggleView('slip')" class="flex-1 px-4 py-3 text-center font-semibold text-sm transition-colors duration-150 text-gray-700 bg-white hover:bg-gray-100">
-                    <i data-lucide="receipt" class="w-4 h-4 mr-2 inline-block"></i> Payment Slip
-                </button>
-            </div>
-
-            <!-- TICKET PREVIEW -->
-            <div id="ticket-preview" class="bg-white shadow-2xl rounded-xl p-6 md:p-8 space-y-8 border-b-4 border-indigo-700 max-w-4xl lg:max-w-none">
-                <!-- Header (Company Branding) -->
-                <header class="pb-4 border-b border-gray-100 flex items-start justify-between">
-                    <div>
-                        <h1 id="previewCompanyName" class="text-xl font-bold text-gray-900">Feasibility Media Solutions</h1>
-                        <p class="text-xs text-gray-500 mt-0.5">Project Documentation</p>
+            <!-- Right Panel: Chat & Info -->
+            <aside class="w-full lg:w-1/4 bg-gray-800/50 border-l border-gray-700 p-4 flex flex-col">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-slate-100">Meeting Transcript</h3>
+                    <div class="text-slate-400 font-medium text-sm">
+                        <span id="duration">00:00:00</span>
                     </div>
-                    <img id="previewLogo" src="https://placehold.co/100x100/312e81/ffffff?text=feasibility" alt="Company Logo" class="w-12 h-12 rounded-lg object-cover">
-                </header>
-
-                <!-- Ticket Summary -->
-                <section class="bg-gray-50 p-4 md:p-6 rounded-lg border border-gray-200">
-                    <h2 class="text-lg md:text-xl font-bold text-gray-800 mb-5 border-b border-gray-200 pb-2">Ticket Summary</h2>
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
-                        <div class="p-3 bg-white rounded-lg shadow-md border-l-4 border-pink-700">
-                            <p class="text-xs font-medium text-gray-500 uppercase tracking-widest flex items-center">
-                                <i data-lucide="banknote" class="w-4 h-4 mr-2 text-pink-700"></i> Total Amount Due
-                            </p>
-                            <p id="previewTotalAmount" class="text-lg font-extrabold text-pink-800 mt-1">23,600</p>
-                        </div>
-                        <div class="p-3 bg-white rounded-lg shadow-md border-l-4 border-indigo-500">
-                            <p class="text-xs font-medium text-gray-500 uppercase tracking-widest flex items-center">
-                                <i data-lucide="hash" class="w-4 h-4 mr-2 text-indigo-500"></i> Reference Number
-                            </p>
-                            <p id="previewRefNum" class="text-lg font-extrabold text-indigo-700 mt-1">FM-HS-20251013-001</p>
-                        </div>
-                        <div class="p-3 bg-white rounded-lg shadow-md border-l-4 border-gray-300">
-                            <p class="text-xs font-medium text-gray-500 uppercase tracking-widest flex items-center">
-                                <i data-lucide="user" class="w-4 h-4 mr-2 text-gray-500"></i> Client Name
-                            </p>
-                            <p id="previewClientName" class="text-lg font-semibold text-gray-800 mt-1">Client Innovations Ltd.</p>
-                        </div>
-                        <div id="previewStatusContainer" class="p-3 bg-white rounded-lg shadow-md border-l-4 border-blue-500">
-                            <p class="text-xs font-medium text-gray-500 uppercase tracking-widest flex items-center">
-                                <i data-lucide="loader-2" class="w-4 h-4 mr-2 text-blue-500"></i> Status
-                            </p>
-                            <span id="previewStatusBadge" class="inline-flex items-center px-2 py-1 mt-1 text-sm font-bold rounded-full status-badge-in-progress">
-                                In Progress - Payment Received
-                            </span>
-                        </div>
-                        <div class="p-3 bg-white rounded-lg shadow-md border-l-4 border-pink-500">
-                            <p class="text-xs font-medium text-gray-500 uppercase tracking-widest flex items-center">
-                                <i data-lucide="file-check" class="w-4 h-4 mr-2 text-pink-500"></i> Invoice Number
-                            </p>
-                            <p id="previewInvoiceNum" class="text-lg font-extrabold text-pink-700 mt-1">INV-2025-0042</p>
-                        </div>
-                        <div class="p-3 bg-white rounded-lg shadow-md border-l-4 border-gray-300">
-                            <p class="text-xs font-medium text-gray-500 uppercase tracking-widest flex items-center">
-                                <i data-lucide="calendar" class="w-4 h-4 mr-2 text-gray-500"></i> Issue Date
-                            </p>
-                            <p id="previewCreationDate" class="text-lg font-semibold text-gray-800 mt-1">2025-10-13</p>
-                        </div>
-                    </div>
-                </section>
+                </div>
                 
-                <!-- Service Description & Table -->
-                <section class="space-y-4 pt-4">
-                    <h2 class="text-lg md:text-xl font-bold text-gray-800 border-b border-gray-200 pb-2 flex items-center">
-                        <i data-lucide="info" class="w-5 h-5 mr-2 text-gray-600"></i> Project Description & Service Breakdown
-                    </h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                            <p class="text-xs font-medium text-gray-500 uppercase">Priority</p>
-                            <p id="previewPriority" class="text-lg font-semibold text-gray-800 mt-1">Standard</p>
-                        </div>
-                    </div>
-                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                        <p id="previewDescription" class="text-gray-700 leading-relaxed text-sm md:text-base">This document confirms the services rendered under the Pro Plan. The foundational analysis is complete and payment has been processed.</p>
-                    </div>
-                    
-                    <div class="pt-4">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-100">
-                                <tr>
-                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                                    <th class="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-16">Qty</th>
-                                    <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Price</th>
-                                    <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Total</th>
-                                </tr>
-                            </thead>
-                            <tbody id="previewLineItems" class="bg-white divide-y divide-gray-200">
-                                <!-- Itemized rows will be injected here by JS -->
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
-                
-                <!-- Footer -->
-                <footer class="pt-6 border-t border-gray-200 text-center">
-                    <p id="previewContactFooter" class="text-sm text-gray-600 leading-relaxed">Address: 123 Tech Lane, Mumbai, IN | Email: contact@feasibility.com | Phone: +91 98765 43210</p>
-                </footer>
-            </div>
-
-            <!-- PAYMENT SLIP PREVIEW (INVOICE) -->
-            <div id="payment-slip-preview" class="bg-white shadow-2xl rounded-xl p-6 md:p-8 space-y-8 border-b-4 border-teal-700 hidden max-w-4xl lg:max-w-none">
-                <!-- Header (Company Branding) -->
-                <header class="pb-4 border-b border-gray-100 flex items-start justify-between">
-                    <div>
-                        <h1 id="slipCompanyName" class="text-xl font-bold text-gray-900">Feasibility Media Solutions</h1>
-                        <p class="text-xs text-gray-500 mt-0.5">Official Payment Confirmation Slip / Tax Invoice</p>
-                    </div>
-                    <img id="slipLogo" src="https://placehold.co/100x100/312e81/ffffff?text=feasibility" alt="Company Logo" class="w-12 h-12 rounded-lg object-cover">
-                </header>
-
-                <section class="bg-teal-50 p-4 md:p-6 rounded-lg border border-teal-200 space-y-6">
-                    <h2 class="text-lg md:text-xl font-bold text-teal-800 border-b border-teal-300 pb-2 flex items-center">
-                        <i data-lucide="file-check" class="w-5 h-5 mr-2"></i> Financial Summary
-                    </h2>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                         <div class="p-3 bg-white rounded-lg shadow-inner border-l-4 border-pink-500">
-                            <p class="text-sm font-medium text-gray-500 uppercase">Invoice Number</p>
-                            <p id="slipInvoiceNum" class="text-lg font-extrabold text-pink-700 mt-1">INV-2025-0042</p>
-                        </div>
-                        <div class="p-3 bg-white rounded-lg shadow-inner border-l-4 border-indigo-500">
-                            <p class="text-sm font-medium text-gray-500 uppercase">Reference Number</p>
-                            <p id="slipRefNum" class="text-lg font-extrabold text-indigo-700 mt-1">FM-HS-20251013-001</p>
-                        </div>
-                        <div class="p-3 bg-white rounded-lg shadow-inner border-l-4 border-teal-500">
-                            <p class="text-sm font-medium text-gray-500 uppercase">Issue Date</p>
-                            <p id="slipCreationDate" class="text-lg font-extrabold text-gray-800 mt-1">2025-10-13</p>
-                        </div>
-                    </div>
-
-                    <div class="border border-teal-300 rounded-lg overflow-hidden">
-                        <div class="bg-teal-100 p-3">
-                            <p class="text-sm font-bold text-teal-800">Itemized Services</p>
-                        </div>
-                         <table class="min-w-full divide-y divide-gray-200 bg-white">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                                    <th class="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-16">Qty</th>
-                                    <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Price</th>
-                                    <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Total</th>
-                                </tr>
-                            </thead>
-                            <tbody id="slipLineItems" class="divide-y divide-gray-200">
-                                <!-- Itemized rows will be injected here by JS -->
-                            </tbody>
-                        </table>
-                    </div>
-                    
-                    <div class="space-y-2 pt-2">
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm font-medium text-teal-800">Subtotal (Base Fee)</span>
-                            <span id="slipSubtotal" class="text-lg font-semibold text-teal-800">20,000</span>
-                        </div>
-                         <div class="flex justify-between items-center border-t border-teal-100 pt-2">
-                            <span class="text-sm font-medium text-gray-600">Tax (<span id="slipTaxRate">18%</span>)</span>
-                            <span id="slipTaxAmount" class="text-lg font-semibold text-gray-800">3,600</span>
-                        </div>
-                         <div class="flex justify-between items-center p-4 bg-teal-300 rounded-md border-t border-teal-400 mt-4">
-                            <span class="text-base font-bold text-teal-900 uppercase">Total Amount Paid</span>
-                            <span id="slipTotalAmount" class="text-2xl font-black text-teal-900">23,600</span>
-                        </div>
-                    </div>
-                </section>
-
-                <section class="space-y-4 pt-4">
-                    <h2 class="text-lg md:text-xl font-bold text-gray-800 border-b border-gray-200 pb-2 flex items-center">
-                        <i data-lucide="user-check" class="w-5 h-5 mr-2 text-gray-600"></i> Authorization
-                    </h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                            <p class="text-sm font-medium text-gray-500 uppercase">Client</p>
-                            <p id="slipClientName" class="text-lg md:text-xl font-semibold text-gray-800 mt-1">Client Innovations Ltd.</p>
-                        </div>
-                         <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                            <p class="text-sm font-medium text-gray-500 uppercase">Payment Method (Assumed)</p>
-                            <p id="slipPaymentMethod" class="text-lg md:text-xl font-semibold text-gray-800 mt-1">Bank Transfer (IMPS)</p>
-                        </div>
-                    </div>
-
-                    <div class="pt-6">
-                        <p class="text-sm text-gray-700">This certifies that the total amount shown above has been received and processed.</p>
-                        <div class="h-px bg-gray-300 w-2/3 mt-6"></div>
-                        <p id="slipAuthorizedBy" class="text-sm font-semibold text-gray-800 mt-2">Aryaveer Mishra, CEO</p>
-                        <p id="slipCompanyNameFooterText" class="text-xs text-gray-500">For Feasibility Media Solutions</p>
-                    </div>
-                </section>
-                
-                <footer class="pt-6 border-t border-gray-200 text-center">
-                    <p id="slipContactFooter" class="text-sm text-gray-600 leading-relaxed">Address: 123 Tech Lane, Mumbai, IN | Email: contact@feasibility.com | Phone: +91 98765 43210</p>
-                </footer>
-            </div>
-        </div>
-    </div>
-    
-    <!-- 3. AI CHAT WIDGET -->
-    
-    <!-- Floating Chat Button -->
-    <button id="chat-toggle" onclick="toggleChat()" class="fixed bottom-6 right-6 z-50 bg-indigo-600 hover:bg-indigo-700 text-white p-4 rounded-full shadow-lg transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-indigo-500 focus:ring-opacity-50">
-        <!-- SVG Icon for Chat/Message -->
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16l3-3m0 0l3 3m-3-3v8m0-8a9 9 0 11-8 8.825m8-8.825A9 9 0 0112 3a9 9 0 018 8.825"></path>
-        </svg>
-    </button>
-
-    <!-- Chat Window Container -->
-    <div id="freelancer-chat" class="freelancer-chat-container fixed bottom-20 right-6 z-40 w-full max-w-sm h-[85vh] md:h-[600px] bg-white rounded-xl flex flex-col overflow-hidden shadow-2xl">
-        
-        <!-- Chat Header -->
-        <div class="p-4 bg-indigo-600 border-b border-indigo-700 flex items-center justify-between text-white">
-            <div class="flex items-center">
-                <div class="relative w-10 h-10 mr-3">
-                    <!-- Freelancer Avatar/Icon -->
-                    <div id="chat-avatar-letter" class="w-full h-full rounded-full bg-indigo-800 flex items-center justify-center text-white font-bold text-lg shadow-md">
-                        R
-                    </div>
-                    <!-- Online Status Dot -->
-                    <span class="absolute right-0 bottom-0 w-3 h-3 bg-green-400 rounded-full border-2 border-indigo-600"></span>
+                <!-- Live Transcript -->
+                <div id="chat-container" class="flex-grow space-y-4 overflow-y-auto pr-2">
+                    <!-- Chat messages will be injected here -->
                 </div>
-                <div>
-                    <h3 id="chat-header-name" class="text-lg font-semibold">Rajiv Menon</h3>
-                    <p class="text-xs text-indigo-200">Online | Your dedicated project advisor</p>
+
+                <!-- Collapsible Info Sections -->
+                <div class="mt-4 border-t border-gray-700 pt-4">
+                    <div id="participants-section" class="mt-2">
+                        <div id="participants-toggle" class="flex justify-between items-center cursor-pointer p-2 rounded-md hover:bg-gray-700">
+                            <h3 class="font-semibold text-slate-200">Participants (11)</h3>
+                            <svg id="participants-chevron" class="h-5 w-5 text-slate-400 transition-transform transform rotate-[-90deg]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </div>
+                        <div id="participants-list" class="mt-2 ml-2 space-y-3 text-sm text-slate-300 hidden">
+                             <!-- Participant list will be injected here -->
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <!-- Close Button -->
-            <button onclick="toggleChat()" class="text-indigo-200 hover:text-white p-1 rounded-full">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-            </button>
-        </div>
-
-        <!-- Message History -->
-        <div id="message-container" class="message-container flex-grow p-4 space-y-4 overflow-y-auto bg-gray-50">
-            <!-- Initial Greeting Message -->
-            <div class="flex justify-start">
-                <div class="ai-message p-3 text-sm">
-                    Hello! I'm Rajiv Menon, your dedicated project expert. How can I help you scope a new project, optimize your pricing, or communicate with a client today?
-                </div>
-            </div>
-        </div>
-
-        <!-- Chat Input -->
-        <div class="p-4 border-t border-gray-200 bg-white">
-            <div class="relative">
-                <input id="chat-input" type="text" placeholder="Type your question..." onkeydown="handleInput(event)" class="w-full py-3 pl-4 pr-12 text-sm bg-gray-100 border border-gray-300 rounded-full focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
-                <button id="send-button" onclick="sendMessage()" class="absolute right-0 top-0 h-full px-4 text-indigo-600 hover:text-indigo-800 disabled:text-gray-400 disabled:cursor-not-allowed" disabled>
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-                </button>
-            </div>
-            <div id="error-message" class="text-red-500 text-xs mt-1 hidden"></div>
-        </div>
-
-        <!-- Loading Indicator (Spinner) -->
-        <div id="loading-indicator" class="hidden absolute inset-0 bg-white bg-opacity-70 flex items-center justify-center">
-            <svg class="animate-spin h-8 w-8 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-        </div>
+            </aside>
+        </main>
     </div>
 
     <script>
-        // --- Shared Application Variables ---
-        const chatContainer = document.getElementById('freelancer-chat');
-        const messageContainer = document.getElementById('message-container');
-        const chatInput = document.getElementById('chat-input');
-        const sendButton = document.getElementById('send-button');
-        const loadingIndicator = document.getElementById('loading-indicator');
-        const errorMessageDiv = document.getElementById('error-message');
-        const apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent";
-        const apiKey = ""; // API key is handled by the environment
+        document.addEventListener('DOMContentLoaded', function() {
+            const timeElement = document.getElementById('current-time');
+            const durationElements = document.querySelectorAll('#duration');
+            const chatContainer = document.getElementById('chat-container');
 
-        // --- TICKET & INVOICE EDITOR LOGIC ---
+            // --- TIME AND DURATION LOGIC ---
+            // Current time: Friday, October 17, 2025 at 8:31 PM IST
+            const meetingStartTime = new Date('2025-10-17T20:10:00+05:30'); // Meeting started 21 mins ago
 
-        const fields = [
-            { input: 'companyName', preview: 'previewCompanyName' },
-            { input: 'logoUrl', preview: 'previewLogo' },
-            { input: 'contactDetails', preview: 'previewContactFooter' },
-            { input: 'refNum', preview: 'previewRefNum' },
-            { input: 'invoiceNum', preview: 'previewInvoiceNum' },
-            { input: 'clientName', preview: 'previewClientName' },
-            { input: 'creationDate', preview: 'previewCreationDate' },
-            { input: 'priority', preview: 'previewPriority' },
-            { input: 'description', preview: 'previewDescription' },
-            { input: 'authorizedBy', preview: 'slipAuthorizedBy' },
-        ];
+            function updateTime() {
+                const now = new Date();
+                const localTime = now.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' });
+                const cestTime = now.toLocaleTimeString('en-DE', { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit' });
+                const jstTime = now.toLocaleTimeString('en-JP', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit' });
 
-        const formatNumber = (num) => num.toLocaleString('en-IN', {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 2,
-        });
+                timeElement.textContent = `KOLKATA: ${localTime} | BERLIN: ${cestTime} | TOKYO: ${jstTime}`;
 
-        function addItemRow(desc = "", qty = 1, price = 0) {
-            const container = document.getElementById('lineItemsContainer');
-            const newRow = document.createElement('div');
-            newRow.className = 'grid grid-cols-12 gap-2 item-input-group';
-            newRow.innerHTML = `
-                <input type="text" value="${desc}" placeholder="Description" data-type="description" class="col-span-6 border p-2 rounded-md" oninput="calculateTotal()">
-                <input type="number" value="${qty}" min="1" placeholder="Qty" data-type="quantity" class="col-span-2 text-center border p-2 rounded-md" oninput="calculateTotal()">
-                <input type="number" value="${price}" min="0" placeholder="Price" data-type="price" class="col-span-3 text-right border p-2 rounded-md" oninput="calculateTotal()">
-                <button onclick="removeItemRow(this)" class="col-span-1 flex items-center justify-center text-red-600 hover:text-red-800 bg-gray-100 rounded-md">
-                    <i data-lucide="x" class="w-4 h-4"></i>
-                </button>
-            `;
-            container.appendChild(newRow);
-            lucide.createIcons();
-            calculateTotal();
-        }
+                const duration = new Date(now - meetingStartTime);
+                const hours = String(duration.getUTCHours()).padStart(2, '0');
+                const minutes = String(duration.getUTCMinutes()).padStart(2, '0');
+                const seconds = String(duration.getUTCSeconds()).padStart(2, '0');
+                durationElements.forEach(el => {
+                    el.textContent = `${hours}:${minutes}:${seconds}`;
+                });
+            }
+            setInterval(updateTime, 1000);
+            updateTime();
 
-        function removeItemRow(button) {
-            button.closest('.item-input-group').remove();
-            calculateTotal();
-        }
+            // --- DYNAMIC CONTENT ---
+            const participants = [
+                { id: 'am', name: "Aryaveer Mishra (You)", shortName: "Aryaveer M." },
+                { id: 'hs', name: "Hans Schmidt", shortName: "Hans S." },
+                { id: 'cd', name: "Chloé Dubois", shortName: "Chloé D." },
+                { id: 'yt', name: "Yuki Tanaka", shortName: "Yuki T." },
+                { id: 'rd', name: "Rohan Desai", shortName: "Rohan D." },
+            ];
 
-        function calculateTotal() {
-            const taxRate = parseFloat(document.getElementById('taxRate').value) || 0; 
-            const itemContainers = document.querySelectorAll('#lineItemsContainer .item-input-group');
-            let subtotal = 0;
-            let itemData = [];
+            const messages = [
+                { speaker: 'am', text: "Good morning and good afternoon everyone. Let's begin with the Q3 review.", time: 2000, reaction: null },
+                { speaker: 'hs', text: "Thank you, Aryaveer. The numbers from the EU market are looking very promising. We've seen a 15% growth in the DACH region.", time: 8000, reaction: {emoji: '👍', name: 'Yuki Tanaka'} },
+                { speaker: 'am', text: "Excellent. Let's move to the expansion analysis. Rohan, would you like to share your screen?", time: 15000, reaction: null },
+                { speaker: 'rd', text: "Of course, one moment. I'm bringing up the presentation now... Can everyone see the slide on market penetration?", time: 22000, reaction: null },
+                { speaker: 'yt', text: "Yes, we can see it clearly. I have a question on the Tokyo projections when you're ready.", time: 28000, reaction: null },
+                { speaker: 'rd', text: "Noted, Yuki. We'll have a Q&A section after this slide. As you can see, the APAC growth is projected at 85% of our target...", time: 35000, reaction: null },
+            ];
             
-            itemContainers.forEach(container => {
-                const desc = container.querySelector('[data-type="description"]').value;
-                const qty = parseInt(container.querySelector('[data-type="quantity"]').value) || 0;
-                const price = parseFloat(container.querySelector('[data-type="price"]').value) || 0;
-                
-                const itemTotal = qty * price;
-                subtotal += itemTotal;
+            // --- SIMULATE HAND RAISE ---
+            setTimeout(() => {
+                document.getElementById('yuki-hand').style.display = 'block';
+            }, 28500); // Yuki raises her hand right after her message
 
-                itemData.push({ desc, qty, price, total: itemTotal });
+            // --- LIVE TRANSCRIPT SIMULATION ---
+            messages.forEach((msgData) => {
+                setTimeout(() => {
+                    const speaker = participants.find(p => p.id === msgData.speaker);
+                    if (!speaker) return;
+
+                    const messageElement = document.createElement('div');
+                    messageElement.classList.add('chat-message', 'text-sm');
+                    let reactionHTML = '';
+                    if (msgData.reaction) {
+                        reactionHTML = `<div class="inline-block mt-2"><span class="chat-reaction">${msgData.reaction.emoji} from ${msgData.reaction.name}</span></div>`;
+                    }
+                    messageElement.innerHTML = `
+                        <p class="font-semibold text-blue-400">${speaker.shortName}</p>
+                        <p class="text-slate-300">${msgData.text}</p>
+                        ${reactionHTML}
+                    `;
+                    chatContainer.appendChild(messageElement);
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                }, msgData.time);
             });
-            
-            const taxAmount = subtotal * (taxRate / 100);
-            const totalAmount = subtotal + taxAmount;
-            
-            // Update Preview Tables
-            const previewBody = document.getElementById('previewLineItems');
-            const slipBody = document.getElementById('slipLineItems');
-            previewBody.innerHTML = '';
-            slipBody.innerHTML = '';
 
-            itemData.forEach(item => {
-                const rowHtml = `
-                    <tr class="hover:bg-gray-50">
-                        <td class="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900">${item.desc || '—'}</td>
-                        <td class="px-3 py-2 whitespace-nowrap text-sm text-center text-gray-700">${item.qty}</td>
-                        <td class="px-3 py-2 whitespace-nowrap text-sm text-right text-gray-700">${formatNumber(item.price)}</td>
-                        <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-right text-gray-800">${formatNumber(item.total)}</td>
-                    </tr>
+            // --- PARTICIPANT LIST & COLLAPSIBLE SECTIONS ---
+            function setupToggle(toggleId, listId, chevronId) {
+                const toggle = document.getElementById(toggleId);
+                const list = document.getElementById(listId);
+                const chevron = document.getElementById(chevronId);
+                toggle.addEventListener('click', () => {
+                    list.classList.toggle('hidden');
+                    chevron.classList.toggle('rotate-[-90deg]');
+                });
+            }
+            
+            const participantListContainer = document.getElementById('participants-list');
+            const allParticipants = [
+                { name: "Aryaveer Mishra", role: "Host", muted: false },
+                { name: "Rohan Desai", role: "Internal", muted: false },
+                { name: "Sunita Gupta", role: "Internal", muted: true },
+                { name: "Hans Schmidt", role: "Guest", muted: false },
+                { name: "Chloé Dubois", role: "Guest", muted: true },
+                { name: "Yuki Tanaka", role: "Guest", muted: false },
+                { name: "Mikael Karlsson", role: "Guest", muted: true },
+                { name: "Sofia Oliveira", role: "Guest", muted: false },
+            ];
+            allParticipants.forEach(p => {
+                const pElement = document.createElement('div');
+                pElement.classList.add('flex', 'items-center', 'justify-between');
+                pElement.innerHTML = `
+                    <span>${p.name} <span class="text-xs text-slate-400">${p.role}</span></span>
+                    ${p.muted ? '<svg class="w-4 h-4 text-red-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8h-1a6 6 0 11-5.93-6 .5.5 0 01.93.34V8a1 1 0 01-2 0V2.34a.5.5 0 01.93-.34A7.001 7.001 0 003 8h1a6 6 0 115.93 6.93z" clip-rule="evenodd"></path></svg>' : ''}
                 `;
-                previewBody.insertAdjacentHTML('beforeend', rowHtml);
-                slipBody.insertAdjacentHTML('beforeend', rowHtml);
+                participantListContainer.appendChild(pElement);
             });
+            const others = document.createElement('p');
+            others.className = 'text-slate-400 text-xs mt-2';
+            others.textContent = "+ 3 others...";
+            participantListContainer.appendChild(others);
 
-            // Update Financial Summary
-            document.getElementById('previewTotalAmount').textContent = formatNumber(totalAmount);
-            document.getElementById('slipSubtotal').textContent = formatNumber(subtotal);
-            document.getElementById('slipTaxRate').textContent = taxRate + '%';
-            document.getElementById('slipTaxAmount').textContent = formatNumber(taxAmount);
-            document.getElementById('slipTotalAmount').textContent = formatNumber(totalAmount);
-        }
-
-        function updatePreview() {
-            fields.forEach(f => {
-                const inputElement = document.getElementById(f.input);
-                if (!inputElement) return;
-
-                const value = inputElement.value;
-
-                if (f.preview && f.input !== 'logoUrl') {
-                    const previewElement = document.getElementById(f.preview);
-                    const slipElement = document.getElementById('slip' + f.preview.substring(7));
-
-                    if (previewElement) previewElement.textContent = value;
-                    if (slipElement) slipElement.textContent = value;
-                }
-                
-                if (f.input === 'logoUrl') {
-                    document.getElementById('previewLogo').src = value;
-                    document.getElementById('slipLogo').src = value;
-                }
-                
-            });
-
-            // Complex logic updates
-            const companyName = document.getElementById('companyName').value;
-            document.getElementById('slipCompanyName').textContent = companyName;
-            document.getElementById('slipCompanyNameFooterText').textContent = 'For ' + companyName;
-
-            // AI Chat Header Updates
-            const freelancerNameAI = document.getElementById('freelancerNameAI').value || 'Freelancer Expert';
-            const avatarLetter = (document.getElementById('freelancerAvatarLetter').value || 'F').toUpperCase().substring(0, 1);
-            document.getElementById('chat-header-name').textContent = freelancerNameAI;
-            document.getElementById('chat-avatar-letter').textContent = avatarLetter;
-
-            updateStatusBadge();
-            calculateTotal();
-        }
-
-        function updateStatusBadge() {
-            const statusInput = document.getElementById('status');
-            const statusBadge = document.getElementById('previewStatusBadge');
-            const statusContainer = document.getElementById('previewStatusContainer');
-
-            if (!statusInput || !statusBadge || !statusContainer) return;
-
-            const selectedValue = statusInput.value;
-            const selectedText = statusInput.options[statusInput.selectedIndex].textContent;
-
-            statusBadge.textContent = selectedText;
-            statusBadge.className = 'inline-flex items-center px-2 py-1 mt-1 text-sm font-bold rounded-full';
-            statusContainer.className = 'p-3 bg-white rounded-lg shadow-md border-l-4';
-            const statusIcon = document.querySelector('#previewStatusContainer i');
-
-            switch (selectedValue) {
-                case 'New':
-                    statusBadge.classList.add('status-badge-new');
-                    statusContainer.classList.add('border-l-4', 'border-green-500');
-                    if(statusIcon) { statusIcon.className = 'w-4 h-4 mr-2 text-green-500'; }
-                    break;
-                case 'In Progress':
-                    statusBadge.classList.add('status-badge-in-progress');
-                    statusContainer.classList.add('border-l-4', 'border-blue-500');
-                    if(statusIcon) { statusIcon.className = 'w-4 h-4 mr-2 text-blue-500'; }
-                    break;
-                case 'Completed':
-                    statusBadge.classList.add('status-badge-completed');
-                    statusContainer.classList.add('border-l-4', 'border-teal-500');
-                    if(statusIcon) { statusIcon.className = 'w-4 h-4 mr-2 text-teal-500'; }
-                    break;
-                default:
-                    statusBadge.classList.add('status-badge-default');
-                    statusContainer.classList.add('border-l-4', 'border-red-500');
-                    if(statusIcon) { statusIcon.className = 'w-4 h-4 mr-2 text-red-500'; }
-                    break;
-            }
-        }
-        
-        function toggleView(view) {
-            const views = {
-                ticket: document.getElementById('ticket-preview'),
-                slip: document.getElementById('payment-slip-preview'),
-            };
-            const buttons = {
-                ticket: document.getElementById('viewTicketButton'),
-                slip: document.getElementById('viewSlipButton'),
-            };
-
-            Object.values(views).forEach(v => v.classList.add('hidden'));
-            Object.values(buttons).forEach(b => {
-                b.classList.remove('bg-indigo-600', 'text-white');
-                b.classList.add('bg-white', 'text-gray-700');
-            });
-            
-            if (views[view]) {
-                views[view].classList.remove('hidden');
-                buttons[view].classList.add('bg-indigo-600', 'text-white');
-                buttons[view].classList.remove('bg-white', 'text-gray-700');
-            }
-        }
-
-        function printActiveView() {
-            window.print();
-        }
-
-        // --- AI CHAT WIDGET LOGIC ---
-
-        function toggleChat() {
-            chatContainer.classList.toggle('active');
-        }
-
-        chatInput.addEventListener('input', () => {
-            sendButton.disabled = chatInput.value.trim() === '';
-        });
-
-        function handleInput(event) {
-            if (event.key === 'Enter' && !sendButton.disabled) {
-                sendMessage();
-            }
-        }
-
-        function appendMessage(text, sender) {
-            const isUser = sender === 'user';
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `flex ${isUser ? 'justify-end' : 'justify-start'}`;
-
-            const contentDiv = document.createElement('div');
-            contentDiv.className = `${isUser ? 'user-message' : 'ai-message'} p-3 text-sm`;
-            
-            const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
-            const formattedText = text.replace(linkRegex, (match, linkText, url) => {
-                return `<a href="${url}" target="_blank" class="text-blue-200 hover:text-blue-100 underline">${linkText}</a>`;
-            });
-
-            contentDiv.innerHTML = formattedText.replace(/\n/g, '<br>');
-            
-            messageDiv.appendChild(contentDiv);
-            messageContainer.appendChild(messageDiv);
-            messageContainer.scrollTop = messageContainer.scrollHeight;
-        }
-
-        async function sendMessage() {
-            const userPrompt = chatInput.value.trim();
-            if (!userPrompt) return;
-
-            appendMessage(userPrompt, 'user');
-            chatInput.value = '';
-            sendButton.disabled = true;
-            errorMessageDiv.classList.add('hidden');
-            loadingIndicator.classList.remove('hidden');
-
-            try {
-                const aiResponseText = await generateFreelancerResponse(userPrompt);
-                appendMessage(aiResponseText, 'ai');
-            } catch (error) {
-                console.error("Gemini API Error:", error);
-                errorMessageDiv.textContent = "Error: Could not get a response. Try again later.";
-                errorMessageDiv.classList.remove('hidden');
-                appendMessage("Sorry, I'm currently unable to connect with the server. Please check your connection or try again.", 'ai');
-            } finally {
-                loadingIndicator.classList.add('hidden');
-                sendButton.disabled = chatInput.value.trim() === '';
-                chatInput.focus();
-            }
-        }
-
-        async function generateFreelancerResponse(userQuery) {
-            const freelancerName = document.getElementById('freelancerNameAI').value || 'Freelancer Expert';
-            
-            // System prompt is customized with the user's chosen name
-            const systemPrompt = `You are '${freelancerName}', a world-class freelance expert specializing in digital projects. Your role is to provide expert, professional, and concise advice related to project strategy, client communication, pricing, and contracts. Maintain a helpful, confident, and professional tone, as if you are a real person responding. Keep your responses focused and actionable. Use markdown for formatting like bold or lists. Sign off your responses with your name, '${freelancerName}'.`;
-
-            const payload = {
-                contents: [{ parts: [{ text: userQuery }] }],
-                tools: [{ "google_search": {} }], 
-                systemInstruction: {
-                    parts: [{ text: systemPrompt }]
-                },
-            };
-
-            const maxRetries = 3;
-            let delay = 1000;
-
-            for (let i = 0; i < maxRetries; i++) {
-                try {
-                    const response = await fetch(`${apiUrl}?key=${apiKey}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-
-                    if (!response.ok) {
-                        if (response.status === 429 && i < maxRetries - 1) {
-                            await new Promise(resolve => setTimeout(resolve, delay));
-                            delay *= 2;
-                            continue; 
-                        }
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-
-                    const result = await response.json();
-                    const candidate = result.candidates?.[0];
-
-                    if (candidate && candidate.content?.parts?.[0]?.text) {
-                        return candidate.content.parts[0].text;
-                    } else {
-                        throw new Error("Invalid response format from API.");
-                    }
-
-                } catch (error) {
-                    if (i === maxRetries - 1) {
-                        throw error;
-                    }
-                    await new Promise(resolve => setTimeout(resolve, delay));
-                    delay *= 2;
-                }
-            }
-        }
-
-        // --- Initialization ---
-
-        document.addEventListener('DOMContentLoaded', () => {
-            updatePreview();
-            toggleView('ticket');
-            lucide.createIcons();
-            
-            // Attach listeners for main form updates (already done inline for line items)
-            document.querySelectorAll('#input-form input, #input-form select, #input-form textarea').forEach(element => {
-                // Ensure only inputs not covered by inline handlers fire this generic one
-                if (!element.getAttribute('oninput')) {
-                    element.addEventListener('input', updatePreview);
-                }
-            });
+            setupToggle('participants-toggle', 'participants-list', 'participants-chevron');
         });
     </script>
-
 </body>
 </html>
+
