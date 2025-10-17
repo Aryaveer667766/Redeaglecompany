@@ -1,351 +1,186 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Feasibility Media | Secure Meeting Room</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Favicon for realism -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📡</text></svg>">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #111827; /* gray-900 */
-        }
-        .pulse {
-            animation: pulse-animation 1.5s infinite;
-        }
-        @keyframes pulse-animation {
-            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-        }
-        .main-container {
-            max-width: 1600px;
-            height: calc(100vh - 4rem);
-        }
-        .active-speaker-border {
-            border: 3px solid #3b82f6; /* blue-500 */
-            box-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
-            transition: all 0.3s ease-in-out;
-        }
-        .control-btn:hover {
-            transform: scale(1.05);
-            background-color: #4b5563; /* gray-600 */
-        }
-        .chat-message {
-            animation: fadeIn 0.5s ease-in-out;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        /* Audio wave animation for speaker */
-        .audio-wave {
-            position: absolute;
-            bottom: 8px;
-            right: 8px;
-            display: flex;
-            align-items: flex-end;
-            height: 20px;
-        }
-        .audio-wave span {
-            display: block;
-            width: 3px;
-            margin-right: 2px;
-            background-color: #ffffff;
-            animation: wave-animation 1.2s infinite ease-in-out;
-        }
-        .audio-wave span:nth-child(2) { animation-delay: -1.0s; }
-        .audio-wave span:nth-child(3) { animation-delay: -0.8s; }
-        .audio-wave span:nth-child(4) { animation-delay: -0.6s; }
-        
-        @keyframes wave-animation {
-            0%, 100% { height: 2px; }
-            50% { height: 20px; }
-        }
-
-        /* Connection Quality Indicator */
-        .conn-good { color: #22c55e; } /* green-500 */
-        .conn-ok { color: #f59e0b; } /* amber-500 */
-        .conn-bad { color: #ef4444; } /* red-500 */
-
-        /* Raised Hand */
-        .hand-raised-icon {
-            display: none; /* Hidden by default */
-            position: absolute;
-            top: 8px;
-            left: 8px;
-            background-color: rgba(245, 158, 11, 0.8); /* amber-500 with opacity */
-            padding: 6px;
-            border-radius: 9999px;
-            animation: hand-pop 0.5s ease-out;
-        }
-        @keyframes hand-pop {
-            from { transform: scale(0.5); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
-        }
-        
-        /* Chat Reaction */
-        .chat-reaction {
-            background-color: #374151; /* gray-700 */
-            border: 1px solid #4b5563; /* gray-600 */
-            border-radius: 16px;
-            padding: 2px 8px;
-            font-size: 12px;
-            margin-top: 4px;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Red Eagle Company | Launching Soon</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Orbitron', sans-serif;
+      background: radial-gradient(circle at center, #1a0000 0%, #000 90%);
+      overflow: hidden;
+      color: white;
+    }
+    canvas {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 0;
+    }
+    .glow {
+      text-shadow: 0 0 30px #ff0000, 0 0 60px #ff0000;
+    }
+    .eagle {
+      position: absolute;
+      width: 180px;
+      filter: drop-shadow(0 0 20px #ff0000);
+      opacity: 0.9;
+      z-index: 2;
+    }
+    #intro {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, #200000 0%, #000 80%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 50;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    #intro img {
+      width: 200px;
+      filter: drop-shadow(0 0 40px #ff0000);
+    }
+    #music, #sfx { display: none; }
+  </style>
 </head>
-<body class="bg-gray-900 text-slate-200 flex flex-col items-center justify-center min-h-screen p-4 sm:p-8">
 
-    <div class="w-full main-container bg-gray-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col">
-        <!-- Header -->
-        <header class="flex items-center justify-between p-3 border-b border-gray-700 bg-gray-800 z-10 flex-shrink-0">
-            <div class="flex items-center space-x-3">
-                 <svg class="h-8 w-8 text-blue-500" xmlns="http://www.w.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9V3m0 18a9 9 0 009-9m-9 9a9 9 0 00-9-9" />
-                  </svg>
-                <h1 class="text-xl font-bold text-slate-100">Feasibility Media | Project Nova</h1>
-            </div>
-            <div class="flex items-center space-x-4">
-                <div class="flex items-center text-red-400 font-semibold bg-red-900/50 px-3 py-1 rounded-full text-xs">
-                    <span class="h-2 w-2 bg-red-500 rounded-full mr-2 pulse"></span>
-                    RECORDING
-                </div>
-                <div id="current-time" class="text-sm font-medium text-slate-400 bg-gray-700 px-3 py-1 rounded-md hidden md:block">
-                    <!-- Time will be injected here -->
-                </div>
-            </div>
-        </header>
+<body class="flex flex-col justify-center items-center text-center relative overflow-hidden">
 
-        <!-- Main Content -->
-        <main class="flex-grow flex flex-col lg:flex-row overflow-hidden">
-            
-            <!-- Main Panel: Screen Share & Controls -->
-            <div class="w-full lg:w-3/4 p-4 flex flex-col">
-                <!-- Screen Share View -->
-                <div id="screen-share-view" class="flex-grow rounded-lg bg-gray-900 p-4 flex items-center justify-center border-2 border-blue-500 shadow-lg">
-                    <div class="bg-white text-gray-800 w-full h-full p-8 rounded-md flex flex-col">
-                        <h2 class="text-3xl font-bold text-blue-700 mb-2">Q3 Market Expansion Analysis</h2>
-                        <p class="text-sm text-gray-500 mb-6">Presented by Rohan Desai</p>
-                        <div class="flex-grow flex items-center space-x-8">
-                            <div class="w-1/2">
-                                <h3 class="font-semibold text-lg mb-3">Key Performance Indicators</h3>
-                                <ul class="list-disc list-inside space-y-2 text-gray-700">
-                                    <li><span class="font-semibold text-green-600">+15%</span> Growth in DACH Region</li>
-                                    <li><span class="font-semibold text-green-600">+12%</span> Growth in APAC Markets</li>
-                                    <li><span class="font-semibold text-blue-600">2.1M</span> Engagements on EU Campaign</li>
-                                    <li><span class="font-semibold text-orange-500">-5%</span> Churn Rate QoQ</li>
-                                </ul>
-                            </div>
-                            <div class="w-1/2">
-                                <h3 class="font-semibold text-lg mb-3">Projected Growth (Q4)</h3>
-                                <!-- Simple bar chart placeholder -->
-                                <div class="space-y-3">
-                                    <div class="flex items-center">
-                                        <span class="w-16">EU:</span>
-                                        <div class="w-full bg-gray-200 rounded-full h-4"><div class="bg-blue-500 h-4 rounded-full" style="width: 70%"></div></div>
-                                    </div>
-                                    <div class="flex items-center">
-                                        <span class="w-16">APAC:</span>
-                                        <div class="w-full bg-gray-200 rounded-full h-4"><div class="bg-green-500 h-4 rounded-full" style="width: 85%"></div></div>
-                                    </div>
-                                    <div class="flex items-center">
-                                        <span class="w-16">NA:</span>
-                                        <div class="w-full bg-gray-200 rounded-full h-4"><div class="bg-purple-500 h-4 rounded-full" style="width: 60%"></div></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                         <div class="mt-auto text-xs text-gray-400">Internal & Confidential | Slide 4 of 12</div>
-                    </div>
-                </div>
-                
-                <!-- Video Strip -->
-                <div class="flex-shrink-0 pt-4 flex space-x-3 overflow-x-auto">
-                    <div class="video-tile relative rounded-lg overflow-hidden bg-gray-900 w-40 h-24 flex-shrink-0" data-name="Rohan Desai (Presenting)">
-                        <img src="https://placehold.co/400x300/a5b4fc/ffffff?text=RD" alt="Rohan Desai" class="w-full h-full object-cover">
-                        <div class="absolute bottom-0 left-0 bg-black/50 px-2 py-0.5 rounded-tr-lg text-xs"><p class="font-semibold text-white">Rohan Desai</p></div>
-                        <div class="audio-wave" style="height: 15px;"><span></span><span></span><span></span></div>
-                    </div>
-                    <div class="video-tile relative rounded-lg overflow-hidden bg-gray-900 w-40 h-24 flex-shrink-0 active-speaker-border" data-name="Yuki Tanaka">
-                        <img src="https://placehold.co/400x300/fb923c/ffffff?text=YT" alt="Yuki Tanaka" class="w-full h-full object-cover">
-                        <div class="absolute bottom-0 left-0 bg-black/50 px-2 py-0.5 rounded-tr-lg text-xs"><p class="font-semibold text-white">Yuki Tanaka</p></div>
-                        <div class="hand-raised-icon" id="yuki-hand"><svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M10 3.5a1.5 1.5 0 011.493 1.355c.371.1.72.26.995.488a1.5 1.5 0 01.332 2.122c-.6.89-1.39 1.63-2.32 2.23a.5.5 0 01-.612 0c-.93-.6-1.72-1.34-2.32-2.23a1.5 1.5 0 01.332-2.122c.276-.228.624-.388.995-.488A1.5 1.5 0 0110 3.5zM7.5 7.5c0 .354-.127.69-.356.964a.5.5 0 01-.707-.708A2.492 2.492 0 007.5 7.5zm5.357.256a.5.5 0 01.707.708A2.5 2.5 0 0012.5 7.5c0-.354.127-.69.356-.964a.5.5 0 01.707.708zM4.5 9.5a.5.5 0 000 1h11a.5.5 0 000-1h-11z"></path></svg></div>
-                    </div>
-                    <div class="video-tile relative rounded-lg overflow-hidden bg-gray-900 w-40 h-24 flex-shrink-0" data-name="Aryaveer Mishra (You)">
-                        <img src="https://placehold.co/400x300/60a5fa/ffffff?text=AM" alt="Aryaveer Mishra" class="w-full h-full object-cover">
-                        <div class="absolute bottom-0 left-0 bg-black/50 px-2 py-0.5 rounded-tr-lg text-xs"><p class="font-semibold text-white">You</p></div>
-                    </div>
-                    <div class="video-tile relative rounded-lg overflow-hidden bg-gray-900 w-40 h-24 flex-shrink-0" data-name="Hans Schmidt">
-                        <img src="https://placehold.co/400x300/34d399/ffffff?text=HS" alt="Hans Schmidt" class="w-full h-full object-cover">
-                        <div class="absolute bottom-0 left-0 bg-black/50 px-2 py-0.5 rounded-tr-lg text-xs"><p class="font-semibold text-white">Hans Schmidt</p></div>
-                    </div>
-                </div>
+  <!-- Background Particles -->
+  <canvas id="particles"></canvas>
 
-                 <!-- Action Buttons -->
-                <div class="flex-shrink-0 pt-4 mt-auto">
-                    <div class="flex items-center justify-center space-x-2 sm:space-x-4 bg-gray-900/70 p-3 rounded-full max-w-md mx-auto">
-                        <button class="p-3 bg-gray-700 rounded-full shadow-lg transition-transform control-btn" title="Mute Microphone"><svg class="h-6 w-6 text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg></button>
-                        <button class="p-3 bg-gray-700 rounded-full shadow-lg transition-transform control-btn" title="Stop Camera"><svg class="h-6 w-6 text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg></button>
-                        <button class="p-3 bg-gray-700 rounded-full shadow-lg transition-transform control-btn" title="Raise Hand"><svg class="h-6 w-6 text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11"></path></svg></button>
-                        <button class="px-4 sm:px-6 py-3 bg-red-600 text-white font-semibold rounded-full shadow-lg hover:bg-red-700 transition-colors flex items-center space-x-2" title="Leave Meeting">
-                             <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                             <span class="hidden sm:inline">Leave</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
+  <!-- Intro Sequence -->
+  <div id="intro">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Golden_Eagle_in_flight_-_5.jpg" alt="Eagle" id="introEagle">
+    <h1 id="introText" class="text-4xl md:text-6xl font-bold glow opacity-0 mt-6">RED EAGLE COMPANY</h1>
+  </div>
 
-            <!-- Right Panel: Chat & Info -->
-            <aside class="w-full lg:w-1/4 bg-gray-800/50 border-l border-gray-700 p-4 flex flex-col">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-semibold text-slate-100">Meeting Transcript</h3>
-                    <div class="text-slate-400 font-medium text-sm">
-                        <span id="duration">00:00:00</span>
-                    </div>
-                </div>
-                
-                <!-- Live Transcript -->
-                <div id="chat-container" class="flex-grow space-y-4 overflow-y-auto pr-2">
-                    <!-- Chat messages will be injected here -->
-                </div>
+  <!-- Main Flying Eagle -->
+  <img src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Golden_Eagle_in_flight_-_5.jpg" alt="Eagle" class="eagle" id="eagle">
 
-                <!-- Collapsible Info Sections -->
-                <div class="mt-4 border-t border-gray-700 pt-4">
-                    <div id="participants-section" class="mt-2">
-                        <div id="participants-toggle" class="flex justify-between items-center cursor-pointer p-2 rounded-md hover:bg-gray-700">
-                            <h3 class="font-semibold text-slate-200">Participants (11)</h3>
-                            <svg id="participants-chevron" class="h-5 w-5 text-slate-400 transition-transform transform rotate-[-90deg]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                            </svg>
-                        </div>
-                        <div id="participants-list" class="mt-2 ml-2 space-y-3 text-sm text-slate-300 hidden">
-                             <!-- Participant list will be injected here -->
-                        </div>
-                    </div>
-                </div>
-            </aside>
-        </main>
-    </div>
+  <!-- Main Content -->
+  <div id="main" class="relative z-10 px-4 opacity-0">
+    <h1 class="text-5xl md:text-7xl font-bold glow mb-6 tracking-wide">RED EAGLE COMPANY</h1>
+    <p class="text-lg md:text-xl tracking-widest text-gray-300 mb-10">By Feasibility Media</p>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const timeElement = document.getElementById('current-time');
-            const durationElements = document.querySelectorAll('#duration');
-            const chatContainer = document.getElementById('chat-container');
+    <div id="countdown" class="text-3xl md:text-4xl font-semibold text-red-500 mb-10"></div>
 
-            // --- TIME AND DURATION LOGIC ---
-            // Current time: Friday, October 17, 2025 at 8:31 PM IST
-            const meetingStartTime = new Date('2025-10-17T20:10:00+05:30'); // Meeting started 21 mins ago
+    <button id="launchBtn" class="px-10 py-4 border-2 border-red-600 rounded-full text-red-500 hover:bg-red-600 hover:text-white transition-all duration-300 shadow-lg hover:scale-105">
+      🔥 Launching Soon 🔥
+    </button>
+  </div>
 
-            function updateTime() {
-                const now = new Date();
-                const localTime = now.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' });
-                const cestTime = now.toLocaleTimeString('en-DE', { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit' });
-                const jstTime = now.toLocaleTimeString('en-JP', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit' });
+  <!-- Footer -->
+  <footer class="absolute bottom-4 text-gray-500 text-sm tracking-widest z-10 opacity-0" id="footer">
+    © 2025 Feasibility Media. All rights reserved.
+  </footer>
 
-                timeElement.textContent = `KOLKATA: ${localTime} | BERLIN: ${cestTime} | TOKYO: ${jstTime}`;
+  <!-- Sounds -->
+  <audio id="music" loop>
+    <source src="https://cdn.pixabay.com/audio/2023/04/06/audio_82887bcb83.mp3" type="audio/mpeg">
+  </audio>
+  <audio id="sfx">
+    <source src="https://cdn.pixabay.com/audio/2022/03/31/audio_45b0165981.mp3" type="audio/mpeg">
+  </audio>
 
-                const duration = new Date(now - meetingStartTime);
-                const hours = String(duration.getUTCHours()).padStart(2, '0');
-                const minutes = String(duration.getUTCMinutes()).padStart(2, '0');
-                const seconds = String(duration.getUTCSeconds()).padStart(2, '0');
-                durationElements.forEach(el => {
-                    el.textContent = `${hours}:${minutes}:${seconds}`;
-                });
-            }
-            setInterval(updateTime, 1000);
-            updateTime();
+  <script>
+    // 🌌 Particle Background
+    const canvas = document.getElementById("particles");
+    const ctx = canvas.getContext("2d");
+    canvas.width = innerWidth;
+    canvas.height = innerHeight;
+    const particles = [];
+    for (let i = 0; i < 100; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        r: Math.random() * 2,
+        o: Math.random(),
+        s: 0.5 + Math.random() * 1.5
+      });
+    }
+    function drawParticles() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,0,0,${p.o})`;
+        ctx.fill();
+        p.y -= p.s;
+        if (p.y < 0) {
+          p.y = canvas.height;
+          p.x = Math.random() * canvas.width;
+        }
+      });
+      requestAnimationFrame(drawParticles);
+    }
+    drawParticles();
 
-            // --- DYNAMIC CONTENT ---
-            const participants = [
-                { id: 'am', name: "Aryaveer Mishra (You)", shortName: "Aryaveer M." },
-                { id: 'hs', name: "Hans Schmidt", shortName: "Hans S." },
-                { id: 'cd', name: "Chloé Dubois", shortName: "Chloé D." },
-                { id: 'yt', name: "Yuki Tanaka", shortName: "Yuki T." },
-                { id: 'rd', name: "Rohan Desai", shortName: "Rohan D." },
-            ];
+    // 🎬 Intro Sequence
+    const intro = document.getElementById("intro");
+    const introEagle = document.getElementById("introEagle");
+    const introText = document.getElementById("introText");
+    const main = document.getElementById("main");
+    const footer = document.getElementById("footer");
+    const music = document.getElementById("music");
+    const sfx = document.getElementById("sfx");
 
-            const messages = [
-                { speaker: 'am', text: "Good morning and good afternoon everyone. Let's begin with the Q3 review.", time: 2000, reaction: null },
-                { speaker: 'hs', text: "Thank you, Aryaveer. The numbers from the EU market are looking very promising. We've seen a 15% growth in the DACH region.", time: 8000, reaction: {emoji: '👍', name: 'Yuki Tanaka'} },
-                { speaker: 'am', text: "Excellent. Let's move to the expansion analysis. Rohan, would you like to share your screen?", time: 15000, reaction: null },
-                { speaker: 'rd', text: "Of course, one moment. I'm bringing up the presentation now... Can everyone see the slide on market penetration?", time: 22000, reaction: null },
-                { speaker: 'yt', text: "Yes, we can see it clearly. I have a question on the Tokyo projections when you're ready.", time: 28000, reaction: null },
-                { speaker: 'rd', text: "Noted, Yuki. We'll have a Q&A section after this slide. As you can see, the APAC growth is projected at 85% of our target...", time: 35000, reaction: null },
-            ];
-            
-            // --- SIMULATE HAND RAISE ---
-            setTimeout(() => {
-                document.getElementById('yuki-hand').style.display = 'block';
-            }, 28500); // Yuki raises her hand right after her message
+    gsap.set(introEagle, { opacity: 0, scale: 0.4, y: 100 });
+    gsap.to(introEagle, { opacity: 1, scale: 1, y: 0, duration: 2, ease: "power4.out" });
+    gsap.to(introText, { opacity: 1, delay: 1.5, duration: 1 });
 
-            // --- LIVE TRANSCRIPT SIMULATION ---
-            messages.forEach((msgData) => {
-                setTimeout(() => {
-                    const speaker = participants.find(p => p.id === msgData.speaker);
-                    if (!speaker) return;
+    // Play intro sound
+    setTimeout(() => { sfx.play(); }, 1200);
 
-                    const messageElement = document.createElement('div');
-                    messageElement.classList.add('chat-message', 'text-sm');
-                    let reactionHTML = '';
-                    if (msgData.reaction) {
-                        reactionHTML = `<div class="inline-block mt-2"><span class="chat-reaction">${msgData.reaction.emoji} from ${msgData.reaction.name}</span></div>`;
-                    }
-                    messageElement.innerHTML = `
-                        <p class="font-semibold text-blue-400">${speaker.shortName}</p>
-                        <p class="text-slate-300">${msgData.text}</p>
-                        ${reactionHTML}
-                    `;
-                    chatContainer.appendChild(messageElement);
-                    chatContainer.scrollTop = chatContainer.scrollHeight;
-                }, msgData.time);
-            });
+    // Transition to main site
+    setTimeout(() => {
+      gsap.to(intro, { opacity: 0, duration: 1.5, ease: "power2.inOut", onComplete: () => {
+        intro.style.display = "none";
+        gsap.to(main, { opacity: 1, duration: 1.5 });
+        gsap.to(footer, { opacity: 1, delay: 0.5, duration: 1.5 });
+      }});
+    }, 4000);
 
-            // --- PARTICIPANT LIST & COLLAPSIBLE SECTIONS ---
-            function setupToggle(toggleId, listId, chevronId) {
-                const toggle = document.getElementById(toggleId);
-                const list = document.getElementById(listId);
-                const chevron = document.getElementById(chevronId);
-                toggle.addEventListener('click', () => {
-                    list.classList.toggle('hidden');
-                    chevron.classList.toggle('rotate-[-90deg]');
-                });
-            }
-            
-            const participantListContainer = document.getElementById('participants-list');
-            const allParticipants = [
-                { name: "Aryaveer Mishra", role: "Host", muted: false },
-                { name: "Rohan Desai", role: "Internal", muted: false },
-                { name: "Sunita Gupta", role: "Internal", muted: true },
-                { name: "Hans Schmidt", role: "Guest", muted: false },
-                { name: "Chloé Dubois", role: "Guest", muted: true },
-                { name: "Yuki Tanaka", role: "Guest", muted: false },
-                { name: "Mikael Karlsson", role: "Guest", muted: true },
-                { name: "Sofia Oliveira", role: "Guest", muted: false },
-            ];
-            allParticipants.forEach(p => {
-                const pElement = document.createElement('div');
-                pElement.classList.add('flex', 'items-center', 'justify-between');
-                pElement.innerHTML = `
-                    <span>${p.name} <span class="text-xs text-slate-400">${p.role}</span></span>
-                    ${p.muted ? '<svg class="w-4 h-4 text-red-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8h-1a6 6 0 11-5.93-6 .5.5 0 01.93.34V8a1 1 0 01-2 0V2.34a.5.5 0 01.93-.34A7.001 7.001 0 003 8h1a6 6 0 115.93 6.93z" clip-rule="evenodd"></path></svg>' : ''}
-                `;
-                participantListContainer.appendChild(pElement);
-            });
-            const others = document.createElement('p');
-            others.className = 'text-slate-400 text-xs mt-2';
-            others.textContent = "+ 3 others...";
-            participantListContainer.appendChild(others);
+    // 🦅 Eagle Flight Loop
+    const eagle = document.getElementById("eagle");
+    function flyEagle() {
+      gsap.fromTo(eagle,
+        { x: -200, y: 200, rotation: -10 },
+        { x: window.innerWidth + 200, y: Math.random() * 200, rotation: 10, duration: 10, ease: "power1.inOut", onComplete: flyEagle }
+      );
+    }
+    setTimeout(flyEagle, 4500);
 
-            setupToggle('participants-toggle', 'participants-list', 'participants-chevron');
-        });
-    </script>
+    // 🕒 Countdown
+    const launchDate = new Date("Dec 1, 2025 00:00:00").getTime();
+    const countdown = document.getElementById("countdown");
+    setInterval(() => {
+      const now = new Date().getTime();
+      const distance = launchDate - now;
+      if (distance < 0) return countdown.innerHTML = "🚀 We Have Launched!";
+      const d = Math.floor(distance / (1000 * 60 * 60 * 24));
+      const h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+      const s = Math.floor((distance % (1000 * 60)) / 1000);
+      countdown.innerHTML = `${d}d ${h}h ${m}m ${s}s`;
+    }, 1000);
+
+    // 🎵 Start Music on Click
+    document.getElementById("launchBtn").addEventListener("click", () => {
+      music.play();
+      gsap.to("#launchBtn", { scale: 1.15, duration: 0.3, yoyo: true, repeat: 1 });
+    });
+
+    // Responsive
+    window.addEventListener("resize", () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+  </script>
 </body>
 </html>
-
