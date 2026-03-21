@@ -40,11 +40,19 @@
         ::-webkit-scrollbar-track { background: rgba(0,0,0,0.5); border-radius: 4px; } 
         ::-webkit-scrollbar-thumb { background: #0ff; border-radius: 4px; }
         
-        /* Ultimate Meter */
-        .ult-container { width: 200px; height: 12px; border: 1px solid #0ff; border-radius: 6px; background: #000; overflow: hidden; margin-bottom: 5px;}
-        .ult-bar { height: 100%; background: #0ff; width: 0%; transition: width 0.2s; box-shadow: 0 0 10px #0ff;}
+        /* HUD Meters & Minimap */
+        .meter-container { width: 200px; height: 10px; border-radius: 5px; background: #000; overflow: hidden; margin-bottom: 8px;}
+        .meter-bar { height: 100%; width: 0%; transition: width 0.2s; }
+        .ult-bar { background: #0ff; box-shadow: 0 0 10px #0ff; }
+        .dash-bar { background: #a855f7; box-shadow: 0 0 10px #a855f7; }
         .ult-ready { background: #fff; box-shadow: 0 0 20px #fff; animation: pulse 1s infinite; }
         @keyframes pulse { 0% { opacity: 0.8; } 50% { opacity: 1; box-shadow: 0 0 30px #fff; } 100% { opacity: 0.8; } }
+        
+        .combo-text { font-size: 1.5rem; font-weight: 900; color: #fbbf24; text-shadow: 0 0 10px #f59e0b, 0 0 20px #f59e0b; transition: all 0.1s; }
+        .combo-pop { transform: scale(1.3); }
+        
+        .upgrade-card { background: rgba(0,0,0,0.8); border: 2px solid #0ff; border-radius: 1rem; padding: 1.5rem; cursor: pointer; transition: all 0.2s; }
+        .upgrade-card:hover { transform: translateY(-5px); box-shadow: 0 0 20px rgba(0,255,255,0.5); background: rgba(0,50,50,0.8); }
     </style>
 </head>
 <body class="text-white select-none">
@@ -52,26 +60,31 @@
     <div id="crtOverlay" class="crt-overlay"></div>
     <div id="toast">Message</div>
 
-    <!-- Heads Up Display -->
+    <div id="bossHpContainer" class="fixed top-4 left-1/2 transform -translate-x-1/2 w-72 md:w-[32rem] border-2 border-red-500 rounded p-2 bg-black/80 z-40 hidden shadow-[0_0_20px_rgba(255,0,0,0.5)]">
+        <div id="bossNameDisplay" class="text-red-500 text-sm md:text-base font-black mb-1 tracking-[0.3em] text-center">DREADNOUGHT</div>
+        <div class="w-full bg-red-950 h-3 md:h-4 rounded overflow-hidden"><div id="bossHpBar" class="bg-gradient-to-r from-red-600 to-red-400 h-full w-full transition-all duration-200"></div></div>
+    </div>
+
     <div id="hud" class="absolute top-0 left-0 w-full p-6 flex justify-between items-start pointer-events-none z-10 hidden">
         <div>
-            <div class="text-2xl md:text-4xl font-black tracking-widest neon-text mb-2" id="scoreWrapper">
+            <div class="text-2xl md:text-4xl font-black tracking-widest neon-text mb-1" id="scoreWrapper">
                 SCORE: <span id="scoreDisplay">0</span>
             </div>
-            <div id="healthDisplay" class="flex items-center mb-2"></div>
+            <div id="comboDisplay" class="combo-text hidden mb-3">COMBO x<span id="comboVal">1</span></div>
+            <div id="healthDisplay" class="flex items-center mb-3"></div>
             
-            <div class="text-xs text-cyan-300 font-bold tracking-widest uppercase mb-1">EMP Ultimate</div>
-            <div class="ult-container"><div id="ultBar" class="ult-bar"></div></div>
+            <div class="text-xs text-cyan-300 font-bold tracking-widest uppercase mb-1">EMP Shockwave</div>
+            <div class="meter-container border border-cyan-500"><div id="ultBar" class="meter-bar ult-bar"></div></div>
+            
+            <div class="text-xs text-purple-400 font-bold tracking-widest uppercase mb-1 mt-2">Warp Dash</div>
+            <div class="meter-container border border-purple-500"><div id="dashBar" class="meter-bar dash-bar"></div></div>
             
             <div id="multiplayerStats" class="text-sm md:text-base space-y-2 bg-black/40 p-2 rounded backdrop-blur-sm border border-cyan-900/50 mt-4"></div>
-            
-            <div id="bossHpContainer" class="hidden mt-4 w-48 border-2 border-red-500 rounded p-1 bg-black/50">
-                <div class="text-red-500 text-xs font-bold mb-1 tracking-widest">DREADNOUGHT</div>
-                <div class="w-full bg-red-900 h-2"><div id="bossHpBar" class="bg-red-500 h-full w-full transition-all"></div></div>
-            </div>
         </div>
         
         <div class="text-right flex flex-col items-end gap-2">
+            <canvas id="minimap" width="120" height="120" class="rounded-full border-2 border-cyan-500/50 bg-black/50 shadow-[0_0_15px_rgba(0,255,255,0.2)] mb-2 hidden md:block"></canvas>
+
             <div class="flex gap-2">
                 <button id="btnUlt" class="pointer-events-auto bg-black/80 border-2 border-white text-white w-16 h-16 rounded-full flex items-center justify-center font-black tracking-widest hover:bg-white hover:text-black transition-all hidden shadow-[0_0_20px_#fff]">ULT</button>
                 <button id="btnToggleMic" class="pointer-events-auto bg-black/50 border border-fuchsia-500 text-fuchsia-300 w-12 h-12 rounded-full flex items-center justify-center hover:bg-fuchsia-900/50 transition-colors hidden" title="Toggle Voice Chat">
@@ -82,22 +95,31 @@
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/></svg>
                 </button>
             </div>
-            <div id="hudControlsHint" class="text-sm md:text-lg text-cyan-200 opacity-70 mt-2 bg-black/30 px-3 py-1 rounded hidden md:block">
-                Drag to Move (Auto-Fire) | [SPACE] for EMP
+            <div id="hudControlsHint" class="text-sm md:text-lg text-cyan-200 opacity-70 mt-2 bg-black/30 px-3 py-1 rounded hidden md:block text-right">
+                Drag to Move (Auto-Fire)<br>Right-Click to DASH | [SPACE] for EMP
             </div>
-            <div id="hudTouchHint" class="text-sm md:text-lg text-cyan-200 opacity-70 mt-2 bg-black/30 px-3 py-1 rounded md:hidden">
-                Drag to Move (Auto-Fire)
+            <div id="hudTouchHint" class="text-sm md:text-lg text-cyan-200 opacity-70 mt-2 bg-black/30 px-3 py-1 rounded md:hidden text-right">
+                Drag to Move<br>Double-Tap to DASH
             </div>
-            <div id="activePowerup" class="text-yellow-300 font-bold animate-pulse text-sm hidden">OVERCHARGE!</div>
+            <div id="activePowerup" class="text-yellow-300 font-bold animate-pulse text-sm hidden mt-2">AUGMENTED WEAPON!</div>
+            <div id="activeDrones" class="text-cyan-300 font-bold animate-pulse text-sm hidden mt-1">WINGMAN DRONES ACTIVE!</div>
         </div>
     </div>
 
     <!-- Menus -->
     <div id="uiLayer" class="ui-layer">
+        
+        <div id="upgradeScreen" class="ui-panel hidden w-[50rem] max-w-[95%] z-50 !bg-black/95">
+            <h2 class="text-4xl md:text-5xl font-black mb-2 neon-text-gold">WAVE CLEARED</h2>
+            <p class="text-cyan-300 mb-8 uppercase tracking-[0.2em] text-sm md:text-base">System Analyzing... Select a Permanent Augmentation</p>
+            <div id="upgradeOptionsContainer" class="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+                </div>
+        </div>
+
         <div id="mainMenu" class="ui-panel">
             <h3 class="text-cyan-500 tracking-[0.5em] text-sm md:text-base font-bold mb-2">WELCOME TO THE</h3>
             <h1 class="text-5xl md:text-8xl font-black mb-4 neon-text text-center leading-tight">BEST GAME<br><span class="text-fuchsia-400" style="text-shadow: 0 0 20px #f0f;">IN UNIVERSE</span></h1>
-            <p class="text-cyan-200 mb-6 max-w-md text-lg mx-auto opacity-80">Classes. Ultimates. PvP. Revives.</p>
+            <p class="text-cyan-200 mb-6 max-w-md text-lg mx-auto opacity-80">Weapons. Bosses. PvP. Revives.</p>
             <div class="flex flex-col gap-3 w-72 mx-auto">
                 <button id="btnPlaySolo" class="btn btn-cyan">Start Mission</button>
                 <button id="btnMultiplayer" class="btn btn-cyan" disabled>Co-Op (Connecting...)</button>
@@ -212,11 +234,12 @@
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, getDocs, updateDoc, onSnapshot, collection, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- Global Configurations & Constants (Defined First!) ---
+        // --- Global Configurations & Constants ---
         const colors = { 
             player: '#0ff', bullet: '#ff0', ghost: '#0f0', 
-            enemyBasic: '#f0f', enemyTracker: '#f30', enemyTank: '#f90', boss: '#f00', 
-            powShield: '#3b82f6', powGun: '#eab308', powHealth: '#22c55e' 
+            enemyBasic: '#f0f', enemyTracker: '#f30', enemyTank: '#f90', boss: '#ff3300', 
+            powShield: '#3b82f6', powGun: '#eab308', powHealth: '#22c55e', powDrone: '#06b6d4',
+            blackHole: '#a855f7'
         };
 
         const SHIP_CLASSES = {
@@ -224,6 +247,15 @@
             rogue: { hp: 2, spd: 0.30, rad: 12, color: '#a855f7', icon: '🥷' },
             tank: { hp: 5, spd: 0.12, rad: 24, color: '#f97316', icon: '🛡️' }
         };
+
+        const UPGRADE_POOL = [
+            { id: 'hp', title: "Titanium Hull", desc: "Max HP +1 & Full Heal", icon: "💚" },
+            { id: 'spd', title: "Hyper Thrusters", desc: "Ship Speed +20%", icon: "⚡" },
+            { id: 'dash', title: "Warp Capacitor", desc: "Dash Cooldown Reduced 30%", icon: "🌀" },
+            { id: 'railgun', title: "Plasma Railgun", desc: "Base Weapon: Piercing Laser", icon: "☄️" },
+            { id: 'swarm', title: "Swarm Missiles", desc: "Base Weapon: Homing Rockets", icon: "🚀" },
+            { id: 'flak', title: "Flak Cannon", desc: "Base Weapon: Shotgun Burst", icon: "💥" }
+        ];
 
         const appId = 'best-game-universe';
         const firebaseConfig = {
@@ -241,10 +273,14 @@
         // Settings & State
         let gameState = 'menu', isMultiplayer = false, currentRoomId = null, isHost = false, roomData = null, gameMode = 'coop';
         let animationId, frameCount = 0, lastTime = 0, score = 0, screenShake = 0, camera = { x: 0, y: 0 };
-        let bossMode = false, bossEntity = null;
+        let bossMode = false, bossEntity = null, syncTimer = null;
+        
+        let combo = 1, comboTimer = 0, ultCharge = 0;
+        let nextWaveScore = 2000;
+        
         let myName = localStorage.getItem('bg_name') || 'PILOT';
         let myShipClass = localStorage.getItem('bg_class') || 'balanced';
-        let isTouchDevice = false; // Set on first touch
+        let isTouchDevice = false, lastTouchTime = 0;
         
         document.getElementById('playerNameInput').value = myName;
         document.getElementById('shipClassSelect').value = myShipClass;
@@ -252,9 +288,9 @@
 
         // Entities arrays
         let player, otherPlayers = {}, bullets = [], enemies = [], particles = [], powerups = [], floatingTexts = [], stars = [], nebulae = [], asteroids = [];
-        let emps = []; // Ultimate shockwaves
+        let emps = [], blackHoles = []; 
 
-        // --- Audio System (Synthesizer) ---
+        // --- Audio System ---
         const AudioContext = window.AudioContext || window.webkitAudioContext; 
         let audioCtx;
         
@@ -268,136 +304,90 @@
             
             if (type === 'shoot') { 
                 osc.type = 'square'; osc.frequency.setValueAtTime(800, now); osc.frequency.exponentialRampToValueAtTime(100, now + 0.1); 
-                gain.gain.setValueAtTime(0.05, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1); 
-                osc.start(now); osc.stop(now + 0.1); 
+                gain.gain.setValueAtTime(0.05, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1); osc.start(now); osc.stop(now + 0.1); 
+            } else if (type === 'railgun') { 
+                osc.type = 'sawtooth'; osc.frequency.setValueAtTime(400, now); osc.frequency.exponentialRampToValueAtTime(800, now + 0.2); 
+                gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2); osc.start(now); osc.stop(now + 0.2); 
             } else if (type === 'ghost_shoot') {
-                osc.type = 'sine'; osc.frequency.setValueAtTime(1000, now); osc.frequency.exponentialRampToValueAtTime(300, now + 0.1);
-                gain.gain.setValueAtTime(0.02, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
-                osc.start(now); osc.stop(now + 0.1);
+                osc.type = 'sine'; osc.frequency.setValueAtTime(1200, now); osc.frequency.exponentialRampToValueAtTime(400, now + 0.1);
+                gain.gain.setValueAtTime(0.02, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1); osc.start(now); osc.stop(now + 0.1);
             } else if (type === 'explosion') { 
                 osc.type = 'sawtooth'; osc.frequency.setValueAtTime(100, now); osc.frequency.exponentialRampToValueAtTime(10, now + 0.3); 
-                gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3); 
-                osc.start(now); osc.stop(now + 0.3); 
+                gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3); osc.start(now); osc.stop(now + 0.3); 
             } else if (type === 'powerup') { 
                 osc.type = 'sine'; osc.frequency.setValueAtTime(400, now); osc.frequency.setValueAtTime(600, now + 0.1); osc.frequency.setValueAtTime(800, now + 0.2); 
-                gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0, now + 0.4); 
-                osc.start(now); osc.stop(now + 0.4); 
+                gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0, now + 0.4); osc.start(now); osc.stop(now + 0.4); 
             } else if (type === 'hit') { 
                 osc.type = 'triangle'; osc.frequency.setValueAtTime(200, now); osc.frequency.exponentialRampToValueAtTime(50, now + 0.1); 
-                gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1); 
-                osc.start(now); osc.stop(now + 0.1); 
+                gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1); osc.start(now); osc.stop(now + 0.1); 
             } else if (type === 'emp') { 
                 osc.type = 'sine'; osc.frequency.setValueAtTime(100, now); osc.frequency.exponentialRampToValueAtTime(800, now + 0.5); 
-                gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0, now + 1.0); 
-                osc.start(now); osc.stop(now + 1.0); 
+                gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0, now + 1.0); osc.start(now); osc.stop(now + 1.0); 
             } else if (type === 'boss_alert') {
                 osc.type = 'sawtooth'; osc.frequency.setValueAtTime(100, now); osc.frequency.setValueAtTime(150, now+0.5); osc.frequency.setValueAtTime(100, now+1);
-                gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0, now + 1.5);
-                osc.start(now); osc.stop(now + 1.5);
+                gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0, now + 1.5); osc.start(now); osc.stop(now + 1.5);
+            } else if (type === 'dash') {
+                osc.type = 'sawtooth'; osc.frequency.setValueAtTime(100, now); osc.frequency.exponentialRampToValueAtTime(800, now + 0.2);
+                gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2); osc.start(now); osc.stop(now + 0.2);
+            } else if (type === 'blackhole') {
+                osc.type = 'sine'; osc.frequency.setValueAtTime(50, now); osc.frequency.linearRampToValueAtTime(30, now + 2.0);
+                gain.gain.setValueAtTime(0.3, now); gain.gain.linearRampToValueAtTime(0, now + 2.0); osc.start(now); osc.stop(now + 2.0);
             }
         }
 
         // --- WebRTC Voice Chat ---
         let peer = null, myStream = null, activeCall = null, isMicOn = false;
-        
         async function toggleVoiceChat() {
             const btn = document.getElementById('btnToggleMic'), iconOff = document.getElementById('micIconOff'), iconOn = document.getElementById('micIconOn');
             if (isMicOn) {
-                if (myStream) myStream.getTracks().forEach(t => t.stop()); 
-                if (peer) { peer.destroy(); peer = null; } 
-                if (activeCall) { activeCall.close(); activeCall = null; }
-                isMicOn = false; 
-                iconOff.classList.remove('hidden'); iconOn.classList.add('hidden'); 
+                if (myStream) myStream.getTracks().forEach(t => t.stop()); if (peer) { peer.destroy(); peer = null; } if (activeCall) { activeCall.close(); activeCall = null; }
+                isMicOn = false; iconOff.classList.remove('hidden'); iconOn.classList.add('hidden'); 
                 btn.classList.replace('text-green-400', 'text-fuchsia-300'); btn.classList.replace('border-green-500', 'border-fuchsia-500');
-                if(currentRoomId) updateDoc(getRoomRef(currentRoomId), { [`players.${currentUser.uid}.peerId`]: null }).catch(()=>{}); 
-                showToast("Voice Chat Disabled");
+                if(currentRoomId) updateDoc(getRoomRef(currentRoomId), { [`players.${currentUser.uid}.peerId`]: null }).catch(()=>{}); showToast("Voice Chat Disabled");
             } else {
                 try {
-                    myStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false }); 
-                    peer = new Peer(); 
+                    myStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false }); peer = new Peer(); 
                     peer.on('open', (id) => { if(currentRoomId) updateDoc(getRoomRef(currentRoomId), { [`players.${currentUser.uid}.peerId`]: id }).catch(()=>{}); });
                     peer.on('call', (call) => { call.answer(myStream); activeCall = call; call.on('stream', s => { const a = new Audio(); a.srcObject = s; a.play(); }); });
-                    isMicOn = true; 
-                    iconOff.classList.add('hidden'); iconOn.classList.remove('hidden'); 
-                    btn.classList.replace('text-fuchsia-300', 'text-green-400'); btn.classList.replace('border-fuchsia-500', 'border-green-500'); 
-                    showToast("Voice Chat Connected");
+                    isMicOn = true; iconOff.classList.add('hidden'); iconOn.classList.remove('hidden'); 
+                    btn.classList.replace('text-fuchsia-300', 'text-green-400'); btn.classList.replace('border-fuchsia-500', 'border-green-500'); showToast("Voice Chat Connected");
                 } catch (e) { showToast("Mic Permission Denied"); }
             }
         }
-        function handleIncomingPeer(remotePeerId) { 
-            if (isMicOn && peer && remotePeerId && (!activeCall || activeCall.peer !== remotePeerId)) { 
-                const call = peer.call(remotePeerId, myStream); activeCall = call; call.on('stream', s => { const a = new Audio(); a.srcObject = s; a.play(); }); 
-            } 
-        }
+        function handleIncomingPeer(remotePeerId) { if (isMicOn && peer && remotePeerId && (!activeCall || activeCall.peer !== remotePeerId)) { const call = peer.call(remotePeerId, myStream); activeCall = call; call.on('stream', s => { const a = new Audio(); a.srcObject = s; a.play(); }); } }
 
-        // --- DOM & Menus Setup ---
-        const canvas = document.getElementById('gameCanvas'); 
-        const ctx = canvas.getContext('2d', { alpha: false });
+        // --- DOM Setup ---
+        const canvas = document.getElementById('gameCanvas'); const ctx = canvas.getContext('2d', { alpha: false });
+        const minimapCanvas = document.getElementById('minimap'); const mmCtx = minimapCanvas.getContext('2d');
         const uiLayer = document.getElementById('uiLayer');
-        const screens = { 
-            main: document.getElementById('mainMenu'), mp: document.getElementById('mpMenu'), 
-            lobby: document.getElementById('lobbyMenu'), gameOver: document.getElementById('gameOverScreen'), 
-            options: document.getElementById('optionsMenu'), pause: document.getElementById('pauseMenu'), 
-            leaderboard: document.getElementById('leaderboardMenu') 
-        };
+        const screens = { main: document.getElementById('mainMenu'), mp: document.getElementById('mpMenu'), lobby: document.getElementById('lobbyMenu'), gameOver: document.getElementById('gameOverScreen'), options: document.getElementById('optionsMenu'), pause: document.getElementById('pauseMenu'), leaderboard: document.getElementById('leaderboardMenu'), upgrade: document.getElementById('upgradeScreen') };
         
-        function showScreen(screenName) { 
-            Object.values(screens).forEach(s => s.classList.add('hidden')); 
-            if (screenName && screens[screenName]) { screens[screenName].classList.remove('hidden'); uiLayer.classList.remove('pointer-events-none'); } 
-            else uiLayer.classList.add('pointer-events-none'); 
-            gameState = screenName || 'playing'; 
-        }
-        
-        function showToast(msg) { 
-            const toast = document.getElementById('toast'); toast.innerText = msg; toast.style.opacity = 1; 
-            setTimeout(() => { toast.style.opacity = 0; }, 3000); 
-        }
+        function showScreen(screenName) { Object.values(screens).forEach(s => s.classList.add('hidden')); if (screenName && screens[screenName]) { screens[screenName].classList.remove('hidden'); uiLayer.classList.remove('pointer-events-none'); } else uiLayer.classList.add('pointer-events-none'); gameState = screenName || 'playing'; }
+        function showToast(msg) { const toast = document.getElementById('toast'); toast.innerText = msg; toast.style.opacity = 1; setTimeout(() => { toast.style.opacity = 0; }, 3000); }
 
         function initFirebase() { 
-            try { app = initializeApp(firebaseConfig); auth = getAuth(app); db = getFirestore(app); } 
-            catch(e) { console.warn("Firebase Init Failed"); return; }
-
+            try { app = initializeApp(firebaseConfig); auth = getAuth(app); db = getFirestore(app); } catch(e) { return; }
             signInAnonymously(auth).catch(e => showToast("Auth Error. Proceed Solo."));
-            onAuthStateChanged(auth, (user) => { 
-                currentUser = user; 
-                if (user) {
-                    document.getElementById('btnMultiplayer').disabled = false; 
-                    document.getElementById('btnMultiplayer').innerText = 'Co-Op Network'; 
-                }
-            });
+            onAuthStateChanged(auth, (user) => { currentUser = user; if (user) { document.getElementById('btnMultiplayer').disabled = false; document.getElementById('btnMultiplayer').innerText = 'Co-Op Network'; } });
         }
-        
         initFirebase(); resizeCanvas(); window.addEventListener('resize', resizeCanvas);
 
         // --- Leaderboard Integration ---
         async function fetchLeaderboard() {
-            showScreen('leaderboard'); const lbList = document.getElementById('lbList'); 
-            lbList.innerHTML = '<li class="text-cyan-300 animate-pulse text-center">Decrypting Network Data...</li>';
+            showScreen('leaderboard'); const lbList = document.getElementById('lbList'); lbList.innerHTML = '<li class="text-cyan-300 animate-pulse text-center">Decrypting Network Data...</li>';
             try { 
-                const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard'), orderBy('score', 'desc'), limit(10)); 
-                const snap = await getDocs(q); lbList.innerHTML = ''; 
+                const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard'), orderBy('score', 'desc'), limit(10)); const snap = await getDocs(q); lbList.innerHTML = ''; 
                 if(snap.empty) { lbList.innerHTML = '<li class="text-center text-cyan-500">No records found.</li>'; return; } 
-                let rank = 1; 
-                snap.forEach(doc => { 
-                    const data = doc.data(); const isMe = currentUser && doc.id === currentUser.uid; 
-                    lbList.innerHTML += `<li class="flex justify-between font-bold text-xl ${isMe ? 'text-fuchsia-400' : 'text-cyan-300'} border-b border-cyan-900 pb-2"><span class="truncate pr-4"><span class="text-white mr-2">#${rank}</span> ${data.name}</span><span>${data.score}</span></li>`; 
-                    rank++; 
-                }); 
+                let rank = 1; snap.forEach(doc => { const data = doc.data(); const isMe = currentUser && doc.id === currentUser.uid; lbList.innerHTML += `<li class="flex justify-between font-bold text-xl ${isMe ? 'text-fuchsia-400' : 'text-cyan-300'} border-b border-cyan-900 pb-2"><span class="truncate pr-4"><span class="text-white mr-2">#${rank}</span> ${data.name}</span><span>${data.score}</span></li>`; rank++; }); 
             } catch (e) { lbList.innerHTML = '<li class="text-center text-red-500">Failed to load intel.</li>'; }
         }
         
         async function saveScoreToLeaderboard() { 
             if (!currentUser || score === 0 || gameMode === 'pvp') return; 
-            try { 
-                const ref = doc(db, 'artifacts', appId, 'public', 'data', 'leaderboard', currentUser.uid); 
-                const docSnap = await getDoc(ref); 
-                if (!docSnap.exists() || docSnap.data().score < score) { 
-                    await setDoc(ref, { name: myName, score: score, timestamp: new Date() }); 
-                } 
-            } catch (e) {} 
+            try { const ref = doc(db, 'artifacts', appId, 'public', 'data', 'leaderboard', currentUser.uid); const docSnap = await getDoc(ref); if (!docSnap.exists() || docSnap.data().score < score) { await setDoc(ref, { name: myName, score: score, timestamp: new Date() }); } } catch (e) {} 
         }
 
-        // --- Multiplayer Connection Logic ---
+        // --- Multiplayer Logic ---
         const getRoomRef = (roomId) => doc(collection(db, 'artifacts', appId, 'public', 'data', 'rooms'), roomId.toUpperCase());
         const genCode = () => Math.random().toString(36).substring(2, 6).toUpperCase();
 
@@ -405,20 +395,14 @@
         document.getElementById('shipClassSelect').addEventListener('change', (e) => { myShipClass = e.target.value; localStorage.setItem('bg_class', myShipClass); });
 
         async function createRoom(mode) {
-            if (!currentUser) return; gameMode = mode; 
-            document.getElementById(mode==='pvp'?'btnCreatePvP':'btnCreateRoom').disabled = true; 
-            const roomId = genCode();
+            if (!currentUser) return; gameMode = mode; document.getElementById(mode==='pvp'?'btnCreatePvP':'btnCreateRoom').disabled = true; const roomId = genCode();
             try {
-                await setDoc(getRoomRef(roomId), { 
-                    host: currentUser.uid, state: 'lobby', mode: mode, 
-                    players: { [currentUser.uid]: { name: myName, sClass: myShipClass, x: 0, y: 0, score: 0, hp: SHIP_CLASSES[myShipClass].hp, isDead: false, isFiring: false, aimX: 0, aimY: -1, reviveProgress: 0 } } 
-                });
+                await setDoc(getRoomRef(roomId), { host: currentUser.uid, state: 'lobby', mode: mode, players: { [currentUser.uid]: { name: myName, sClass: myShipClass, x: 0, y: 0, score: 0, hp: SHIP_CLASSES[myShipClass].hp, isDead: false, reviveProgress: 0, droneActive: false } } });
                 isHost = true; currentRoomId = roomId; isMultiplayer = true; setupRoomListener(roomId);
                 document.getElementById('lobbyRoomCode').innerText = roomId; 
                 document.getElementById('lobbyModeText').innerText = mode === 'pvp' ? 'PVP DEATHMATCH' : 'CO-OP SURVIVAL'; 
                 document.getElementById('lobbyModeText').className = mode === 'pvp' ? 'text-red-500 font-bold uppercase tracking-widest mb-4' : 'text-fuchsia-400 font-bold uppercase tracking-widest mb-4';
-                document.getElementById('btnStartGame').classList.remove('hidden'); document.getElementById('waitingText').classList.add('hidden'); 
-                showScreen('lobby');
+                document.getElementById('btnStartGame').classList.remove('hidden'); document.getElementById('waitingText').classList.add('hidden'); showScreen('lobby');
             } catch (e) { showToast("Check Firestore Rules!"); }
             document.getElementById(mode==='pvp'?'btnCreatePvP':'btnCreateRoom').disabled = false;
         }
@@ -429,13 +413,12 @@
                 const snap = await getDoc(getRoomRef(roomId));
                 if (snap.exists() && snap.data().state === 'lobby') {
                     gameMode = snap.data().mode || 'coop';
-                    await updateDoc(getRoomRef(roomId), { [`players.${currentUser.uid}`]: { name: myName, sClass: myShipClass, x: 0, y: 0, score: 0, hp: SHIP_CLASSES[myShipClass].hp, isDead: false, isFiring: false, aimX: 0, aimY: -1, reviveProgress: 0 } });
+                    await updateDoc(getRoomRef(roomId), { [`players.${currentUser.uid}`]: { name: myName, sClass: myShipClass, x: 0, y: 0, score: 0, hp: SHIP_CLASSES[myShipClass].hp, isDead: false, reviveProgress: 0, droneActive: false } });
                     isHost = false; currentRoomId = roomId.toUpperCase(); isMultiplayer = true; setupRoomListener(currentRoomId);
                     document.getElementById('lobbyRoomCode').innerText = currentRoomId; 
                     document.getElementById('lobbyModeText').innerText = gameMode === 'pvp' ? 'PVP DEATHMATCH' : 'CO-OP SURVIVAL'; 
                     document.getElementById('lobbyModeText').className = gameMode === 'pvp' ? 'text-red-500 font-bold uppercase tracking-widest mb-4' : 'text-fuchsia-400 font-bold uppercase tracking-widest mb-4';
-                    document.getElementById('btnStartGame').classList.add('hidden'); document.getElementById('waitingText').classList.remove('hidden'); 
-                    showScreen('lobby');
+                    document.getElementById('btnStartGame').classList.add('hidden'); document.getElementById('waitingText').classList.remove('hidden'); showScreen('lobby');
                 } else showToast("Room invalid/full");
             } catch (e) { showToast("Check Firestore Rules!"); }
             document.getElementById('btnJoinRoom').disabled = false;
@@ -451,32 +434,28 @@
                     const list = document.getElementById('playerList'); list.innerHTML = '';
                     for (const uid in data.players) {
                         if (!data.players[uid]) continue; const pData = data.players[uid]; const li = document.createElement('li'); li.className = uid === currentUser.uid ? 'text-cyan-300' : 'text-white';
-                        li.innerHTML = `${SHIP_CLASSES[pData.sClass]?.icon||'🚀'} ${pData.name} ${uid === currentUser.uid ? '(You)' : ''} ${uid === data.host ? '<span class="text-fuchsia-400 text-xs ml-2">[HOST]</span>' : ''}`;
-                        list.appendChild(li);
+                        li.innerHTML = `${SHIP_CLASSES[pData.sClass]?.icon||'🚀'} ${pData.name} ${uid === currentUser.uid ? '(You)' : ''} ${uid === data.host ? '<span class="text-fuchsia-400 text-xs ml-2">[HOST]</span>' : ''}`; list.appendChild(li);
                     }
                     if (data.state === 'playing') startGame();
                 }
                 
                 if (gameState === 'playing' || gameState === 'gameover') {
-                    let allDeadCoop = true;
-                    let pvpAliveCount = 0;
+                    let allDeadCoop = true, pvpAliveCount = 0;
                     
                     for (const uid in data.players) {
                         if (!data.players[uid] || uid === currentUser.uid) continue;
                         const pData = data.players[uid];
                         
                         if (!pData.isDead) { allDeadCoop = false; pvpAliveCount++; }
-                        
                         if (!otherPlayers[uid]) otherPlayers[uid] = new GhostPlayer(uid, pData.x||canvas.width/2, pData.y||canvas.height/2, pData.name, pData.sClass);
+                        
                         let ghost = otherPlayers[uid];
                         ghost.targetX = pData.x; ghost.targetY = pData.y; ghost.score = pData.score; ghost.isDead = pData.isDead; ghost.hp = pData.hp; ghost.reviveProgress = pData.reviveProgress || 0;
+                        ghost.droneActive = pData.droneActive || false;
                         
-                        // Sync Ghost Firing
-                        if (pData.isFiring && !pData.isDead) { if (ghost.weaponTimer <= 0) { ghost.shoot(); ghost.weaponTimer = 10; } }
-                        // Connect Voice Chat
                         if (pData.peerId) handleIncomingPeer(pData.peerId);
                         
-                        // Local Sync of Revive: If I am dead, and Firestore says a ghost revived me, apply it locally.
+                        // Local Revive execution
                         if (player && player.isDead && data.players[currentUser.uid] && data.players[currentUser.uid].reviveProgress >= 100) {
                             player.isDead = false; player.hp = 1; player.invulnFrames = 120; document.getElementById('scoreDisplay').innerText = score;
                             updateDoc(getRoomRef(currentRoomId), { [`players.${currentUser.uid}.isDead`]: false, [`players.${currentUser.uid}.hp`]: 1, [`players.${currentUser.uid}.reviveProgress`]: 0 }).catch(()=>{});
@@ -489,15 +468,14 @@
 
                     if (gameState === 'playing') {
                         if (gameMode === 'coop' && allDeadCoop && player && player.isDead) endMultiplayerGame("SQUAD WIPED");
-                        if (gameMode === 'pvp' && Object.keys(data.players).length > 1 && pvpAliveCount <= 1) endMultiplayerGame(player.isDead ? "DEFEAT" : "VICTORY!");
+                        if (gameMode === 'pvp' && Object.keys(data.players).length > 1 && pvpAliveCount <= 1) endMultiplayerGame(player && player.isDead ? "DEFEAT" : "VICTORY!");
                     }
                 }
             });
         }
 
         function updateMultiplayerHUD() {
-            if (!isMultiplayer || !roomData) return;
-            const ms = document.getElementById('multiplayerStats'); 
+            if (!isMultiplayer || !roomData) return; const ms = document.getElementById('multiplayerStats'); 
             let html = `<div class="font-bold ${gameMode==='pvp'?'text-red-500':'text-cyan-500'} mb-1 border-b border-cyan-800 pb-1">${gameMode==='pvp'?'PVP MATCH':'SQUAD STATUS'}</div>`;
             for (const uid in roomData.players) {
                 if (!roomData.players[uid]) continue; const isMe = uid === currentUser.uid;
@@ -513,43 +491,85 @@
         function syncLocalPlayerState() {
             if (!isMultiplayer || !currentRoomId || !currentUser || !player) return;
             updateDoc(getRoomRef(currentRoomId), { 
-                [`players.${currentUser.uid}.x`]: Math.round(player.x), 
-                [`players.${currentUser.uid}.y`]: Math.round(player.y), 
-                [`players.${currentUser.uid}.score`]: score, 
-                [`players.${currentUser.uid}.hp`]: player.hp, 
-                [`players.${currentUser.uid}.isDead`]: player.isDead, 
-                [`players.${currentUser.uid}.isFiring`]: player.isFiring
+                [`players.${currentUser.uid}.x`]: Math.round(player.x), [`players.${currentUser.uid}.y`]: Math.round(player.y), 
+                [`players.${currentUser.uid}.score`]: score, [`players.${currentUser.uid}.hp`]: player.hp, 
+                [`players.${currentUser.uid}.isDead`]: player.isDead, [`players.${currentUser.uid}.droneActive`]: player.droneActive
             }).catch(()=>{});
         }
 
-        // --- Ultimate Abilities ---
-        let ultCharge = 0;
-        
-        function addUltCharge(amount) {
-            if (ultCharge >= 100) return;
-            ultCharge += amount;
-            if (ultCharge >= 100) { 
-                ultCharge = 100; document.getElementById('ultBar').classList.add('ult-ready'); 
-                document.getElementById('btnUlt').classList.remove('hidden'); playSound('powerup'); 
+        // --- Core Systems (Combo, Ult, Roguelite Upgrades) ---
+        function updateCombo() {
+            if (comboTimer > 0) {
+                comboTimer--;
+                if (comboTimer === 0) { combo = 1; document.getElementById('comboDisplay').classList.add('hidden'); }
             }
+        }
+        
+        function handleKill(basePoints) {
+            comboTimer = 180; combo = Math.min(10, combo + 1); let earned = basePoints * combo; score += earned;
+            
+            const cd = document.getElementById('comboDisplay');
+            cd.classList.remove('hidden'); document.getElementById('comboVal').innerText = combo;
+            cd.classList.add('combo-pop'); setTimeout(()=>cd.classList.remove('combo-pop'), 100);
+            
+            addUltCharge((basePoints / 100) * 5); 
+            if (player && !player.isDead) {
+                document.getElementById('scoreDisplay').innerText = score;
+                // Wave Threshold Check
+                if (score >= nextWaveScore && gameMode !== 'pvp') { triggerWaveUpgrade(); }
+            }
+            return earned;
+        }
+
+        function addUltCharge(amount) {
+            if (ultCharge >= 100) return; ultCharge += amount;
+            if (ultCharge >= 100) { ultCharge = 100; document.getElementById('ultBar').classList.add('ult-ready'); document.getElementById('btnUlt').classList.remove('hidden'); playSound('powerup'); }
             document.getElementById('ultBar').style.width = `${ultCharge}%`;
         }
         
         function triggerUltimate() {
             if (ultCharge < 100 || !player || player.isDead) return;
-            ultCharge = 0; document.getElementById('ultBar').style.width = `0%`; 
-            document.getElementById('ultBar').classList.remove('ult-ready'); document.getElementById('btnUlt').classList.add('hidden');
-            playSound('emp');
+            ultCharge = 0; document.getElementById('ultBar').style.width = `0%`; document.getElementById('ultBar').classList.remove('ult-ready'); document.getElementById('btnUlt').classList.add('hidden');
+            playSound('emp'); emps.push({ x: player.x, y: player.y, radius: 10, maxRadius: canvas.width * 1.5, alpha: 1 });
             
-            emps.push({ x: player.x, y: player.y, radius: 10, maxRadius: canvas.width * 1.5, alpha: 1 });
-            
-            // Screen wipe
-            for (let i = enemies.length - 1; i >= 0; i--) { createExplosion(enemies[i].x, enemies[i].y, enemies[i].color, 15); score += enemies[i].scoreVal; enemies.splice(i, 1); }
+            for (let i = enemies.length - 1; i >= 0; i--) { createExplosion(enemies[i].x, enemies[i].y, enemies[i].color, 15); handleKill(enemies[i].scoreVal); enemies.splice(i, 1); }
             for (let i = bullets.length - 1; i >= 0; i--) { if (bullets[i].isEnemy) bullets.splice(i, 1); }
             for (let i = asteroids.length - 1; i >= 0; i--) { createExplosion(asteroids[i].x, asteroids[i].y, '#555', 30); asteroids.splice(i, 1); }
-            
-            document.getElementById('scoreDisplay').innerText = score;
             screenShake = 40; showFloatingText(player.x, player.y - 40, "EMP DEPLOYED", "#0ff");
+        }
+
+        function triggerWaveUpgrade() {
+            if (player) player.isUpgrading = true; // Makes immune
+            playSound('powerup');
+            
+            // Randomize 3 unique options
+            let options = [...UPGRADE_POOL].sort(() => 0.5 - Math.random()).slice(0, 3);
+            const container = document.getElementById('upgradeOptionsContainer');
+            container.innerHTML = '';
+            
+            options.forEach(opt => {
+                let div = document.createElement('div');
+                div.className = 'upgrade-card';
+                div.innerHTML = `<div class="text-4xl mb-3">${opt.icon}</div><h3 class="text-xl font-bold text-cyan-300 mb-2">${opt.title}</h3><p class="text-sm text-gray-300">${opt.desc}</p>`;
+                div.onclick = () => selectUpgrade(opt.id);
+                container.appendChild(div);
+            });
+
+            nextWaveScore += 3000; // Next threshold
+            showScreen('upgrade');
+        }
+
+        function selectUpgrade(id) {
+            playSound('powerup');
+            if (id === 'hp') { player.maxHp++; player.hp = player.maxHp; updateHealthUI(); }
+            else if (id === 'spd') { player.speed *= 1.2; }
+            else if (id === 'dash') { player.dashCooldownMax = Math.floor(player.dashCooldownMax * 0.7); }
+            else if (id === 'railgun') { player.baseWeapon = 'railgun'; player.weapon = 'railgun'; document.getElementById('activePowerup').innerText = "RAILGUN ONLINE"; document.getElementById('activePowerup').classList.remove('hidden'); }
+            else if (id === 'swarm') { player.baseWeapon = 'swarm'; player.weapon = 'swarm'; document.getElementById('activePowerup').innerText = "SWARM ONLINE"; document.getElementById('activePowerup').classList.remove('hidden');}
+            else if (id === 'flak') { player.baseWeapon = 'flak'; player.weapon = 'flak'; document.getElementById('activePowerup').innerText = "FLAK ONLINE"; document.getElementById('activePowerup').classList.remove('hidden');}
+            
+            if (player) player.isUpgrading = false;
+            showScreen(null); // Return to game
         }
 
         // --- Game Classes ---
@@ -558,7 +578,14 @@
                 let stats = SHIP_CLASSES[myShipClass] || SHIP_CLASSES['balanced'];
                 this.radius = stats.rad; this.x = canvas.width / 2; this.y = canvas.height - 120; this.targetX = this.x; this.targetY = this.y; this.vx = 0; this.vy = 0;
                 this.color = stats.color; this.speed = stats.spd; this.maxHp = stats.hp; this.hp = this.maxHp;
-                this.isDead = false; this.invulnFrames = 0; this.weapon = myShipClass === 'tank' ? 'spread' : 'std'; this.weaponTimer = 0; this.shielded = false; this.isFiring = false; this.reviveProgress = 0;
+                
+                this.isDead = false; this.invulnFrames = 0; this.shielded = false; this.reviveProgress = 0;
+                this.isUpgrading = false; // Overlay immunity
+                
+                // Weapons & Abilities
+                this.baseWeapon = 'std'; this.weapon = this.baseWeapon; this.weaponTimer = 0;
+                this.dashTimer = 0; this.dashCooldown = 0; this.dashCooldownMax = 180;
+                this.droneActive = false; this.droneTimer = 0; this.droneAngle = 0;
             }
             
             draw() {
@@ -573,80 +600,140 @@
                     return;
                 }
                 
-                if (this.invulnFrames > 0 && frameCount % 6 < 3) return;
+                if (this.invulnFrames > 0 && frameCount % 6 < 3 && this.dashTimer === 0) return;
                 
                 ctx.save(); ctx.translate(this.x, this.y); 
-                
-                // Smooth Dynamic Banking based on actual velocity
-                let moveTilt = this.vx * 0.05; 
-                ctx.rotate(Math.max(-0.5, Math.min(0.5, moveTilt)));
+                let moveTilt = this.vx * 0.05; ctx.rotate(Math.max(-0.5, Math.min(0.5, moveTilt)));
                 
                 if (this.shielded) { ctx.beginPath(); ctx.arc(0, 0, this.radius + 10, 0, Math.PI*2); ctx.fillStyle = 'rgba(59, 130, 246, 0.2)'; ctx.fill(); ctx.strokeStyle = '#3b82f6'; ctx.stroke(); }
+                if (this.isUpgrading) { ctx.beginPath(); ctx.arc(0, 0, this.radius + 20, 0, Math.PI*2); ctx.strokeStyle = '#eab308'; ctx.stroke(); } // Gold shield during upgrade
+
+                if (this.dashTimer > 0) { ctx.shadowBlur = 40; ctx.shadowColor = '#a855f7'; } else { ctx.shadowBlur = 20; ctx.shadowColor = this.color; }
                 
-                ctx.shadowBlur = 20; ctx.shadowColor = this.color; 
                 ctx.beginPath(); ctx.moveTo(0, -this.radius * 1.8); ctx.lineTo(this.radius, this.radius); ctx.lineTo(this.radius*0.4, this.radius*0.6); ctx.lineTo(0, this.radius * 0.8); ctx.lineTo(-this.radius*0.4, this.radius*0.6); ctx.lineTo(-this.radius, this.radius); ctx.closePath(); 
-                ctx.fillStyle = '#050510'; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = this.color; ctx.stroke();
+                ctx.fillStyle = this.dashTimer > 0 ? '#a855f7' : '#050510'; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = this.dashTimer > 0 ? '#fff' : this.color; ctx.stroke();
                 
-                const thrustLvl = Math.random() * 15 + 5; 
+                const thrustLvl = Math.random() * 15 + (this.dashTimer>0?25:5); 
                 ctx.beginPath(); ctx.moveTo(-this.radius*0.5, this.radius*0.8); ctx.lineTo(0, this.radius + thrustLvl); ctx.lineTo(this.radius*0.5, this.radius*0.8); 
-                ctx.fillStyle = this.weapon === 'spread' ? '#eab308' : '#0ff'; ctx.fill(); 
+                ctx.fillStyle = this.dashTimer > 0 ? '#fff' : (this.weapon === 'spread' ? '#eab308' : '#0ff'); ctx.fill(); 
+                
                 ctx.restore();
+
+                if (this.droneActive) {
+                    let d1x = this.x + Math.cos(this.droneAngle) * 35, d1y = this.y + Math.sin(this.droneAngle) * 35;
+                    let d2x = this.x + Math.cos(this.droneAngle + Math.PI) * 35, d2y = this.y + Math.sin(this.droneAngle + Math.PI) * 35;
+                    ctx.save(); ctx.shadowBlur = 10; ctx.shadowColor = colors.powDrone; ctx.fillStyle = colors.powDrone;
+                    ctx.beginPath(); ctx.arc(d1x, d1y, 4, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(d2x, d2y, 4, 0, Math.PI*2); ctx.fill(); ctx.restore();
+                }
             }
             
             update() {
-                if (this.isDead) return;
+                if (this.isDead || this.isUpgrading) return; // Freeze entirely if upgrading
                 
-                // Smooth Velocity Interpolation
-                this.vx = (this.targetX - this.x) * this.speed;
-                this.vy = (this.targetY - this.y) * this.speed;
-                this.x += this.vx; 
-                this.y += this.vy;
-                
+                if (this.dashCooldown > 0) { this.dashCooldown--; document.getElementById('dashBar').style.width = `${((this.dashCooldownMax - this.dashCooldown) / this.dashCooldownMax) * 100}%`; }
+
+                if (this.dashTimer > 0) {
+                    this.dashTimer--; this.vx = (this.targetX - this.x) * (this.speed * 4); this.vy = (this.targetY - this.y) * (this.speed * 4);
+                    createExplosion(this.x, this.y, '#a855f7', 2); // trail
+                } else {
+                    this.vx = (this.targetX - this.x) * this.speed; this.vy = (this.targetY - this.y) * this.speed;
+                }
+
+                this.x += this.vx; this.y += this.vy;
                 this.x = Math.max(this.radius, Math.min(canvas.width - this.radius, this.x)); this.y = Math.max(this.radius, Math.min(canvas.height - this.radius, this.y));
                 
                 if (this.invulnFrames > 0) this.invulnFrames--;
-                if (this.weaponTimer > 0) { this.weaponTimer--; if (this.weaponTimer <= 0) { this.weapon = myShipClass === 'tank' ? 'spread' : 'std'; document.getElementById('activePowerup').classList.add('hidden'); } }
+                if (this.weaponTimer > 0) { this.weaponTimer--; if (this.weaponTimer <= 0) { this.weapon = this.baseWeapon; document.getElementById('activePowerup').classList.add('hidden'); } }
                 
-                // Nebula slow check
+                // Drone Update
+                if (this.droneActive) {
+                    this.droneTimer--; this.droneAngle += 0.1;
+                    if (this.droneTimer <= 0) { this.droneActive = false; document.getElementById('activeDrones').classList.add('hidden'); }
+                    
+                    if (frameCount % 15 === 0) {
+                        let nearest = null, minDist = 400;
+                        enemies.forEach(e => { let d = Math.hypot(e.x - this.x, e.y - this.y); if(d < minDist) { minDist = d; nearest = e; } });
+                        if (bossEntity && Math.hypot(bossEntity.x - this.x, bossEntity.y - this.y) < 500) nearest = bossEntity;
+                        if (nearest) {
+                            playSound('ghost_shoot');
+                            let d1x = this.x + Math.cos(this.droneAngle) * 35, d1y = this.y + Math.sin(this.droneAngle) * 35;
+                            let toX = nearest.x - d1x, toY = nearest.y - d1y; let mag = Math.hypot(toX, toY);
+                            bullets.push(new Bullet(d1x, d1y, (toY/mag)*15, (toX/mag)*15, colors.powDrone));
+                            
+                            let d2x = this.x + Math.cos(this.droneAngle + Math.PI) * 35, d2y = this.y + Math.sin(this.droneAngle + Math.PI) * 35;
+                            toX = nearest.x - d2x; toY = nearest.y - d2y; mag = Math.hypot(toX, toY);
+                            bullets.push(new Bullet(d2x, d2y, (toY/mag)*15, (toX/mag)*15, colors.powDrone));
+                        }
+                    }
+                }
+
                 let inNebula = false; nebulae.forEach(n => { if(Math.hypot(this.x - n.x, this.y - n.y) < n.r) inNebula = true; });
-                if (inNebula) { this.x -= this.vx * 0.5; this.y -= this.vy * 0.5; }
+                if (inNebula && this.dashTimer === 0) { this.x -= this.vx * 0.5; this.y -= this.vy * 0.5; }
                 
-                // Always Auto-Fire Upwards
-                this.isFiring = true;
-                if (this.isFiring && frameCount % (this.weapon === 'spread' ? 8 : 10) === 0) this.shoot();
+                // Advanced Firing Rates
+                let rate = 10;
+                if (this.weapon === 'spread') rate = 8;
+                if (this.weapon === 'railgun') rate = 20;
+                if (this.weapon === 'flak') rate = 15;
+
+                if (frameCount % rate === 0 && this.dashTimer === 0) this.shoot();
                 
                 this.draw();
             }
+
+            dash() {
+                if (this.isDead || this.dashCooldown > 0 || this.isUpgrading) return;
+                playSound('dash'); this.dashTimer = 10; this.dashCooldown = this.dashCooldownMax; this.invulnFrames = 20; 
+            }
             
             shoot() {
-                if (this.isDead) return; playSound('shoot'); 
-                const speed = 18; 
-                let dx = 0, dy = -1; // Shoot straight up
+                const speed = 18; let dx = 0, dy = -1; 
                 
                 if (this.weapon === 'spread') { 
-                    let baseAng = Math.atan2(dy, dx); 
+                    playSound('shoot'); let baseAng = Math.atan2(dy, dx); 
                     for(let offset of [-0.2, 0, 0.2]) { let ang = baseAng + offset; bullets.push(new Bullet(this.x, this.y - this.radius, Math.sin(ang)*speed, Math.cos(ang)*speed, colors.bullet)); } 
-                } else { 
-                    let perpX = 8, perpY = 0; 
+                } 
+                else if (this.weapon === 'railgun') {
+                    playSound('railgun');
+                    let b = new Bullet(this.x, this.y - this.radius, dy*30, dx*30, '#0ff');
+                    b.radius = 8; b.pierce = true; bullets.push(b);
+                }
+                else if (this.weapon === 'swarm') {
+                    playSound('shoot');
+                    let baseAng = Math.atan2(dy, dx);
+                    for(let offset of [-0.4, 0.4]) { 
+                        let ang = baseAng + offset; let b = new Bullet(this.x, this.y - this.radius, Math.sin(ang)*10, Math.cos(ang)*10, '#f0f');
+                        b.homing = true; bullets.push(b);
+                    }
+                }
+                else if (this.weapon === 'flak') {
+                    playSound('explosion');
+                    for(let i=0; i<6; i++) {
+                        let vx = (Math.random() - 0.5) * 10; let vy = -15 - Math.random() * 10;
+                        let b = new Bullet(this.x, this.y - this.radius, vy, vx, '#f97316');
+                        b.friction = 0.92; bullets.push(b);
+                    }
+                }
+                else { 
+                    playSound('shoot'); let perpX = 8, perpY = 0; 
                     bullets.push(new Bullet(this.x + perpX, this.y - this.radius, dy*speed, dx*speed, colors.bullet)); 
                     bullets.push(new Bullet(this.x - perpX, this.y - this.radius, dy*speed, dx*speed, colors.bullet)); 
                 }
             }
             
             takeDamage(amount = 1) {
-                if (this.isDead || this.invulnFrames > 0) return; screenShake = 20; playSound('hit');
+                if (this.isDead || this.invulnFrames > 0 || this.dashTimer > 0 || this.isUpgrading) return; screenShake = 20; playSound('hit');
                 if (this.shielded) { this.shielded = false; createExplosion(this.x, this.y, colors.powShield, 20); showFloatingText(this.x, this.y, "SHIELD BROKEN", colors.powShield); this.invulnFrames = 60; return; }
                 
                 this.hp -= amount; updateHealthUI(); createExplosion(this.x, this.y, '#fff', 15);
+                combo = 1; document.getElementById('comboDisplay').classList.add('hidden'); // Break combo
                 
                 if (this.hp <= 0) {
                     this.isDead = true; this.reviveProgress = 0; screenShake = 40; playSound('explosion'); 
                     createExplosion(this.x, this.y, this.color, 60); createExplosion(this.x, this.y, '#f00', 40);
                     if (isMultiplayer) { syncLocalPlayerState(); showToast(gameMode==='pvp'?"Destroyed!":"Distress Beacon Deployed."); } 
                     else endSoloGame();
-                } else { 
-                    this.invulnFrames = 90; showFloatingText(this.x, this.y, "WARNING!", "#f00"); 
-                }
+                } else { this.invulnFrames = 90; showFloatingText(this.x, this.y, "WARNING!", "#f00"); }
             }
         }
 
@@ -655,9 +742,8 @@
                 this.uid = uid; this.x = x; this.y = y; this.targetX = x; this.targetY = y; this.name = name || 'ALLY';
                 let stats = SHIP_CLASSES[sClass] || SHIP_CLASSES['balanced'];
                 this.radius = stats.rad; this.color = gameMode === 'pvp' ? '#f00' : colors.ghost; 
-                this.isDead = false; this.hp = stats.hp; this.weaponTimer = 0; this.reviveProgress = 0;
+                this.isDead = false; this.hp = stats.hp; this.reviveProgress = 0; this.droneActive = false; this.droneAngle = 0;
             }
-            
             update() {
                 if (this.isDead) {
                     if (gameMode === 'coop') {
@@ -667,44 +753,58 @@
                         if (this.reviveProgress > 0) { ctx.beginPath(); ctx.arc(0, 0, this.radius + 5, -Math.PI/2, (-Math.PI/2) + (this.reviveProgress/100)*Math.PI*2); ctx.strokeStyle = '#0f0'; ctx.lineWidth = 3; ctx.stroke(); }
                         ctx.restore();
                         
-                        // Local Revive Mechanic logic
-                        if (player && !player.isDead && Math.hypot(player.x - this.x, player.y - this.y) < this.radius + player.radius + 30) {
-                            this.reviveProgress += 1; // 100 frames = ~1.5s
-                            if(frameCount % 10 === 0) updateDoc(getRoomRef(currentRoomId), { [`players.${this.uid}.reviveProgress`]: this.reviveProgress }).catch(()=>{});
-                        } else if (this.reviveProgress > 0) {
-                            this.reviveProgress -= 0.5; // decay
-                        }
+                        if (player && !player.isDead && !player.isUpgrading && Math.hypot(player.x - this.x, player.y - this.y) < this.radius + player.radius + 30) {
+                            this.reviveProgress += 1.5; if(frameCount % 10 === 0) updateDoc(getRoomRef(currentRoomId), { [`players.${this.uid}.reviveProgress`]: this.reviveProgress }).catch(()=>{});
+                        } else if (this.reviveProgress > 0) { this.reviveProgress -= 0.5; }
                     }
                     return;
                 }
                 
-                // Smooth interpolation for ghost
-                this.x += (this.targetX - this.x) * 0.2; 
-                this.y += (this.targetY - this.y) * 0.2;
-                if(this.weaponTimer > 0) this.weaponTimer--;
-                
+                this.x += (this.targetX - this.x) * 0.2; this.y += (this.targetY - this.y) * 0.2;
                 ctx.save(); ctx.translate(this.x, this.y); ctx.globalAlpha = 0.5; ctx.shadowBlur = 10; ctx.shadowColor = this.color;
                 ctx.beginPath(); ctx.moveTo(0, -this.radius * 1.8); ctx.lineTo(this.radius, this.radius); ctx.lineTo(0, this.radius * 0.8); ctx.lineTo(-this.radius, this.radius); ctx.closePath(); ctx.strokeStyle = this.color; ctx.lineWidth = 2; ctx.stroke();
                 ctx.globalAlpha = 1; ctx.fillStyle = this.color; ctx.font = 'bold 10px Courier'; ctx.textAlign = 'center'; ctx.fillText(`${this.name} [${this.hp}]`, 0, this.radius + 15); ctx.restore();
-            }
-            
-            shoot() {
-                const speed = 18; let dx = 0, dy = -1; // Shoot straight up
-                let perpX = 8, perpY = 0;
-                let b1 = new Bullet(this.x + perpX, this.y - this.radius, dy*speed, dx*speed, this.color);
-                let b2 = new Bullet(this.x - perpX, this.y - this.radius, dy*speed, dx*speed, this.color);
-                b1.isGhost = true; b2.isGhost = true;
-                if (gameMode === 'pvp') { b1.isEnemy = true; b2.isEnemy = true; } // In PvP, ghost bullets hurt local player
-                bullets.push(b1, b2);
+
+                if(this.droneActive) {
+                    this.droneAngle += 0.1;
+                    let d1x = this.x + Math.cos(this.droneAngle) * 35, d1y = this.y + Math.sin(this.droneAngle) * 35;
+                    let d2x = this.x + Math.cos(this.droneAngle + Math.PI) * 35, d2y = this.y + Math.sin(this.droneAngle + Math.PI) * 35;
+                    ctx.save(); ctx.shadowBlur = 10; ctx.shadowColor = colors.powDrone; ctx.fillStyle = colors.powDrone; ctx.globalAlpha = 0.5;
+                    ctx.beginPath(); ctx.arc(d1x, d1y, 4, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(d2x, d2y, 4, 0, Math.PI*2); ctx.fill(); ctx.restore();
+                }
             }
         }
         
         class Bullet { 
-            constructor(x, y, vy, vx, color) { this.x = x; this.y = y; this.radius = 4; this.vy = vy; this.vx = vx; this.color = color; this.isGhost = false; this.isEnemy = false;} 
+            constructor(x, y, vy, vx, color) { 
+                this.x = x; this.y = y; this.radius = 4; this.vy = vy; this.vx = vx; this.color = color; 
+                this.isGhost = false; this.isEnemy = false; this.isBossAttack = false;
+                this.pierce = false; this.homing = false; this.friction = 1;
+            } 
             update() { 
+                if (this.friction !== 1) { this.vx *= this.friction; this.vy *= this.friction; }
+                if (this.homing) {
+                    let nearest = null, minDist = 400;
+                    enemies.forEach(e => { let d = Math.hypot(e.x - this.x, e.y - this.y); if(d < minDist) { minDist = d; nearest = e; } });
+                    if (bossEntity && Math.hypot(bossEntity.x - this.x, bossEntity.y - this.y) < 500) nearest = bossEntity;
+                    if (nearest) {
+                        let toX = nearest.x - this.x, toY = nearest.y - this.y; let mag = Math.hypot(toX, toY);
+                        this.vx += (toX/mag) * 0.5; this.vy += (toY/mag) * 0.5;
+                    }
+                }
+                
                 this.y += this.vy; this.x += this.vx; 
-                ctx.save(); ctx.shadowBlur = 15; ctx.shadowColor = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill(); 
-                ctx.beginPath(); ctx.moveTo(this.x, this.y); ctx.lineTo(this.x - this.vx, this.y - this.vy * 1.5); ctx.strokeStyle = this.color; ctx.lineWidth = 3; ctx.stroke(); ctx.restore(); 
+                ctx.save(); ctx.shadowBlur = this.isBossAttack ? 20 : 15; ctx.shadowColor = this.color; 
+                ctx.beginPath(); ctx.arc(this.x, this.y, this.isBossAttack ? this.radius*1.5 : this.radius, 0, Math.PI * 2); 
+                ctx.fillStyle = '#fff'; ctx.fill(); 
+                
+                if (!this.isBossAttack) {
+                    ctx.beginPath(); ctx.moveTo(this.x, this.y); ctx.lineTo(this.x - this.vx, this.y - this.vy * 1.5); 
+                    ctx.strokeStyle = this.color; ctx.lineWidth = this.pierce ? 5 : 3; ctx.stroke(); 
+                } else {
+                    ctx.lineWidth = 3; ctx.strokeStyle = this.color; ctx.stroke();
+                }
+                ctx.restore(); 
             } 
         }
         
@@ -738,11 +838,21 @@
                 ctx.closePath(); ctx.fillStyle = '#222'; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = '#666'; ctx.stroke(); ctx.restore(); 
             } 
         }
+
+        class BlackHole {
+            constructor(x, y) { this.x = x; this.y = y; this.radius = 40; this.life = 600; playSound('blackhole'); }
+            update() {
+                this.life--; ctx.save(); ctx.translate(this.x, this.y); ctx.shadowBlur = 50; ctx.shadowColor = colors.blackHole;
+                ctx.beginPath(); ctx.arc(0,0, this.radius, 0, Math.PI*2); ctx.fillStyle = '#000'; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = `rgba(168, 85, 247, ${Math.random()*0.5+0.5})`; ctx.stroke();
+                ctx.rotate(frameCount*0.1); ctx.beginPath(); ctx.arc(0,0, this.radius*1.5, 0, Math.PI*2); ctx.setLineDash([10, 10]); ctx.stroke(); ctx.restore();
+            }
+        }
         
         class Boss { 
             constructor() { 
                 this.x = canvas.width / 2; this.y = -150; this.radius = 80; this.maxHp = 600; this.hp = this.maxHp; this.color = colors.boss; this.vy = 1; this.vx = 2; this.hitTime = 0; this.phase = 'enter'; this.shootTimer = 0; 
-                playSound('boss_alert'); showFloatingText(canvas.width/2, canvas.height/3, "WARNING: DREADNOUGHT", colors.boss); document.getElementById('bossHpContainer').classList.remove('hidden'); 
+                playSound('boss_alert'); showFloatingText(canvas.width/2, canvas.height/3, "WARNING: DREADNOUGHT", colors.boss); 
+                document.getElementById('bossHpContainer').classList.remove('hidden'); document.getElementById('bossNameDisplay').innerText = "DREADNOUGHT";
             } 
             update() { 
                 if(this.hitTime > 0) this.hitTime--; 
@@ -761,23 +871,87 @@
             } 
             shootRadial() { 
                 playSound('hit'); let count = this.phase === 'rage' ? 12 : 8; 
-                for(let i=0; i<count; i++) { let ang = (i * Math.PI * 2) / count + (frameCount * 0.05); let speed = 4; let b = new Bullet(this.x, this.y, Math.sin(ang)*speed, Math.cos(ang)*speed, this.color); b.isEnemy = true; bullets.push(b); } 
+                for(let i=0; i<count; i++) { let ang = (i * Math.PI * 2) / count + (frameCount * 0.05); let speed = 4; let b = new Bullet(this.x, this.y, Math.sin(ang)*speed, Math.cos(ang)*speed, '#ff6600'); b.radius = 8; b.isEnemy = true; b.isBossAttack = true; bullets.push(b); } 
             } 
+        }
+
+        class Ophidian {
+            constructor() {
+                this.segments = []; this.history = [];
+                let startX = canvas.width/2, startY = -200;
+                for(let i=0; i<12; i++) this.segments.push({ x: startX, y: startY, hp: 100, maxHp: 100, color: '#10b981', hitTime: 0, radius: 30 - (i*1.5) });
+                this.head = this.segments[0]; this.head.hp = 800; this.head.maxHp = 800; this.head.color = '#34d399';
+                this.color = '#10b981'; this.hp = 800; this.maxHp = 800;
+                this.angle = Math.PI/2; this.speed = 4; this.shootTimer = 0;
+                playSound('boss_alert'); showFloatingText(canvas.width/2, canvas.height/3, "WARNING: OPHIDIAN", this.color);
+                document.getElementById('bossHpContainer').classList.remove('hidden'); document.getElementById('bossNameDisplay').innerText = "THE OPHIDIAN";
+                document.getElementById('bossNameDisplay').classList.replace('text-red-500', 'text-emerald-400');
+                document.getElementById('bossHpBar').classList.replace('from-red-600', 'from-emerald-600'); document.getElementById('bossHpBar').classList.replace('to-red-400', 'to-emerald-400');
+            }
+            update() {
+                this.head.x += Math.cos(this.angle) * this.speed; this.head.y += Math.sin(this.angle) * this.speed;
+                // Meander logic
+                let target = player && !player.isDead ? player : {x: canvas.width/2, y: canvas.height/2};
+                let toX = target.x - this.head.x, toY = target.y - this.head.y;
+                let targetAng = Math.atan2(toY, toX);
+                
+                // Smooth turn + sine wave slither
+                let diff = targetAng - this.angle;
+                while (diff > Math.PI) diff -= Math.PI*2; while (diff < -Math.PI) diff += Math.PI*2;
+                this.angle += diff * 0.02;
+                this.angle += Math.sin(frameCount * 0.05) * 0.05; // Slither
+
+                this.history.unshift({x: this.head.x, y: this.head.y, ang: this.angle});
+                if(this.history.length > 300) this.history.pop();
+                
+                for(let i=1; i<this.segments.length; i++) {
+                    let pos = this.history[i * 12]; // spacing
+                    if(pos) { this.segments[i].x = pos.x; this.segments[i].y = pos.y; this.segments[i].ang = pos.ang; }
+                    if(this.segments[i].hitTime > 0) this.segments[i].hitTime--;
+                }
+                if(this.head.hitTime > 0) this.head.hitTime--;
+
+                // Shooting
+                this.shootTimer++;
+                if (this.shootTimer > 60) {
+                    this.shootTimer = 0; playSound('hit');
+                    let b1 = new Bullet(this.head.x, this.head.y, Math.sin(this.angle - 0.5)*5, Math.cos(this.angle - 0.5)*5, '#10b981');
+                    let b2 = new Bullet(this.head.x, this.head.y, Math.sin(this.angle + 0.5)*5, Math.cos(this.angle + 0.5)*5, '#10b981');
+                    b1.radius = 8; b1.isEnemy = true; b1.isBossAttack = true; b2.radius = 8; b2.isEnemy = true; b2.isBossAttack = true;
+                    bullets.push(b1, b2);
+                }
+
+                // Draw (back to front)
+                for(let i = this.segments.length-1; i>=0; i--) {
+                    let seg = this.segments[i];
+                    if (seg.hp <= 0) continue;
+                    ctx.save(); ctx.translate(seg.x, seg.y); ctx.rotate(seg.ang || this.angle); ctx.shadowBlur = 20; ctx.shadowColor = seg.color;
+                    ctx.beginPath(); ctx.arc(0, 0, seg.radius, 0, Math.PI*2);
+                    ctx.fillStyle = seg.hitTime > 0 ? '#fff' : '#051005'; ctx.fill();
+                    ctx.lineWidth = i===0 ? 4 : 2; ctx.strokeStyle = seg.color; ctx.stroke();
+                    if(i===0) { ctx.beginPath(); ctx.arc(10, -10, 5, 0, Math.PI*2); ctx.arc(10, 10, 5, 0, Math.PI*2); ctx.fillStyle='#f00'; ctx.fill(); } // eyes
+                    ctx.restore();
+                }
+
+                this.hp = this.head.hp; // For game logic, killing head kills snake
+                document.getElementById('bossHpBar').style.width = `${(this.hp / this.maxHp)*100}%`; 
+            }
         }
         
         class PowerUp { 
-            constructor(x, y, type) { this.x = x; this.y = y; this.type = type; this.radius = 12; this.vy = 2; this.angle = 0; this.color = type === 0 ? colors.powShield : (type === 1 ? colors.powGun : colors.powHealth); this.text = type === 0 ? "S" : (type === 1 ? "W" : "+"); } 
+            constructor(x, y, type) { this.x = x; this.y = y; this.type = type; this.radius = 12; this.vy = 2; this.angle = 0; this.color = type === 0 ? colors.powShield : (type === 1 ? colors.powGun : (type === 2 ? colors.powHealth : colors.powDrone)); this.text = type === 0 ? "S" : (type === 1 ? "W" : (type === 2 ? "+" : "D")); } 
             update() { 
                 this.y += this.vy; this.angle += 0.05; 
-                ctx.save(); ctx.translate(this.x, this.y); ctx.shadowBlur = 20; ctx.shadowColor = this.color; ctx.beginPath(); ctx.arc(0, 0, this.radius + Math.sin(frameCount*0.1)*3, 0, Math.PI*2); ctx.fillStyle = `rgba(${this.color === colors.powShield ? '59,130,246' : (this.color === colors.powGun ? '234,179,8' : '34,197,94')}, 0.3)`; ctx.fill(); 
+                ctx.save(); ctx.translate(this.x, this.y); ctx.shadowBlur = 20; ctx.shadowColor = this.color; ctx.beginPath(); ctx.arc(0, 0, this.radius + Math.sin(frameCount*0.1)*3, 0, Math.PI*2); ctx.fillStyle = `rgba(${this.type===0?'59,130,246':(this.type===1?'234,179,8':(this.type===2?'34,197,94':'6,182,212'))}, 0.3)`; ctx.fill(); 
                 ctx.rotate(this.angle); ctx.beginPath(); ctx.rect(-8, -8, 16, 16); ctx.fillStyle = '#000'; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = this.color; ctx.stroke(); 
                 ctx.rotate(-this.angle); ctx.fillStyle = '#fff'; ctx.font = 'bold 12px Courier'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(this.text, 0, 0); ctx.restore(); 
             } 
             collect() { 
                 playSound('powerup'); 
                 if (this.type === 0) { player.shielded = true; showFloatingText(this.x, this.y, "SHIELD ACTIVATED", this.color); } 
-                else if (this.type === 1) { player.weapon = 'spread'; player.weaponTimer = 300; document.getElementById('activePowerup').classList.remove('hidden'); showFloatingText(this.x, this.y, "OVERCHARGE", this.color); } 
-                else { if (player.hp < player.maxHp) { player.hp++; updateHealthUI(); } showFloatingText(this.x, this.y, "HEALTH +1", this.color); } 
+                else if (this.type === 1) { player.weapon = 'spread'; player.weaponTimer = 300; document.getElementById('activePowerup').innerText = "SPREAD SHOT ACTIVE"; document.getElementById('activePowerup').classList.remove('hidden'); showFloatingText(this.x, this.y, "OVERCHARGE", this.color); } 
+                else if (this.type === 2) { if (player.hp < player.maxHp) { player.hp++; updateHealthUI(); } showFloatingText(this.x, this.y, "HEALTH +1", this.color); } 
+                else if (this.type === 3) { player.droneActive = true; player.droneTimer = 600; document.getElementById('activeDrones').classList.remove('hidden'); showFloatingText(this.x, this.y, "WINGMAN ONLINE", this.color); }
             } 
         }
         
@@ -788,29 +962,45 @@
         
         class Particle { 
             constructor(x, y, velocity, color, life) { this.x = x; this.y = y; this.velocity = velocity; this.color = color; this.alpha = 1; this.life = life; this.radius = Math.random() * 3 + 1; } 
-            update() { 
-                // Add friction for smooth slow-down effect
-                this.velocity.x *= 0.95; this.velocity.y *= 0.95;
-                this.x += this.velocity.x; this.y += this.velocity.y; this.alpha -= this.life; 
-                ctx.save(); ctx.globalAlpha = Math.max(0, this.alpha); if (settings.particleLevel === 'high') { ctx.shadowBlur = 10; ctx.shadowColor = this.color; } ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fillStyle = this.color; ctx.fill(); ctx.restore(); 
-            } 
+            update() { this.velocity.x *= 0.95; this.velocity.y *= 0.95; this.x += this.velocity.x; this.y += this.velocity.y; this.alpha -= this.life; ctx.save(); ctx.globalAlpha = Math.max(0, this.alpha); if (settings.particleLevel === 'high') { ctx.shadowBlur = 10; ctx.shadowColor = this.color; } ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fillStyle = this.color; ctx.fill(); ctx.restore(); } 
         }
 
-        // --- Core Rendering & Mechanics ---
+        // --- Core Rendering & Evolution ---
         function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; initBackground(); }
         
         function initBackground() { 
             stars = []; nebulae = []; 
             for(let i = 0; i < (settings.particleLevel==='high'?150:80); i++) stars.push({ x: Math.random() * canvas.width * 1.5 - canvas.width*0.25, y: Math.random() * canvas.height * 1.5 - canvas.height*0.25, s: Math.random() * 2 + 0.5, speed: Math.random() * 1 + 0.2 }); 
-            if (settings.particleLevel==='high') for(let i=0; i<3; i++) nebulae.push({ x: Math.random() * canvas.width * 1.5, y: Math.random() * canvas.height * 1.5, r: Math.random() * 200 + 100, c: 'rgba(150,0,255,0.05)', speed: Math.random()*0.5 + 0.1 }); 
+            if (settings.particleLevel==='high') for(let i=0; i<3; i++) nebulae.push({ x: Math.random() * canvas.width * 1.5, y: Math.random() * canvas.height * 1.5, r: Math.random() * 200 + 100, c: 'rgba(0,255,255,0.03)', speed: Math.random()*0.5 + 0.1 }); 
         }
         
         function drawBackground(speedMult) { 
-            ctx.fillStyle = '#030308'; ctx.fillRect(-canvas.width, -canvas.height, canvas.width*3, canvas.height*3); 
-            nebulae.forEach(n => { n.y += n.speed * speedMult; if (n.y - n.r > canvas.height*1.5) { n.y = -n.r; n.x = Math.random() * canvas.width; } ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI*2); ctx.fillStyle = n.c; ctx.fill(); }); 
+            // Evolving Galaxy Colors
+            let bgColor = '#030308'; let nebColor = 'rgba(0,255,255,0.03)';
+            if (bossMode) { bgColor = '#1a0000'; nebColor = 'rgba(255,50,0,0.05)'; speedMult *= 3; }
+            else if (score > 5000) { bgColor = '#0f0518'; nebColor = 'rgba(255,0,255,0.04)'; speedMult *= 1.5; }
+            
+            ctx.fillStyle = bgColor; ctx.fillRect(-canvas.width, -canvas.height, canvas.width*3, canvas.height*3); 
+            nebulae.forEach(n => { n.c = nebColor; n.y += n.speed * speedMult; if (n.y - n.r > canvas.height*1.5) { n.y = -n.r; n.x = Math.random() * canvas.width; } ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI*2); ctx.fillStyle = n.c; ctx.fill(); }); 
             ctx.fillStyle = '#fff'; 
             stars.forEach(star => { star.y += star.speed * speedMult; if (star.y > canvas.height*1.5) { star.y = -canvas.height*0.25; star.x = Math.random() * canvas.width * 1.5 - canvas.width*0.25; } ctx.globalAlpha = Math.random() * 0.5 + 0.3; ctx.beginPath(); ctx.arc(star.x, star.y, star.s, 0, Math.PI * 2); ctx.fill(); }); 
             ctx.globalAlpha = 1; 
+        }
+
+        function drawMinimap() {
+            const mmSize = 100, mmX = canvas.width - mmSize - 20, mmY = 20;
+            const mmCtxLocal = mmCtx; // Using the separate canvas context
+            mmCtxLocal.clearRect(0, 0, 120, 120);
+            
+            const scale = 100 / Math.max(canvas.width, canvas.height);
+            function dot(x, y, color, r) { mmCtxLocal.fillStyle = color; mmCtxLocal.beginPath(); mmCtxLocal.arc(10 + x*scale, 10 + y*scale, r, 0, Math.PI*2); mmCtxLocal.fill(); }
+            
+            if(player && !player.isDead) dot(player.x, player.y, '#0ff', 3);
+            for(let uid in otherPlayers) { if(!otherPlayers[uid].isDead) dot(otherPlayers[uid].x, otherPlayers[uid].y, gameMode==='pvp'?'#f00':'#0f0', 3); }
+            enemies.forEach(e => dot(e.x, e.y, '#f0f', 2));
+            if(bossEntity) dot(bossEntity.x || bossEntity.head.x, bossEntity.y || bossEntity.head.y, '#f00', 4);
+            blackHoles.forEach(b => dot(b.x, b.y, '#a855f7', 4));
+            powerups.forEach(p => dot(p.x, p.y, '#fbbf24', 2));
         }
         
         function createExplosion(x, y, color, count = 15) { if (settings.particleLevel === 'low') count = Math.floor(count / 3); for (let i = 0; i < count; i++) { const angle = Math.random() * Math.PI * 2; const speed = Math.random() * 8 + 2; particles.push(new Particle(x, y, { x: Math.cos(angle)*speed, y: Math.sin(angle)*speed }, color, Math.random()*0.02 + 0.02)); } }
@@ -818,53 +1008,29 @@
         function spawnEnemy() { const diffMult = 1 + (score / 10000); const x = Math.random() * (canvas.width - 60) + 30; let rand = Math.random(), type = 0; if (score > 2000 && rand > 0.7) type = 1; if (score > 5000 && rand > 0.9) type = 2; enemies.push(new Enemy(x, -50, type, diffMult)); }
         function spawnAsteroid() { asteroids.push(new Asteroid(Math.random() * canvas.width, -100)); }
         function updateHealthUI() { const hd = document.getElementById('healthDisplay'); hd.innerHTML = ''; for (let i = 0; i < player.maxHp; i++) { const div = document.createElement('div'); div.className = i < player.hp ? 'health-icon' : 'health-icon lost'; hd.appendChild(div); } }
-        
-        // --- Game Management ---
+
         function startGame() {
             if (!audioCtx) audioCtx = new AudioContext(); if (audioCtx.state === 'suspended') audioCtx.resume();
             
-            showScreen(null); document.getElementById('hud').classList.remove('hidden'); document.getElementById('activePowerup').classList.add('hidden');
-            document.getElementById('btnPause').classList.toggle('hidden', isMultiplayer); 
-            document.getElementById('btnToggleMic').classList.toggle('hidden', !isMultiplayer); 
-            document.getElementById('bossHpContainer').classList.add('hidden');
+            showScreen(null); document.getElementById('hud').classList.remove('hidden'); document.getElementById('activePowerup').classList.add('hidden'); document.getElementById('activeDrones').classList.add('hidden'); document.getElementById('comboDisplay').classList.add('hidden');
+            document.getElementById('btnPause').classList.toggle('hidden', isMultiplayer); document.getElementById('btnToggleMic').classList.toggle('hidden', !isMultiplayer); document.getElementById('bossHpContainer').classList.add('hidden');
             
             player = new Player(); updateHealthUI(); 
             otherPlayers = {}; bullets = []; enemies = []; particles = []; powerups = []; floatingTexts = []; asteroids = []; emps = [];
-            score = 0; frameCount = 0; screenShake = 0; document.getElementById('scoreDisplay').innerText = score; 
+            score = 0; combo = 1; comboTimer = 0; frameCount = 0; screenShake = 0; document.getElementById('scoreDisplay').innerText = score; 
             bossMode = false; bossEntity = null; camera = {x: 0, y: 0}; 
             ultCharge = 0; document.getElementById('ultBar').style.width = '0%'; document.getElementById('ultBar').classList.remove('ult-ready'); document.getElementById('btnUlt').classList.add('hidden');
             
-            if (isMultiplayer) { 
-                document.getElementById('multiplayerStats').classList.remove('hidden'); updateMultiplayerHUD(); 
-                if(syncTimer) clearInterval(syncTimer); syncTimer = setInterval(syncLocalPlayerState, 100); 
-            } else document.getElementById('multiplayerStats').classList.add('hidden');
+            if (isMultiplayer) { document.getElementById('multiplayerStats').classList.remove('hidden'); updateMultiplayerHUD(); if(syncTimer) clearInterval(syncTimer); syncTimer = setInterval(syncLocalPlayerState, 100); } else document.getElementById('multiplayerStats').classList.add('hidden');
             
             if (animationId) cancelAnimationFrame(animationId); lastTime = performance.now(); animate(lastTime);
         }
 
-        function endSoloGame() { 
-            gameState = 'gameover'; document.getElementById('goTitle').innerText = "SHIP DESTROYED"; document.getElementById('goLeaderboard').classList.add('hidden'); saveScoreToLeaderboard(); 
-            setTimeout(() => { document.getElementById('hud').classList.add('hidden'); document.getElementById('finalScoreDisplay').innerText = score; showScreen('gameOver'); }, 1500); 
-        }
-        
-        function endMultiplayerGame(msg) { 
-            gameState = 'gameover'; if (syncTimer) clearInterval(syncTimer); 
-            if (isHost && currentRoomId) updateDoc(getRoomRef(currentRoomId), { state: 'gameover' }).catch(()=>{}); saveScoreToLeaderboard(); 
-            
-            setTimeout(() => { 
-                document.getElementById('hud').classList.add('hidden'); document.getElementById('goTitle').innerText = msg; document.getElementById('finalScoreDisplay').innerText = score; 
-                const lb = document.getElementById('goLeaderboard'); lb.classList.remove('hidden'); 
-                let lbHtml = '<h3 class="text-cyan-500 font-bold mb-3 uppercase tracking-widest text-sm border-b border-cyan-900 pb-2">Final Intel</h3>'; 
-                const scores = [{ uid: currentUser.uid, name: myName, score: score }]; 
-                if (roomData && roomData.players) { for (const uid in roomData.players) { if (uid !== currentUser.uid && roomData.players[uid]) scores.push({ uid, name: roomData.players[uid].name, score: roomData.players[uid].score }); } } 
-                scores.sort((a, b) => b.score - a.score); 
-                scores.forEach((s, i) => { lbHtml += `<div class="flex justify-between font-bold text-lg ${s.uid === currentUser.uid ? 'text-cyan-300' : 'text-white'}"><span class="truncate pr-4">#${i+1} ${s.name}</span><span>${s.score}</span></div>`; }); 
-                lb.innerHTML = lbHtml; showScreen('gameOver'); 
-            }, 2000); 
-        }
+        function endSoloGame() { gameState = 'gameover'; document.getElementById('goTitle').innerText = "SHIP DESTROYED"; document.getElementById('goLeaderboard').classList.add('hidden'); saveScoreToLeaderboard(); setTimeout(() => { document.getElementById('hud').classList.add('hidden'); document.getElementById('finalScoreDisplay').innerText = score; showScreen('gameOver'); }, 1500); }
+        function endMultiplayerGame(msg) { gameState = 'gameover'; if (syncTimer) clearInterval(syncTimer); if (isHost && currentRoomId) updateDoc(getRoomRef(currentRoomId), { state: 'gameover' }).catch(()=>{}); saveScoreToLeaderboard(); setTimeout(() => { document.getElementById('hud').classList.add('hidden'); document.getElementById('goTitle').innerText = msg; document.getElementById('finalScoreDisplay').innerText = score; const lb = document.getElementById('goLeaderboard'); lb.classList.remove('hidden'); let lbHtml = '<h3 class="text-cyan-500 font-bold mb-3 uppercase tracking-widest text-sm border-b border-cyan-900 pb-2">Final Intel</h3>'; const scores = [{ uid: currentUser.uid, name: myName, score: score }]; if (roomData && roomData.players) { for (const uid in roomData.players) { if (uid !== currentUser.uid && roomData.players[uid]) scores.push({ uid, name: roomData.players[uid].name, score: roomData.players[uid].score }); } } scores.sort((a, b) => b.score - a.score); scores.forEach((s, i) => { lbHtml += `<div class="flex justify-between font-bold text-lg ${s.uid === currentUser.uid ? 'text-cyan-300' : 'text-white'}"><span class="truncate pr-4">#${i+1} ${s.name}</span><span>${s.score}</span></div>`; }); lb.innerHTML = lbHtml; showScreen('gameOver'); }, 2000); }
         
         function togglePause() { 
-            if (isMultiplayer || !player || player.isDead || gameState === 'gameover') return; 
+            if (isMultiplayer || !player || player.isDead || gameState === 'gameover' || player.isUpgrading) return; 
             if (gameState === 'playing') { gameState = 'paused'; showScreen('pause'); } 
             else if (gameState === 'paused') { gameState = 'playing'; showScreen(null); document.getElementById('hud').classList.remove('hidden'); lastTime = performance.now(); animate(lastTime); } 
         }
@@ -873,24 +1039,22 @@
             if (gameState !== 'playing' && gameState !== 'gameover') return;
             animationId = requestAnimationFrame(animate); lastTime = time; frameCount++; ctx.save();
             
-            // Smooth Spectator Camera
-            if (player && player.isDead && isMultiplayer) { 
-                let aliveGhost = Object.values(otherPlayers).find(g => !g.isDead); 
-                if (aliveGhost) { camera.x += (((canvas.width/2) - aliveGhost.x) - camera.x) * 0.05; camera.y += (((canvas.height/2) - aliveGhost.y) - camera.y) * 0.05; } 
-            } else { camera.x += (0 - camera.x) * 0.05; camera.y += (0 - camera.y) * 0.05; }
-            
+            updateCombo();
+
+            if (player && player.isDead && isMultiplayer) { let aliveGhost = Object.values(otherPlayers).find(g => !g.isDead); if (aliveGhost) { camera.x += (((canvas.width/2) - aliveGhost.x) - camera.x) * 0.05; camera.y += (((canvas.height/2) - aliveGhost.y) - camera.y) * 0.05; } } else { camera.x += (0 - camera.x) * 0.05; camera.y += (0 - camera.y) * 0.05; }
             ctx.translate(camera.x, camera.y);
 
-            // Smooth Screen Shake Decay
             if (screenShake > 0) { ctx.translate((Math.random() - 0.5) * screenShake, (Math.random() - 0.5) * screenShake); screenShake *= 0.9; if (screenShake < 0.5) screenShake = 0; }
-            
             drawBackground(1 + (score/20000));
             
-            if (gameState === 'playing') { 
-                if (score >= 5000 && !bossMode && gameMode !== 'pvp') { bossMode = true; bossEntity = new Boss(); }
-                if (!bossMode) {
+            if (gameState === 'playing' && (!player || !player.isUpgrading)) { 
+                if (score >= 5000 && !bossMode && score < 10000 && gameMode !== 'pvp' && !bossEntity) { bossMode = true; bossEntity = new Boss(); }
+                if (score >= 10000 && !bossMode && gameMode !== 'pvp' && !bossEntity) { bossMode = true; bossEntity = new Ophidian(); }
+                
+                if (!bossMode) { 
                     const spawnRate = Math.max(20, (gameMode==='pvp'?180:90) - Math.floor(score / 300)); if (frameCount % spawnRate === 0) spawnEnemy(); 
-                    if (frameCount % 300 === 0) spawnAsteroid();
+                    if (frameCount % 300 === 0) spawnAsteroid(); 
+                    if (frameCount % 1200 === 0) blackHoles.push(new BlackHole(Math.random()*canvas.width, Math.random()*canvas.height/2));
                 }
             }
             
@@ -898,16 +1062,26 @@
             powerups.forEach((p, i) => { p.update(); if (p.y > canvas.height*2) powerups.splice(i, 1); else if (player && !player.isDead && Math.hypot(p.x - player.x, p.y - player.y) < p.radius + player.radius) { p.collect(); powerups.splice(i, 1); } });
             for (let i = particles.length - 1; i >= 0; i--) { if (particles[i].alpha <= 0) particles.splice(i, 1); else particles[i].update(); }
             
-            // Draw Ultimates
-            for (let i = emps.length -1; i >= 0; i--) {
-                let e = emps[i]; e.radius += 30; e.alpha -= 0.02;
-                ctx.beginPath(); ctx.arc(e.x, e.y, e.radius, 0, Math.PI*2); ctx.strokeStyle = `rgba(0, 255, 255, ${e.alpha})`; ctx.lineWidth = 10; ctx.stroke();
-                if (e.alpha <= 0) emps.splice(i, 1);
+            for (let i = blackHoles.length - 1; i >= 0; i--) {
+                let bh = blackHoles[i]; bh.update();
+                if (bh.life <= 0) { createExplosion(bh.x, bh.y, colors.blackHole, 50); blackHoles.splice(i, 1); continue; }
+                
+                // Gravity Logic
+                let applyGravity = (ent, massMulti) => {
+                    let dx = bh.x - ent.x, dy = bh.y - ent.y; let dist = Math.hypot(dx, dy);
+                    if (dist > 10 && dist < 400) { ent.x += (dx/dist) * (1500/(dist*dist)) * massMulti; ent.y += (dy/dist) * (1500/(dist*dist)) * massMulti; }
+                    if (dist < bh.radius - 10 && ent.takeDamage) ent.takeDamage(5); // Crush
+                };
+                if(player && !player.isDead && player.dashTimer === 0 && !player.isUpgrading) applyGravity(player, 1);
+                enemies.forEach(e => applyGravity(e, 1)); asteroids.forEach(a => applyGravity(a, 0.5)); powerups.forEach(p => applyGravity(p, 2));
+                bullets.forEach(b => applyGravity(b, 2));
             }
+
+            for (let i = emps.length -1; i >= 0; i--) { let e = emps[i]; e.radius += 30; e.alpha -= 0.02; ctx.beginPath(); ctx.arc(e.x, e.y, e.radius, 0, Math.PI*2); ctx.strokeStyle = `rgba(0, 255, 255, ${e.alpha})`; ctx.lineWidth = 10; ctx.stroke(); if (e.alpha <= 0) emps.splice(i, 1); }
 
             for (let i = bullets.length - 1; i >= 0; i--) { 
                 const b = bullets[i]; 
-                if (b.y + b.radius < -100 || b.y > canvas.height+100 || b.x < -100 || b.x > canvas.width+100) { bullets.splice(i, 1); } 
+                if (b.y + b.radius < -100 || b.y > canvas.height+100 || b.x < -100 || b.x > canvas.width+100 || (b.friction !== 1 && Math.abs(b.vy) < 1 && Math.abs(b.vx) < 1)) { bullets.splice(i, 1); } 
                 else {
                     b.update(); 
                     if (b.isEnemy && player && !player.isDead && Math.hypot(player.x - b.x, player.y - b.y) < player.radius + b.radius - 2) { player.takeDamage(); bullets.splice(i, 1); }
@@ -917,49 +1091,71 @@
             if (bossEntity) {
                 bossEntity.update();
                 if (bossEntity.hp <= 0) { 
-                    playSound('explosion'); createExplosion(bossEntity.x, bossEntity.y, bossEntity.color, 100); score += 5000; document.getElementById('scoreDisplay').innerText = score; showFloatingText(bossEntity.x, bossEntity.y, "+5000 BOSS DEFEATED", '#fff'); bossEntity = null; bossMode = false; document.getElementById('bossHpContainer').classList.add('hidden'); 
+                    playSound('explosion'); createExplosion(bossEntity.x || bossEntity.head.x, bossEntity.y || bossEntity.head.y, bossEntity.color, 150); handleKill(10000); showFloatingText(bossEntity.x || bossEntity.head.x, bossEntity.y || bossEntity.head.y, "+10000 BOSS DEFEATED", '#fff'); bossEntity = null; bossMode = false; document.getElementById('bossHpContainer').classList.add('hidden'); 
                 } 
-                else if (player && !player.isDead && Math.hypot(player.x - bossEntity.x, player.y - bossEntity.y) < player.radius + bossEntity.radius) { player.takeDamage(); } 
-                else { for (let j = bullets.length - 1; j >= 0; j--) { const b = bullets[j]; if (!b.isGhost && !b.isEnemy && Math.hypot(b.x - bossEntity.x, b.y - bossEntity.y) < bossEntity.radius + b.radius) { bossEntity.hp -= 1; bossEntity.hitTime = 3; createExplosion(b.x, b.y, colors.bullet, 4); bullets.splice(j, 1); } } }
+                else if (player && !player.isDead && !player.isUpgrading) {
+                    if (bossEntity.segments) { // Ophidian
+                        bossEntity.segments.forEach(seg => { if(Math.hypot(player.x - seg.x, player.y - seg.y) < player.radius + seg.radius) player.takeDamage(); });
+                    } else if (Math.hypot(player.x - bossEntity.x, player.y - bossEntity.y) < player.radius + bossEntity.radius) { player.takeDamage(); }
+                } 
+                
+                for (let j = bullets.length - 1; j >= 0; j--) { 
+                    const b = bullets[j]; 
+                    if (!b.isGhost && !b.isEnemy) {
+                        if (bossEntity.segments) { // Ophidian collision
+                            for (let s of bossEntity.segments) {
+                                if (Math.hypot(b.x - s.x, b.y - s.y) < s.radius + b.radius) {
+                                    bossEntity.head.hp -= b.pierce ? 3 : 1; s.hitTime = 3; createExplosion(b.x, b.y, colors.bullet, 4); if(!b.pierce) bullets.splice(j, 1); break;
+                                }
+                            }
+                        } else if (Math.hypot(b.x - bossEntity.x, b.y - bossEntity.y) < bossEntity.radius + b.radius) { 
+                            bossEntity.hp -= b.pierce ? 3 : 1; bossEntity.hitTime = 3; createExplosion(b.x, b.y, colors.bullet, 4); if(!b.pierce) bullets.splice(j, 1); 
+                        } 
+                    }
+                }
             }
 
             for (let i = asteroids.length - 1; i >= 0; i--) {
                 let a = asteroids[i]; a.update();
                 if (a.y > canvas.height + 100) { asteroids.splice(i, 1); continue; }
-                if (player && !player.isDead && Math.hypot(player.x - a.x, player.y - a.y) < a.radius + player.radius) { player.takeDamage(2); createExplosion(a.x, a.y, '#555', 20); asteroids.splice(i, 1); continue; }
-                for (let j = bullets.length - 1; j >= 0; j--) { const b = bullets[j]; if (!b.isGhost && Math.hypot(b.x - a.x, b.y - a.y) < a.radius + b.radius) { a.hp -= 1; createExplosion(b.x, b.y, '#ff0', 2); bullets.splice(j, 1); if (a.hp <= 0) { createExplosion(a.x, a.y, '#555', 30); asteroids.splice(i, 1); break; } } }
+                if (player && !player.isDead && !player.isUpgrading && Math.hypot(player.x - a.x, player.y - a.y) < a.radius + player.radius) { player.takeDamage(2); createExplosion(a.x, a.y, '#555', 20); asteroids.splice(i, 1); continue; }
+                for (let j = bullets.length - 1; j >= 0; j--) { const b = bullets[j]; if (!b.isGhost && Math.hypot(b.x - a.x, b.y - a.y) < a.radius + b.radius) { a.hp -= b.pierce ? 5 : 1; createExplosion(b.x, b.y, '#ff0', 2); if(!b.pierce) bullets.splice(j, 1); if (a.hp <= 0) { createExplosion(a.x, a.y, '#555', 30); asteroids.splice(i, 1); break; } } }
             }
 
             for (let i = enemies.length - 1; i >= 0; i--) {
                 const enemy = enemies[i]; enemy.update(); if (enemy.y - enemy.radius > canvas.height+100) { enemies.splice(i, 1); continue; }
-                if (player && !player.isDead && Math.hypot(player.x - enemy.x, player.y - enemy.y) < enemy.radius + player.radius - 5) { player.takeDamage(); if (enemy.type !== 2) { createExplosion(enemy.x, enemy.y, colors.enemyBasic, 20); enemies.splice(i, 1); continue; } }
-                let hit = false; for (let j = bullets.length - 1; j >= 0; j--) { const b = bullets[j]; if (!b.isGhost && !b.isEnemy && Math.hypot(b.x - enemy.x, b.y - enemy.y) < enemy.radius + b.radius) { enemy.hp -= 1; enemy.hitTime = 3; createExplosion(b.x, b.y, colors.bullet, 4); bullets.splice(j, 1); if (enemy.hp <= 0) { playSound('explosion'); createExplosion(enemy.x, enemy.y, enemy.color, enemy.type === 2 ? 40 : 15); score += enemy.scoreVal; addUltCharge(enemy.type===2?20:5); if (player && !player.isDead) document.getElementById('scoreDisplay').innerText = score; showFloatingText(enemy.x, enemy.y, `+${enemy.scoreVal}`, '#fff'); if (Math.random() < (enemy.type === 2 ? 0.5 : 0.08)) powerups.push(new PowerUp(enemy.x, enemy.y, Math.floor(Math.random()*3))); enemies.splice(i, 1); hit = true; } break; } } if (hit) continue;
+                if (player && !player.isDead && !player.isUpgrading && Math.hypot(player.x - enemy.x, player.y - enemy.y) < enemy.radius + player.radius - 5) { player.takeDamage(); if (enemy.type !== 2) { createExplosion(enemy.x, enemy.y, colors.enemyBasic, 20); enemies.splice(i, 1); continue; } }
+                let hit = false; for (let j = bullets.length - 1; j >= 0; j--) { const b = bullets[j]; if (!b.isGhost && !b.isEnemy && Math.hypot(b.x - enemy.x, b.y - enemy.y) < enemy.radius + b.radius) { enemy.hp -= b.pierce ? 3 : 1; enemy.hitTime = 3; createExplosion(b.x, b.y, colors.bullet, 4); if(!b.pierce) bullets.splice(j, 1); if (enemy.hp <= 0) { playSound('explosion'); createExplosion(enemy.x, enemy.y, enemy.color, enemy.type === 2 ? 40 : 15); handleKill(enemy.scoreVal); if (Math.random() < (enemy.type === 2 ? 0.5 : 0.08)) powerups.push(new PowerUp(enemy.x, enemy.y, Math.floor(Math.random()*4))); enemies.splice(i, 1); hit = true; } break; } } if (hit) continue;
             }
             if (player) player.update();
             for (let i = floatingTexts.length - 1; i >= 0; i--) { if (floatingTexts[i].life <= 0) floatingTexts.splice(i, 1); else floatingTexts[i].update(); }
             
             ctx.restore();
+            drawMinimap();
         }
 
-        // --- Smooth Input Listeners ---
+        // --- Input Listeners ---
         function handlePointerMove(e) { 
-            if (gameState !== 'playing' || !player || player.isDead) return; 
-            e.preventDefault(); 
-            let cx = e.clientX, cy = e.clientY; 
-            if (e.touches && e.touches.length > 0) { cx = e.touches[0].clientX; cy = e.touches[0].clientY; isTouchDevice = true; } 
-            
-            // Offset finger slightly above touch position so you can see your ship
-            player.targetX = cx - camera.x; 
-            player.targetY = cy - camera.y - (isTouchDevice ? 60 : 0); 
+            if (gameState !== 'playing' || !player || player.isDead || player.isUpgrading) return; e.preventDefault(); 
+            let cx = e.clientX, cy = e.clientY; if (e.touches && e.touches.length > 0) { cx = e.touches[0].clientX; cy = e.touches[0].clientY; isTouchDevice = true; } 
+            player.targetX = cx - camera.x; player.targetY = cy - camera.y - (isTouchDevice ? 60 : 0); 
         }
 
-        canvas.addEventListener('pointermove', handlePointerMove); 
-        canvas.addEventListener('pointerdown', handlePointerMove); 
+        function handleDoubleTap(e) {
+            if (gameState !== 'playing' || !player || player.isDead || player.isUpgrading) return;
+            const now = new Date().getTime();
+            if (now - lastTouchTime < 300) { player.dash(); e.preventDefault(); }
+            lastTouchTime = now;
+        }
+
+        canvas.addEventListener('pointermove', handlePointerMove); canvas.addEventListener('pointerdown', handlePointerMove); 
+        canvas.addEventListener('touchstart', handleDoubleTap);
         document.addEventListener('touchmove', (e) => { e.preventDefault(); }, { passive: false });
         
         window.addEventListener('keydown', (e) => { if(e.key === 'Escape' || e.key === 'p') togglePause(); if(e.code === 'Space') triggerUltimate(); });
+        window.addEventListener('contextmenu', (e) => { e.preventDefault(); if(player) player.dash(); });
         
-        document.getElementById('btnPlaySolo').addEventListener('click', () => { isMultiplayer = false; gameMode = 'solo'; startGame(); });
+        document.getElementById('btnPlaySolo').addEventListener('click', () => { isMultiplayer = false; gameMode = 'solo'; nextWaveScore = 2000; startGame(); });
         document.getElementById('btnMultiplayer').addEventListener('click', () => showScreen('mp'));
         document.getElementById('btnLeaderboard').addEventListener('click', fetchLeaderboard);
         document.getElementById('btnBackFromLB').addEventListener('click', () => showScreen('main'));
@@ -973,15 +1169,15 @@
         document.getElementById('toggleCRT').addEventListener('change', (e) => { settings.crtEnabled = e.target.checked; document.getElementById('crtOverlay').style.display = settings.crtEnabled ? 'block' : 'none'; });
         document.getElementById('toggleSound').addEventListener('change', (e) => { settings.sfxEnabled = e.target.checked; });
         document.getElementById('selectParticles').addEventListener('change', (e) => { settings.particleLevel = e.target.value; initBackground(); });
-        document.getElementById('btnCreateRoom').addEventListener('click', () => createRoom('coop'));
+        document.getElementById('btnCreateRoom').addEventListener('click', () => { nextWaveScore = 2000; createRoom('coop'); });
         document.getElementById('btnCreatePvP').addEventListener('click', () => createRoom('pvp'));
-        document.getElementById('btnJoinRoom').addEventListener('click', () => { const code = document.getElementById('roomCodeInput').value.trim().toUpperCase(); if (code.length === 4) joinRoom(code); else showToast("Enter 4-letter code"); });
+        document.getElementById('btnJoinRoom').addEventListener('click', () => { const code = document.getElementById('roomCodeInput').value.trim().toUpperCase(); if (code.length === 4) { nextWaveScore = 2000; joinRoom(code); } else showToast("Enter 4-letter code"); });
         document.getElementById('btnLeaveRoom').addEventListener('click', async () => { if (isMicOn) await toggleVoiceChat(); leaveRoom(); });
         document.getElementById('btnStartGame').addEventListener('click', () => { if (isHost && currentRoomId) updateDoc(getRoomRef(currentRoomId), { state: 'playing' }).catch(()=>{}); });
         document.getElementById('btnToggleMic').addEventListener('click', toggleVoiceChat);
         document.getElementById('btnUlt').addEventListener('click', triggerUltimate);
 
-        function menuLoop() { if (gameState !== 'playing' && gameState !== 'paused' && gameState !== 'gameover') { camera = {x:0, y:0}; drawBackground(0.5); } requestAnimationFrame(menuLoop); }
+        function menuLoop() { if (gameState !== 'playing' && gameState !== 'paused' && gameState !== 'gameover' && gameState !== 'upgrade') { camera = {x:0, y:0}; drawBackground(0.5); } requestAnimationFrame(menuLoop); }
         initBackground(); menuLoop();
     </script>
 </body>
