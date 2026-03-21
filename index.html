@@ -1,172 +1,994 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Red Eagle Productions | Launching Soon</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600;700&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Best Game in Universe</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
+            background-color: #030308; font-family: 'Courier New', Courier, monospace;
+            overscroll-behavior-y: none; touch-action: none;
+        }
+        
+        /* CRT Scanline Effect */
+        .crt-overlay {
+            position: absolute; top: 0; left: 0; bottom: 0; right: 0; z-index: 15;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            background-size: 100% 3px, 3px 100%; pointer-events: none;
+        }
 
-  <style>
-    body {
-      font-family: 'Poppins', sans-serif;
-      background: radial-gradient(circle at top, #1a0000 0%, #000 80%);
-      color: #fff;
-      overflow: hidden;
-    }
-
-    .hero {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      text-align: center;
-      position: relative;
-    }
-
-    .hero::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: url('https://www.animatedimages.org/data/media/238/animated-eagle-image-0036.gif') center/contain no-repeat;
-      opacity: 0.13;
-      filter: grayscale(100%) contrast(110%);
-      animation: slowFloat 12s ease-in-out infinite;
-    }
-
-    @keyframes slowFloat {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-10px); }
-    }
-
-    .title {
-      font-size: 2.5rem;
-      font-weight: 700;
-      letter-spacing: 1px;
-      color: #fff;
-      text-transform: uppercase;
-    }
-
-    .title span {
-      color: #e50914;
-    }
-
-    .subtitle {
-      font-size: 1rem;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      color: #bbb;
-      margin-top: 10px;
-    }
-
-    .divider {
-      width: 80px;
-      height: 3px;
-      background: linear-gradient(to right, #ff0000, #800000);
-      margin: 20px auto;
-      border-radius: 2px;
-    }
-
-    .countdown {
-      margin-top: 30px;
-      font-size: 1.2rem;
-      font-weight: 500;
-      color: #e50914;
-      letter-spacing: 2px;
-    }
-
-    .footer {
-      position: absolute;
-      bottom: 15px;
-      text-align: center;
-      width: 100%;
-      font-size: 0.8rem;
-      color: #777;
-      letter-spacing: 1px;
-    }
-    
-    .footer a {
-        text-decoration: none;
-        color: inherit;
-    }
-    .footer a:hover {
-        text-decoration: underline;
-    }
-
-    .notify-btn {
-      margin-top: 40px;
-      background: #e50914;
-      color: white;
-      font-weight: 500;
-      padding: 12px 40px;
-      border-radius: 50px;
-      border: none;
-      outline: none;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    .notify-btn:hover {
-      background: #b1070f;
-      transform: translateY(-2px);
-    }
-
-    @media (max-width: 640px) {
-      .title { font-size: 1.9rem; }
-      .subtitle { font-size: 0.8rem; }
-    }
-  </style>
+        #gameCanvas { display: block; width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; }
+        .ui-layer { position: absolute; inset: 0; z-index: 20; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; }
+        .ui-panel { 
+            pointer-events: auto; background: rgba(5, 5, 15, 0.9); backdrop-filter: blur(12px); 
+            padding: 2.5rem; border-radius: 1.5rem; border: 1px solid rgba(0, 255, 255, 0.4); 
+            text-align: center; box-shadow: 0 0 30px rgba(0, 255, 255, 0.1);
+            transform: scale(0.95); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        
+        @keyframes popIn { to { transform: scale(1); opacity: 1; } }
+        
+        .neon-text { text-shadow: 0 0 5px #fff, 0 0 15px #0ff, 0 0 30px #0ff; color: white; }
+        .neon-text-red { text-shadow: 0 0 5px #fff, 0 0 15px #f0f, 0 0 30px #f0f; color: white; }
+        .neon-text-gold { text-shadow: 0 0 5px #fff, 0 0 15px #fdba74, 0 0 30px #f97316; color: white; }
+        
+        .btn { 
+            padding: 0.85rem 2.5rem; border-radius: 9999px; font-weight: 900; font-size: 1.25rem; 
+            transition: all 0.2s; cursor: pointer; text-transform: uppercase; margin: 0.5rem; 
+            letter-spacing: 0.05em; position: relative; overflow: hidden;
+        }
+        .btn-cyan { background: rgba(0, 20, 30, 0.7); color: #67e8f9; border: 2px solid #0ff; box-shadow: 0 0 15px rgba(0,255,255,0.3); }
+        .btn-cyan:hover { background: rgba(8, 145, 178, 0.8); transform: translateY(-2px); box-shadow: 0 0 25px rgba(0,255,255,0.6); color: white; }
+        .btn-cyan:active { transform: translateY(1px); }
+        .btn-cyan:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; filter: grayscale(100%); }
+        
+        .health-icon { width: 24px; height: 24px; display: inline-block; background-color: #0ff; clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); margin-right: 4px; box-shadow: 0 0 10px #0ff; transition: all 0.3s;}
+        .health-icon.lost { background-color: transparent; border: 2px solid #333; box-shadow: none; clip-path: none; border-radius: 50%; width: 16px; height: 16px; margin: 4px; }
+        
+        .hidden { display: none !important; }
+        #toast { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: linear-gradient(90deg, #f0f, #80f); color: white; padding: 12px 24px; border-radius: 12px; font-weight: bold; z-index: 100; opacity: 0; transition: opacity 0.3s; pointer-events: none; box-shadow: 0 0 20px rgba(255,0,255,0.5); text-transform: uppercase; letter-spacing: 2px;}
+    </style>
 </head>
+<body class="text-white select-none">
 
-<body>
-  <section class="hero">
-    <div>
-      <h1 class="title">Red Eagle <span>Productions</span></h1>
-      <div class="subtitle">by Feasibility Media</div>
-      <div class="divider"></div>
-      <div id="countdown" class="countdown"></div>
-      <button class="notify-btn">Notify Me</button>
+    <div id="crtOverlay" class="crt-overlay"></div>
+    <div id="toast">Message</div>
+
+    <!-- HUD -->
+    <div id="hud" class="absolute top-0 left-0 w-full p-6 flex justify-between items-start pointer-events-none z-10 hidden">
+        <div>
+            <div class="text-2xl md:text-4xl font-black tracking-widest neon-text mb-2">
+                SCORE: <span id="scoreDisplay">0</span>
+            </div>
+            <!-- Health Bar -->
+            <div id="healthDisplay" class="flex items-center mb-4">
+                <div class="health-icon"></div><div class="health-icon"></div><div class="health-icon"></div>
+            </div>
+            <!-- MP Stats -->
+            <div id="multiplayerStats" class="text-sm md:text-base space-y-2 bg-black/40 p-2 rounded backdrop-blur-sm border border-cyan-900/50"></div>
+        </div>
+        <div class="text-right flex flex-col items-end gap-2">
+            <button id="btnPause" class="pointer-events-auto bg-black/50 border border-cyan-500 text-cyan-300 w-12 h-12 rounded-full flex items-center justify-center hover:bg-cyan-900/50 transition-colors">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/></svg>
+            </button>
+            <div id="hudControlsHint" class="text-sm md:text-lg text-cyan-200 opacity-70 mt-2 bg-black/30 px-3 py-1 rounded">
+                Drag to Move & Fire
+            </div>
+            <div id="activePowerup" class="text-yellow-300 font-bold animate-pulse text-sm hidden">OVERCHARGE ACTIVE!</div>
+        </div>
     </div>
-  </section>
 
-  <footer class="footer">
-    <a href="finished.html">© 2025 Feasibility Media</a> | All Rights Reserved
-  </footer>
+    <!-- UI Menus Layer -->
+    <div id="uiLayer" class="ui-layer">
+        
+        <!-- Main Menu -->
+        <div id="mainMenu" class="ui-panel">
+            <h3 class="text-cyan-500 tracking-[0.5em] text-sm md:text-base font-bold mb-2">WELCOME TO THE</h3>
+            <h1 class="text-5xl md:text-8xl font-black mb-4 neon-text text-center leading-tight">BEST GAME<br><span class="text-fuchsia-400" style="text-shadow: 0 0 20px #f0f;">IN UNIVERSE</span></h1>
+            <p class="text-cyan-200 mb-10 max-w-md text-lg mx-auto opacity-80">Survive the cosmic onslaught. Dodge, collect powerups, and dominate the leaderboards.</p>
+            <div class="flex flex-col gap-4 w-72 mx-auto">
+                <button id="btnPlaySolo" class="btn btn-cyan">Start Mission</button>
+                <button id="btnMultiplayer" class="btn btn-cyan" disabled>Co-Op (Connecting...)</button>
+                <button id="btnOptions" class="text-cyan-500 hover:text-cyan-300 mt-4 uppercase font-bold tracking-wider text-sm">Game Options</button>
+            </div>
+        </div>
 
-  <script>
-    // Countdown logic
-    const launchDate = new Date("Dec 1, 2025 00:00:00").getTime();
-    const countdown = document.getElementById("countdown");
+        <!-- Options Menu -->
+        <div id="optionsMenu" class="ui-panel hidden w-80">
+            <h2 class="text-3xl font-bold mb-8 neon-text">SYSTEM CONFIG</h2>
+            <div class="flex flex-col gap-6 mb-8 text-left">
+                <label class="flex justify-between items-center cursor-pointer">
+                    <span class="text-xl text-cyan-100">CRT Scanlines</span>
+                    <input type="checkbox" id="toggleCRT" checked class="w-6 h-6 accent-cyan-500">
+                </label>
+                <label class="flex justify-between items-center cursor-pointer">
+                    <span class="text-xl text-cyan-100">Particle FX</span>
+                    <select id="selectParticles" class="bg-black border border-cyan-500 text-cyan-300 p-2 rounded outline-none">
+                        <option value="high">High (Juicy)</option>
+                        <option value="low">Low (Performant)</option>
+                    </select>
+                </label>
+            </div>
+            <button id="btnBackFromOptions" class="btn btn-cyan w-full">Apply & Back</button>
+        </div>
 
-    const timer = setInterval(() => {
-      const now = new Date().getTime();
-      const distance = launchDate - now;
-      if (distance < 0) {
-        clearInterval(timer);
-        countdown.innerHTML = "🎬 We’ve Launched!";
-        return;
-      }
-      const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const mins = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-      countdown.innerHTML = `${days} Days ${hours} Hrs ${mins} Min`;
-    }, 1000);
+        <!-- Multiplayer Menu -->
+        <div id="mpMenu" class="ui-panel hidden">
+            <h2 class="text-4xl font-black mb-8 neon-text">CO-OP NETWORK</h2>
+            <div class="flex flex-col gap-5 w-72 mx-auto">
+                <button id="btnCreateRoom" class="btn btn-cyan">Host Server</button>
+                <div class="flex items-center my-2 opacity-50">
+                    <div class="flex-grow border-t border-cyan-500"></div>
+                    <span class="px-3 text-sm font-bold tracking-widest">OR JOIN</span>
+                    <div class="flex-grow border-t border-cyan-500"></div>
+                </div>
+                <input type="text" id="roomCodeInput" placeholder="4-LETTER CODE" class="bg-black/80 border-2 border-fuchsia-500 text-fuchsia-300 text-center text-3xl font-black py-4 rounded-xl outline-none uppercase shadow-[0_0_15px_rgba(255,0,255,0.2)] focus:shadow-[0_0_25px_rgba(255,0,255,0.5)] transition-shadow" maxlength="4">
+                <button id="btnJoinRoom" class="btn btn-cyan !border-fuchsia-500 !text-fuchsia-300 shadow-[0_0_10px_#f0f] hover:bg-fuchsia-900/50">Connect</button>
+                <button id="btnBackToMain" class="text-cyan-600 hover:text-cyan-400 mt-4 uppercase font-bold text-sm tracking-widest">Abort</button>
+            </div>
+        </div>
 
-    // Notify Me button
-    document.querySelector(".notify-btn").addEventListener("click", () => {
-      // Replaced alert with a less obtrusive notification
-      const btn = document.querySelector(".notify-btn");
-      if (!btn.classList.contains('clicked')) {
-          btn.textContent = "Thank you! We'll be in touch.";
-          btn.classList.add('clicked', 'bg-green-600', 'hover:bg-green-700');
-          setTimeout(() => {
-            btn.textContent = "Notify Me";
-            btn.classList.remove('clicked', 'bg-green-600', 'hover:bg-green-700');
-          }, 5000);
-      }
-    });
-  </script>
+        <!-- Lobby Menu -->
+        <div id="lobbyMenu" class="ui-panel hidden w-96">
+            <h2 class="text-3xl font-bold mb-2 neon-text">STAGING AREA</h2>
+            <div class="bg-black/60 py-3 px-6 rounded-lg inline-block border border-cyan-500/50 mb-6">
+                <span class="text-cyan-300 text-sm block mb-1 uppercase tracking-widest">Transmit Code</span>
+                <span id="lobbyRoomCode" class="font-black text-4xl tracking-[0.2em] text-white">----</span>
+            </div>
+            
+            <div class="bg-black/40 border border-cyan-800/50 rounded-xl p-5 mb-6 text-left min-h-[160px]">
+                <h3 class="text-cyan-500 text-sm font-bold tracking-wider mb-3 uppercase">Squad Members</h3>
+                <ul id="playerList" class="space-y-3 text-lg font-bold"></ul>
+            </div>
+
+            <div class="flex flex-col gap-3">
+                <button id="btnStartGame" class="btn btn-cyan hidden text-xl py-4">Launch Mission</button>
+                <div id="waitingText" class="text-cyan-400 hidden animate-pulse py-3 font-bold tracking-widest">AWAITING HOST...</div>
+                <button id="btnLeaveRoom" class="text-red-500 hover:text-red-400 mt-2 text-sm uppercase font-bold tracking-widest">Disconnect</button>
+            </div>
+        </div>
+
+        <!-- Pause Menu -->
+        <div id="pauseMenu" class="ui-panel hidden w-80">
+            <h2 class="text-4xl font-black mb-8 neon-text-gold">PAUSED</h2>
+            <div class="flex flex-col gap-4">
+                <button id="btnResume" class="btn btn-cyan !border-orange-400 !text-orange-300 shadow-[0_0_10px_#f97316]">Resume</button>
+                <button id="btnQuitToMenu" class="text-red-500 hover:text-red-400 mt-4 uppercase font-bold text-sm tracking-widest">Abort Mission</button>
+            </div>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="gameOverScreen" class="ui-panel hidden">
+            <h2 id="goTitle" class="text-5xl md:text-7xl font-black mb-2 neon-text-red">SHIP DESTROYED</h2>
+            <p id="goSubtitle" class="text-cyan-300 mb-8 uppercase tracking-[0.3em] text-sm">Mission Failed</p>
+            <div class="text-2xl md:text-4xl text-white mb-10 bg-black/50 p-6 rounded-2xl border border-fuchsia-900">
+                FINAL SCORE<br><span id="finalScoreDisplay" class="font-black text-6xl text-fuchsia-400 block mt-2" style="text-shadow: 0 0 20px #f0f;">0</span>
+            </div>
+            <div id="goLeaderboard" class="bg-black/60 p-5 rounded-xl border border-cyan-900 mb-8 text-left hidden shadow-inner">
+                <!-- MP results populated here -->
+            </div>
+            <button id="btnRestart" class="btn btn-cyan w-full text-xl py-4">Return to Base</button>
+        </div>
+
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- Config & Globals ---
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'best-game-universe';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        
+        let app, auth, db, currentUser = null;
+        let unsubscribeRoom = null;
+        
+        let gameState = 'menu'; // menu, mp_menu, lobby, playing, paused, gameover
+        let isMultiplayer = false, currentRoomId = null, isHost = false, roomData = null;
+        
+        let animationId, frameCount = 0, lastTime = 0;
+        let score = 0;
+        let syncTimer = null, deathProcessed = false;
+        let screenShake = 0;
+
+        // Settings
+        const settings = {
+            crtEnabled: true,
+            particleLevel: 'high' // high, low
+        };
+
+        // Entities arrays
+        let player;
+        let otherPlayers = {}; 
+        let bullets = [];
+        let enemies = [];
+        let particles = [];
+        let powerups = [];
+        let floatingTexts = [];
+        let stars = [];
+        let nebulae = [];
+
+        const colors = { 
+            player: '#0ff', 
+            bullet: '#ff0', 
+            ghost: '#0f0',
+            enemyBasic: '#f0f', 
+            enemyTracker: '#f30', 
+            enemyTank: '#f90',
+            powShield: '#3b82f6',
+            powGun: '#eab308',
+            powHealth: '#22c55e'
+        };
+
+        // --- DOM Elements ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d', { alpha: false }); // Optimize
+        const uiLayer = document.getElementById('uiLayer');
+        const screens = {
+            main: document.getElementById('mainMenu'), mp: document.getElementById('mpMenu'),
+            lobby: document.getElementById('lobbyMenu'), gameOver: document.getElementById('gameOverScreen'),
+            options: document.getElementById('optionsMenu'), pause: document.getElementById('pauseMenu')
+        };
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const mpStats = document.getElementById('multiplayerStats');
+        const healthDisplay = document.getElementById('healthDisplay');
+
+        // --- Init Firebase ---
+        function initFirebase() {
+            if (!firebaseConfig) { console.warn("No Firebase config. Offline mode."); return; }
+            app = initializeApp(firebaseConfig); auth = getAuth(app); db = getFirestore(app);
+            const authenticate = async () => {
+                try {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token);
+                    else await signInAnonymously(auth);
+                } catch (e) { showToast("Network Error."); }
+            };
+            authenticate();
+            onAuthStateChanged(auth, (user) => {
+                currentUser = user;
+                const mpBtn = document.getElementById('btnMultiplayer');
+                if (user) { mpBtn.disabled = false; mpBtn.innerText = 'Co-Op Network'; }
+            });
+        }
+        initFirebase();
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // --- UI Utils ---
+        function showScreen(screenName) {
+            Object.values(screens).forEach(s => s.classList.add('hidden'));
+            if (screenName && screens[screenName]) {
+                screens[screenName].classList.remove('hidden');
+                uiLayer.classList.remove('pointer-events-none');
+            } else {
+                uiLayer.classList.add('pointer-events-none');
+            }
+            gameState = screenName || 'playing';
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg; toast.style.opacity = 1;
+            setTimeout(() => { toast.style.opacity = 0; }, 3000);
+        }
+
+        function updateHealthUI() {
+            if (!player) return;
+            healthDisplay.innerHTML = '';
+            for (let i = 0; i < player.maxHp; i++) {
+                const div = document.createElement('div');
+                div.className = i < player.hp ? 'health-icon' : 'health-icon lost';
+                healthDisplay.appendChild(div);
+            }
+        }
+
+        // --- Multiplayer Logic ---
+        const getRoomRef = (roomId) => doc(collection(db, 'artifacts', appId, 'public', 'data', 'rooms'), roomId.toUpperCase());
+        const genCode = () => Math.random().toString(36).substring(2, 6).toUpperCase();
+
+        async function createRoom() {
+            if (!currentUser) return;
+            document.getElementById('btnCreateRoom').disabled = true;
+            const roomId = genCode();
+            try {
+                await setDoc(getRoomRef(roomId), {
+                    host: currentUser.uid, state: 'lobby',
+                    players: { [currentUser.uid]: { x: 0, y: 0, score: 0, hp: 3, isDead: false } }
+                });
+                isHost = true; currentRoomId = roomId; isMultiplayer = true;
+                setupRoomListener(roomId);
+                document.getElementById('lobbyRoomCode').innerText = roomId;
+                document.getElementById('btnStartGame').classList.remove('hidden');
+                document.getElementById('waitingText').classList.add('hidden');
+                showScreen('lobby');
+            } catch (e) { showToast("Error creating host"); }
+            document.getElementById('btnCreateRoom').disabled = false;
+        }
+
+        async function joinRoom(roomId) {
+            if (!currentUser || !roomId) return;
+            document.getElementById('btnJoinRoom').disabled = true;
+            try {
+                const snap = await getDoc(getRoomRef(roomId));
+                if (snap.exists() && snap.data().state === 'lobby') {
+                    await updateDoc(getRoomRef(roomId), { [`players.${currentUser.uid}`]: { x: 0, y: 0, score: 0, hp: 3, isDead: false } });
+                    isHost = false; currentRoomId = roomId.toUpperCase(); isMultiplayer = true;
+                    setupRoomListener(currentRoomId);
+                    document.getElementById('lobbyRoomCode').innerText = currentRoomId;
+                    document.getElementById('btnStartGame').classList.add('hidden');
+                    document.getElementById('waitingText').classList.remove('hidden');
+                    showScreen('lobby');
+                } else showToast("Room invalid or full");
+            } catch (e) { showToast("Connection failed"); }
+            document.getElementById('btnJoinRoom').disabled = false;
+        }
+
+        async function leaveRoom() {
+            if (unsubscribeRoom) { unsubscribeRoom(); unsubscribeRoom = null; }
+            if (currentRoomId && currentUser) {
+                try {
+                    if (isHost) await deleteDoc(getRoomRef(currentRoomId));
+                    else await updateDoc(getRoomRef(currentRoomId), { [`players.${currentUser.uid}`]: null });
+                } catch(e) {}
+            }
+            currentRoomId = null; isMultiplayer = false; isHost = false; roomData = null;
+            showScreen('mp');
+        }
+
+        function setupRoomListener(roomId) {
+            if (unsubscribeRoom) unsubscribeRoom();
+            unsubscribeRoom = onSnapshot(getRoomRef(roomId), (snap) => {
+                if (!snap.exists()) { showToast("Room closed."); leaveRoom(); return; }
+                const data = snap.data(); roomData = data;
+                
+                if (gameState === 'lobby') {
+                    const list = document.getElementById('playerList'); list.innerHTML = '';
+                    let pCount = 1;
+                    for (const uid in data.players) {
+                        if (!data.players[uid]) continue;
+                        const li = document.createElement('li');
+                        li.className = uid === currentUser.uid ? 'text-cyan-300' : 'text-white';
+                        li.innerHTML = `Pilot ${pCount} ${uid === currentUser.uid ? '(You)' : ''} ${uid === data.host ? '<span class="text-fuchsia-400 text-xs ml-2">[HOST]</span>' : ''}`;
+                        list.appendChild(li); pCount++;
+                    }
+                    if (data.state === 'playing') startGame();
+                }
+                
+                if (gameState === 'playing' || gameState === 'gameover') {
+                    let allDead = true;
+                    for (const uid in data.players) {
+                        if (!data.players[uid] || uid === currentUser.uid) continue;
+                        const pData = data.players[uid];
+                        if (!pData.isDead) allDead = false;
+                        if (!otherPlayers[uid] && !pData.isDead) otherPlayers[uid] = new GhostPlayer(pData.x || canvas.width/2, pData.y || canvas.height/2);
+                        if (otherPlayers[uid]) {
+                            otherPlayers[uid].targetX = pData.x; otherPlayers[uid].targetY = pData.y;
+                            otherPlayers[uid].score = pData.score; otherPlayers[uid].isDead = pData.isDead;
+                            otherPlayers[uid].hp = pData.hp;
+                        }
+                    }
+                    if (player && !player.isDead) allDead = false;
+                    updateMultiplayerHUD();
+                    if (allDead && gameState === 'playing' && player && player.isDead) endMultiplayerGame();
+                }
+            });
+        }
+
+        function updateMultiplayerHUD() {
+            if (!isMultiplayer || !roomData) return;
+            let html = '<div class="font-bold text-cyan-500 mb-1 border-b border-cyan-800 pb-1">SQUAD STATUS</div>';
+            for (const uid in roomData.players) {
+                if (!roomData.players[uid]) continue;
+                const isMe = uid === currentUser.uid;
+                const data = isMe ? { score, isDead: player.isDead, hp: player.hp } : roomData.players[uid];
+                const statusColor = data.isDead ? 'text-red-500 line-through opacity-50' : (isMe ? 'text-cyan-300 font-bold' : 'text-green-400');
+                const nameStr = isMe ? 'YOU' : 'ALLY';
+                const hpStr = data.isDead ? 'DEAD' : '♥'.repeat(data.hp);
+                html += `<div class="flex justify-between w-32 ${statusColor}"><span>${nameStr}</span><span>${hpStr}</span></div>`;
+            }
+            mpStats.innerHTML = html;
+        }
+
+        function syncLocalPlayerState() {
+            if (!isMultiplayer || !currentRoomId || !currentUser || !player) return;
+            updateDoc(getRoomRef(currentRoomId), {
+                [`players.${currentUser.uid}.x`]: Math.round(player.x),
+                [`players.${currentUser.uid}.y`]: Math.round(player.y),
+                [`players.${currentUser.uid}.score`]: score,
+                [`players.${currentUser.uid}.hp`]: player.hp,
+                [`players.${currentUser.uid}.isDead`]: player.isDead
+            }).catch(()=>{});
+        }
+
+        // --- Game Classes ---
+        class Player {
+            constructor() {
+                this.radius = 16;
+                this.x = canvas.width / 2; this.y = canvas.height - 120;
+                this.targetX = this.x; this.targetY = this.y;
+                this.color = colors.player; this.speed = 0.25;
+                this.maxHp = 3; this.hp = this.maxHp;
+                this.isDead = false;
+                this.invulnFrames = 0;
+                this.weapon = 'std'; // std, spread
+                this.weaponTimer = 0;
+                this.shielded = false;
+            }
+
+            draw() {
+                if (this.isDead) return;
+                
+                // Flicker if invulnerable
+                if (this.invulnFrames > 0 && frameCount % 6 < 3) return;
+
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                
+                // Shield visual
+                if (this.shielded) {
+                    ctx.beginPath(); ctx.arc(0, 0, this.radius + 10, 0, Math.PI*2);
+                    ctx.fillStyle = 'rgba(59, 130, 246, 0.2)'; ctx.fill();
+                    ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 2; ctx.stroke();
+                }
+
+                ctx.shadowBlur = 20; ctx.shadowColor = this.color;
+                
+                // Sleek Jet Shape
+                ctx.beginPath();
+                ctx.moveTo(0, -this.radius * 1.8);
+                ctx.lineTo(this.radius, this.radius);
+                ctx.lineTo(this.radius*0.4, this.radius*0.6);
+                ctx.lineTo(0, this.radius * 0.8);
+                ctx.lineTo(-this.radius*0.4, this.radius*0.6);
+                ctx.lineTo(-this.radius, this.radius);
+                ctx.closePath();
+                
+                ctx.fillStyle = '#050510'; ctx.fill();
+                ctx.lineWidth = 3; ctx.strokeStyle = this.color; ctx.stroke();
+
+                // Thrusters
+                const thrustLvl = Math.random() * 15 + 5;
+                ctx.beginPath(); ctx.moveTo(-this.radius*0.5, this.radius*0.8); ctx.lineTo(0, this.radius + thrustLvl); ctx.lineTo(this.radius*0.5, this.radius*0.8);
+                ctx.fillStyle = this.weapon === 'spread' ? '#eab308' : '#0ff'; ctx.fill();
+                ctx.restore();
+            }
+
+            update() {
+                if (this.isDead) return;
+                this.x += (this.targetX - this.x) * this.speed;
+                this.y += (this.targetY - this.y) * this.speed;
+                this.x = Math.max(this.radius, Math.min(canvas.width - this.radius, this.x));
+                this.y = Math.max(this.radius, Math.min(canvas.height - this.radius, this.y));
+                
+                if (this.invulnFrames > 0) this.invulnFrames--;
+                if (this.weaponTimer > 0) {
+                    this.weaponTimer--;
+                    if (this.weaponTimer <= 0) {
+                        this.weapon = 'std';
+                        document.getElementById('activePowerup').classList.add('hidden');
+                    }
+                }
+                this.draw();
+            }
+            
+            shoot() {
+                if (this.isDead) return;
+                const speed = -18;
+                if (this.weapon === 'spread') {
+                    bullets.push(new Bullet(this.x, this.y - this.radius, speed, 0));
+                    bullets.push(new Bullet(this.x, this.y - this.radius, speed, -3));
+                    bullets.push(new Bullet(this.x, this.y - this.radius, speed, 3));
+                } else {
+                    bullets.push(new Bullet(this.x - 8, this.y - this.radius, speed, 0));
+                    bullets.push(new Bullet(this.x + 8, this.y - this.radius, speed, 0));
+                }
+            }
+
+            takeDamage() {
+                if (this.isDead || this.invulnFrames > 0) return;
+                screenShake = 15;
+                if (this.shielded) {
+                    this.shielded = false;
+                    createExplosion(this.x, this.y, colors.powShield, 20);
+                    showFloatingText(this.x, this.y, "SHIELD BROKEN", colors.powShield);
+                    this.invulnFrames = 60; // 1 sec invuln
+                    return;
+                }
+                
+                this.hp--;
+                updateHealthUI();
+                createExplosion(this.x, this.y, '#fff', 15);
+                
+                if (this.hp <= 0) {
+                    this.isDead = true;
+                    screenShake = 30;
+                    createExplosion(this.x, this.y, this.color, 60);
+                    createExplosion(this.x, this.y, '#f00', 40);
+                    if (isMultiplayer) {
+                        syncLocalPlayerState(); showToast("Ship Destroyed! Spectating...");
+                    } else endSoloGame();
+                } else {
+                    this.invulnFrames = 90; // 1.5s invuln
+                    showFloatingText(this.x, this.y, "WARNING!", "#f00");
+                }
+            }
+        }
+
+        class GhostPlayer {
+            constructor(x, y) {
+                this.x = x; this.y = y; this.targetX = x; this.targetY = y;
+                this.radius = 16; this.color = colors.ghost; this.isDead = false; this.hp = 3;
+            }
+            update() {
+                if (this.isDead) return;
+                this.x += (this.targetX - this.x) * 0.15; this.y += (this.targetY - this.y) * 0.15;
+                ctx.save(); ctx.translate(this.x, this.y); ctx.globalAlpha = 0.4;
+                ctx.shadowBlur = 10; ctx.shadowColor = this.color;
+                ctx.beginPath(); ctx.moveTo(0, -this.radius * 1.8); ctx.lineTo(this.radius, this.radius);
+                ctx.lineTo(0, this.radius * 0.8); ctx.lineTo(-this.radius, this.radius); ctx.closePath();
+                ctx.strokeStyle = this.color; ctx.lineWidth = 2; ctx.stroke();
+                ctx.globalAlpha = 1; ctx.fillStyle = this.color; ctx.font = 'bold 10px Courier'; ctx.textAlign = 'center';
+                ctx.fillText(`ALLY [${this.hp}]`, 0, this.radius + 15);
+                ctx.restore();
+            }
+        }
+
+        class Bullet {
+            constructor(x, y, vy, vx) {
+                this.x = x; this.y = y; this.radius = 4; this.vy = vy; this.vx = vx; this.color = colors.bullet;
+            }
+            update() {
+                this.y += this.vy; this.x += this.vx;
+                ctx.save(); ctx.shadowBlur = 15; ctx.shadowColor = this.color;
+                ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = '#fff'; ctx.fill();
+                ctx.beginPath(); ctx.moveTo(this.x, this.y); ctx.lineTo(this.x - this.vx, this.y - this.vy * 1.5);
+                ctx.strokeStyle = this.color; ctx.lineWidth = 3; ctx.stroke(); ctx.restore();
+            }
+        }
+
+        class Enemy {
+            constructor(x, y, type, diffMult) {
+                this.x = x; this.y = y; this.type = type; // 0=basic, 1=tracker, 2=tank
+                
+                if (type === 2) { // Tank
+                    this.radius = Math.random() * 10 + 30;
+                    this.hp = Math.floor(10 * diffMult);
+                    this.vy = (Math.random() * 1 + 0.5) * diffMult;
+                    this.color = colors.enemyTank;
+                    this.scoreVal = 500;
+                } else if (type === 1) { // Tracker
+                    this.radius = Math.random() * 5 + 15;
+                    this.hp = Math.floor(2 * diffMult);
+                    this.vy = (Math.random() * 2 + 2) * diffMult;
+                    this.color = colors.enemyTracker;
+                    this.scoreVal = 250;
+                } else { // Basic
+                    this.radius = Math.random() * 10 + 15;
+                    this.hp = Math.floor(3 * diffMult);
+                    this.vy = (Math.random() * 2 + 2) * diffMult;
+                    this.color = colors.enemyBasic;
+                    this.scoreVal = 100;
+                }
+                this.maxHp = this.hp; this.angle = 0; this.spinSpeed = (Math.random() - 0.5) * 0.1;
+                this.hitTime = 0; // Flash effect
+            }
+            update() {
+                if (this.type === 1 && player && !player.isDead) { // Homing logic
+                    const dx = player.x - this.x;
+                    this.x += dx * 0.01; // Slow curve
+                }
+                this.y += this.vy; this.angle += this.spinSpeed;
+                if (this.hitTime > 0) this.hitTime--;
+
+                ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle);
+                ctx.shadowBlur = 15; ctx.shadowColor = this.color;
+                ctx.beginPath();
+                
+                let sides = this.type === 2 ? 8 : (this.type === 1 ? 3 : 6);
+                for (let i = 0; i < sides; i++) {
+                    const r = this.radius * (i % 2 === 0 ? 1 : (this.type === 2 ? 0.8 : 0.5));
+                    const a = (i * 2 * Math.PI) / sides;
+                    if (i === 0) ctx.moveTo(r * Math.cos(a), r * Math.sin(a));
+                    else ctx.lineTo(r * Math.cos(a), r * Math.sin(a));
+                }
+                ctx.closePath();
+                ctx.fillStyle = this.hitTime > 0 ? '#fff' : '#050510'; ctx.fill();
+                ctx.lineWidth = this.type === 2 ? 4 : 2; ctx.strokeStyle = this.color; ctx.stroke();
+                
+                // HP indicator for tanks
+                if (this.type === 2 && this.hp < this.maxHp) {
+                    ctx.rotate(-this.angle); // un-rotate
+                    ctx.fillStyle = 'rgba(255,0,0,0.5)';
+                    ctx.fillRect(-20, -this.radius - 15, 40, 5);
+                    ctx.fillStyle = '#0f0';
+                    ctx.fillRect(-20, -this.radius - 15, 40 * (this.hp/this.maxHp), 5);
+                }
+                ctx.restore();
+            }
+        }
+
+        class PowerUp {
+            constructor(x, y, type) {
+                this.x = x; this.y = y; this.type = type; // 0=shield, 1=gun, 2=health
+                this.radius = 12; this.vy = 2; this.angle = 0;
+                this.color = type === 0 ? colors.powShield : (type === 1 ? colors.powGun : colors.powHealth);
+                this.text = type === 0 ? "S" : (type === 1 ? "W" : "+");
+            }
+            update() {
+                this.y += this.vy; this.angle += 0.05;
+                ctx.save(); ctx.translate(this.x, this.y);
+                ctx.shadowBlur = 20; ctx.shadowColor = this.color;
+                
+                // Pulsing outer ring
+                ctx.beginPath(); ctx.arc(0, 0, this.radius + Math.sin(frameCount*0.1)*3, 0, Math.PI*2);
+                ctx.fillStyle = `rgba(${this.color === colors.powShield ? '59,130,246' : (this.color === colors.powGun ? '234,179,8' : '34,197,94')}, 0.3)`; ctx.fill();
+                
+                // Inner core
+                ctx.rotate(this.angle);
+                ctx.beginPath(); ctx.rect(-8, -8, 16, 16);
+                ctx.fillStyle = '#000'; ctx.fill();
+                ctx.lineWidth = 2; ctx.strokeStyle = this.color; ctx.stroke();
+                
+                ctx.rotate(-this.angle);
+                ctx.fillStyle = '#fff'; ctx.font = 'bold 12px Courier'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText(this.text, 0, 0);
+                ctx.restore();
+            }
+            collect() {
+                if (this.type === 0) {
+                    player.shielded = true; showFloatingText(this.x, this.y, "SHIELD ACTIVATED", this.color);
+                } else if (this.type === 1) {
+                    player.weapon = 'spread'; player.weaponTimer = 300; // 5 seconds at 60fps
+                    document.getElementById('activePowerup').classList.remove('hidden');
+                    showFloatingText(this.x, this.y, "OVERCHARGE", this.color);
+                } else {
+                    if (player.hp < player.maxHp) { player.hp++; updateHealthUI(); }
+                    showFloatingText(this.x, this.y, "HEALTH +1", this.color);
+                }
+            }
+        }
+
+        class FloatingText {
+            constructor(x, y, text, color) {
+                this.x = x; this.y = y; this.text = text; this.color = color;
+                this.life = 60; this.maxLife = 60; this.vy = -1.5;
+            }
+            update() {
+                this.y += this.vy; this.life--;
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, this.life / this.maxLife);
+                ctx.shadowBlur = 10; ctx.shadowColor = this.color;
+                ctx.fillStyle = this.color; ctx.font = 'bold 18px Courier'; ctx.textAlign = 'center';
+                ctx.fillText(this.text, this.x, this.y);
+                ctx.restore();
+            }
+        }
+
+        class Particle {
+            constructor(x, y, velocity, color, life) {
+                this.x = x; this.y = y; this.velocity = velocity; this.color = color;
+                this.alpha = 1; this.life = life; this.radius = Math.random() * 3 + 1;
+            }
+            update() {
+                this.x += this.velocity.x; this.y += this.velocity.y; this.alpha -= this.life;
+                ctx.save(); ctx.globalAlpha = Math.max(0, this.alpha);
+                if (settings.particleLevel === 'high') { ctx.shadowBlur = 10; ctx.shadowColor = this.color; }
+                ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color; ctx.fill(); ctx.restore();
+            }
+        }
+
+        // --- Core Functions ---
+        function resizeCanvas() {
+            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+            if (player) {
+                if (player.y > canvas.height) player.y = canvas.height - 120;
+                if (player.x > canvas.width) player.x = canvas.width / 2;
+            }
+            initBackground();
+        }
+
+        function initBackground() {
+            stars = []; nebulae = [];
+            for(let i = 0; i < (settings.particleLevel==='high'?150:80); i++) {
+                stars.push({
+                    x: Math.random() * canvas.width, y: Math.random() * canvas.height,
+                    s: Math.random() * 2 + 0.5, speed: Math.random() * 1 + 0.2
+                });
+            }
+            if (settings.particleLevel==='high') {
+                for(let i=0; i<3; i++) {
+                    nebulae.push({
+                        x: Math.random() * canvas.width, y: Math.random() * canvas.height,
+                        r: Math.random() * 200 + 100, c: Math.random()>0.5 ? 'rgba(255,0,255,0.03)' : 'rgba(0,255,255,0.03)', speed: Math.random()*0.5 + 0.1
+                    });
+                }
+            }
+        }
+
+        function drawBackground(speedMult) {
+            ctx.fillStyle = '#030308'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            nebulae.forEach(n => {
+                n.y += n.speed * speedMult; if (n.y - n.r > canvas.height) n.y = -n.r;
+                ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI*2);
+                ctx.fillStyle = n.c; ctx.fill();
+            });
+
+            ctx.fillStyle = '#fff';
+            stars.forEach(star => {
+                star.y += star.speed * speedMult;
+                if (star.y > canvas.height) { star.y = 0; star.x = Math.random() * canvas.width; }
+                ctx.globalAlpha = Math.random() * 0.5 + 0.3;
+                ctx.beginPath(); ctx.arc(star.x, star.y, star.s, 0, Math.PI * 2); ctx.fill();
+            });
+            ctx.globalAlpha = 1;
+        }
+
+        function createExplosion(x, y, color, count = 15) {
+            if (settings.particleLevel === 'low') count = Math.floor(count / 3);
+            for (let i = 0; i < count; i++) {
+                const angle = Math.random() * Math.PI * 2; const speed = Math.random() * 8 + 2;
+                particles.push(new Particle(x, y, { x: Math.cos(angle)*speed, y: Math.sin(angle)*speed }, color, Math.random()*0.02 + 0.02));
+            }
+        }
+
+        function showFloatingText(x, y, text, color) {
+            floatingTexts.push(new FloatingText(x, y, text, color));
+        }
+
+        function spawnEnemy() {
+            const diffMult = 1 + (score / 10000);
+            const x = Math.random() * (canvas.width - 60) + 30;
+            
+            // Randomize type based on progress
+            let rand = Math.random();
+            let type = 0; 
+            if (score > 2000 && rand > 0.7) type = 1; // 30% tracker
+            if (score > 5000 && rand > 0.9) type = 2; // 10% tank
+
+            enemies.push(new Enemy(x, -50, type, diffMult));
+        }
+
+        function startGame() {
+            showScreen(null); 
+            document.getElementById('hud').classList.remove('hidden');
+            document.getElementById('activePowerup').classList.add('hidden');
+            document.getElementById('btnPause').classList.toggle('hidden', isMultiplayer);
+            
+            player = new Player(); updateHealthUI();
+            otherPlayers = {}; bullets = []; enemies = []; particles = []; powerups = []; floatingTexts = [];
+            score = 0; frameCount = 0; deathProcessed = false; screenShake = 0;
+            scoreDisplay.innerText = score;
+            
+            if (isMultiplayer) {
+                mpStats.classList.remove('hidden'); updateMultiplayerHUD();
+                if (syncTimer) clearInterval(syncTimer);
+                syncTimer = setInterval(syncLocalPlayerState, 150); 
+            } else {
+                mpStats.classList.add('hidden');
+            }
+
+            if (animationId) cancelAnimationFrame(animationId);
+            lastTime = performance.now();
+            animate(lastTime);
+        }
+
+        function endSoloGame() {
+            gameState = 'gameover';
+            document.getElementById('goTitle').innerText = "SHIP DESTROYED";
+            document.getElementById('goSubtitle').innerText = "Mission Failed";
+            document.getElementById('goLeaderboard').classList.add('hidden');
+            setTimeout(() => {
+                document.getElementById('hud').classList.add('hidden');
+                document.getElementById('finalScoreDisplay').innerText = score;
+                showScreen('gameOver');
+            }, 1500);
+        }
+
+        function endMultiplayerGame() {
+            if (deathProcessed) return;
+            deathProcessed = true; gameState = 'gameover';
+            
+            if (syncTimer) clearInterval(syncTimer);
+            if (isHost && currentRoomId) updateDoc(getRoomRef(currentRoomId), { state: 'gameover' }).catch(()=>{});
+
+            setTimeout(() => {
+                document.getElementById('hud').classList.add('hidden');
+                document.getElementById('goTitle').innerText = "SQUAD WIPED";
+                document.getElementById('goSubtitle').innerText = "Network Terminated";
+                document.getElementById('finalScoreDisplay').innerText = score;
+                
+                const lb = document.getElementById('goLeaderboard'); lb.classList.remove('hidden');
+                let lbHtml = '<h3 class="text-cyan-500 font-bold mb-3 uppercase tracking-widest text-sm border-b border-cyan-900 pb-2">Final Intel</h3>';
+                const scores = [{ uid: currentUser.uid, name: 'You', score: score }];
+                if (roomData && roomData.players) {
+                    for (const uid in roomData.players) {
+                        if (uid !== currentUser.uid && roomData.players[uid]) scores.push({ uid, name: 'Ally', score: roomData.players[uid].score });
+                    }
+                }
+                scores.sort((a, b) => b.score - a.score);
+                scores.forEach((s, i) => {
+                    lbHtml += `<div class="flex justify-between font-bold text-lg ${s.uid === currentUser.uid ? 'text-cyan-300' : 'text-white'}"><span>#${i+1} ${s.name}</span><span>${s.score}</span></div>`;
+                });
+                lb.innerHTML = lbHtml;
+                
+                showScreen('gameOver'); leaveRoom();
+            }, 2000);
+        }
+
+        function togglePause() {
+            if (isMultiplayer || player.isDead || gameState === 'gameover') return;
+            if (gameState === 'playing') {
+                gameState = 'paused'; showScreen('pause');
+            } else if (gameState === 'paused') {
+                gameState = 'playing'; showScreen(null);
+                document.getElementById('hud').classList.remove('hidden');
+                lastTime = performance.now(); animate(lastTime);
+            }
+        }
+
+        // --- Main Loop ---
+        function animate(time) {
+            if (gameState !== 'playing' && gameState !== 'gameover') return;
+            animationId = requestAnimationFrame(animate);
+            
+            // Fixed timestep logic roughly
+            const dt = time - lastTime; lastTime = time;
+            frameCount++;
+
+            ctx.save();
+            
+            // Screen Shake
+            if (screenShake > 0) {
+                const dx = (Math.random() - 0.5) * screenShake;
+                const dy = (Math.random() - 0.5) * screenShake;
+                ctx.translate(dx, dy);
+                screenShake *= 0.85;
+                if (screenShake < 0.5) screenShake = 0;
+            }
+
+            drawBackground(1 + (score/20000)); // Speeds up slightly
+
+            if (gameState === 'playing') {
+                if (player && !player.isDead && frameCount % (player.weapon === 'spread' ? 7 : 10) === 0) player.shoot();
+                const spawnRate = Math.max(20, 90 - Math.floor(score / 300)); 
+                if (frameCount % spawnRate === 0) spawnEnemy();
+            }
+
+            // Update entities (back to front)
+            for (const uid in otherPlayers) otherPlayers[uid].update();
+            
+            powerups.forEach((p, i) => {
+                p.update();
+                if (p.y > canvas.height) powerups.splice(i, 1);
+                else if (player && !player.isDead && Math.hypot(p.x - player.x, p.y - player.y) < p.radius + player.radius) {
+                    p.collect(); powerups.splice(i, 1);
+                }
+            });
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                if (particles[i].alpha <= 0) particles.splice(i, 1); else particles[i].update();
+            }
+
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                const b = bullets[i];
+                if (b.y + b.radius < 0 || b.x < 0 || b.x > canvas.width) bullets.splice(i, 1); else b.update();
+            }
+
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                const enemy = enemies[i]; enemy.update();
+                if (enemy.y - enemy.radius > canvas.height) { enemies.splice(i, 1); continue; }
+
+                if (player && !player.isDead) {
+                    if (Math.hypot(player.x - enemy.x, player.y - enemy.y) < enemy.radius + player.radius - 5) { // generous hitbox
+                        player.takeDamage();
+                        if (enemy.type !== 2) { // Non tanks die on crash
+                            createExplosion(enemy.x, enemy.y, colors.enemyBasic, 20);
+                            enemies.splice(i, 1); continue;
+                        }
+                    }
+                }
+
+                let hit = false;
+                for (let j = bullets.length - 1; j >= 0; j--) {
+                    const b = bullets[j];
+                    if (Math.hypot(b.x - enemy.x, b.y - enemy.y) < enemy.radius + b.radius) {
+                        enemy.hp -= 1; enemy.hitTime = 3;
+                        createExplosion(b.x, b.y, colors.bullet, 4);
+                        bullets.splice(j, 1);
+
+                        if (enemy.hp <= 0) {
+                            createExplosion(enemy.x, enemy.y, enemy.color, enemy.type === 2 ? 40 : 15);
+                            score += enemy.scoreVal;
+                            if (player && !player.isDead) scoreDisplay.innerText = score;
+                            showFloatingText(enemy.x, enemy.y, `+${enemy.scoreVal}`, '#fff');
+                            
+                            // Powerup drop chance (10% standard, 50% tank)
+                            if (Math.random() < (enemy.type === 2 ? 0.5 : 0.08)) {
+                                powerups.push(new PowerUp(enemy.x, enemy.y, Math.floor(Math.random()*3)));
+                            }
+                            
+                            enemies.splice(i, 1); hit = true;
+                        }
+                        break;
+                    }
+                }
+                if (hit) continue;
+            }
+
+            if (player) player.update();
+
+            for (let i = floatingTexts.length - 1; i >= 0; i--) {
+                if (floatingTexts[i].life <= 0) floatingTexts.splice(i, 1); else floatingTexts[i].update();
+            }
+
+            ctx.restore();
+        }
+
+        // --- Event Listeners ---
+        function handleInput(e) {
+            if (gameState !== 'playing' || !player || player.isDead) return;
+            e.preventDefault();
+            let cx = e.clientX, cy = e.clientY;
+            if (e.touches && e.touches.length > 0) { cx = e.touches[0].clientX; cy = e.touches[0].clientY; }
+            player.targetX = cx; player.targetY = cy - (e.touches ? 50 : 0); // Offset higher for touch
+        }
+
+        canvas.addEventListener('pointermove', handleInput);
+        canvas.addEventListener('pointerdown', handleInput);
+        document.addEventListener('touchmove', (e) => { e.preventDefault(); }, { passive: false });
+        
+        // Keyboard Pause
+        window.addEventListener('keydown', (e) => { if(e.key === 'Escape' || e.key === 'p') togglePause(); });
+
+        // Buttons
+        document.getElementById('btnPlaySolo').addEventListener('click', () => { isMultiplayer = false; startGame(); });
+        document.getElementById('btnMultiplayer').addEventListener('click', () => showScreen('mp'));
+        document.getElementById('btnOptions').addEventListener('click', () => showScreen('options'));
+        document.getElementById('btnBackFromOptions').addEventListener('click', () => showScreen('main'));
+        document.getElementById('btnBackToMain').addEventListener('click', () => showScreen('main'));
+        document.getElementById('btnPause').addEventListener('click', togglePause);
+        document.getElementById('btnResume').addEventListener('click', togglePause);
+        document.getElementById('btnQuitToMenu').addEventListener('click', () => { showScreen('main'); gameState = 'menu'; });
+        document.getElementById('btnRestart').addEventListener('click', () => showScreen('main'));
+
+        // Settings Toggles
+        document.getElementById('toggleCRT').addEventListener('change', (e) => {
+            settings.crtEnabled = e.target.checked;
+            document.getElementById('crtOverlay').style.display = settings.crtEnabled ? 'block' : 'none';
+        });
+        document.getElementById('selectParticles').addEventListener('change', (e) => {
+            settings.particleLevel = e.target.value; initBackground();
+        });
+
+        // Network Buttons
+        document.getElementById('btnCreateRoom').addEventListener('click', createRoom);
+        document.getElementById('btnJoinRoom').addEventListener('click', () => {
+            const code = document.getElementById('roomCodeInput').value.trim().toUpperCase();
+            if (code.length === 4) joinRoom(code); else showToast("Enter 4-letter code");
+        });
+        document.getElementById('btnLeaveRoom').addEventListener('click', leaveRoom);
+        document.getElementById('btnStartGame').addEventListener('click', () => {
+            if (isHost && currentRoomId) updateDoc(getRoomRef(currentRoomId), { state: 'playing' }).catch(()=>{});
+        });
+
+        // Background loop for menus
+        function menuLoop() {
+            if (gameState !== 'playing' && gameState !== 'paused' && gameState !== 'gameover') {
+                drawBackground(0.5);
+            }
+            requestAnimationFrame(menuLoop);
+        }
+        initBackground();
+        menuLoop();
+
+    </script>
 </body>
 </html>
-
