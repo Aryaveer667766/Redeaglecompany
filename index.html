@@ -83,10 +83,10 @@
                 </button>
             </div>
             <div id="hudControlsHint" class="text-sm md:text-lg text-cyan-200 opacity-70 mt-2 bg-black/30 px-3 py-1 rounded hidden md:block">
-                Mouse to Fly & Fire | [SPACE] for EMP
+                Drag to Move (Auto-Fire) | [SPACE] for EMP
             </div>
             <div id="hudTouchHint" class="text-sm md:text-lg text-cyan-200 opacity-70 mt-2 bg-black/30 px-3 py-1 rounded md:hidden">
-                Dual Stick Touch
+                Drag to Move (Auto-Fire)
             </div>
             <div id="activePowerup" class="text-yellow-300 font-bold animate-pulse text-sm hidden">OVERCHARGE!</div>
         </div>
@@ -212,7 +212,19 @@
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, getDocs, updateDoc, onSnapshot, collection, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- Firebase Config ---
+        // --- Global Configurations & Constants (Defined First!) ---
+        const colors = { 
+            player: '#0ff', bullet: '#ff0', ghost: '#0f0', 
+            enemyBasic: '#f0f', enemyTracker: '#f30', enemyTank: '#f90', boss: '#f00', 
+            powShield: '#3b82f6', powGun: '#eab308', powHealth: '#22c55e' 
+        };
+
+        const SHIP_CLASSES = {
+            balanced: { hp: 3, spd: 0.20, rad: 16, color: '#0ff', icon: '⚖️' },
+            rogue: { hp: 2, spd: 0.30, rad: 12, color: '#a855f7', icon: '🥷' },
+            tank: { hp: 5, spd: 0.12, rad: 24, color: '#f97316', icon: '🛡️' }
+        };
+
         const appId = 'best-game-universe';
         const firebaseConfig = {
             apiKey: "AIzaSyBHyyUHxcoTfTCSPeO8QI-StUoqvsbRpFw",
@@ -232,28 +244,15 @@
         let bossMode = false, bossEntity = null;
         let myName = localStorage.getItem('bg_name') || 'PILOT';
         let myShipClass = localStorage.getItem('bg_class') || 'balanced';
+        let isTouchDevice = false; // Set on first touch
         
         document.getElementById('playerNameInput').value = myName;
         document.getElementById('shipClassSelect').value = myShipClass;
         const settings = { crtEnabled: true, particleLevel: 'high', sfxEnabled: true };
 
-        // Ship Class Definitions
-        const SHIP_CLASSES = {
-            balanced: { hp: 3, spd: 0.25, rad: 16, color: '#0ff', icon: '⚖️' },
-            rogue: { hp: 2, spd: 0.38, rad: 12, color: '#a855f7', icon: '🥷' },
-            tank: { hp: 5, spd: 0.16, rad: 24, color: '#f97316', icon: '🛡️' }
-        };
-
         // Entities arrays
         let player, otherPlayers = {}, bullets = [], enemies = [], particles = [], powerups = [], floatingTexts = [], stars = [], nebulae = [], asteroids = [];
         let emps = []; // Ultimate shockwaves
-
-        // Virtual Joysticks Setup
-        let joysticks = { 
-            left: { active: false, id: null, base: {x:0, y:0}, stick: {x:0, y:0}, vector: {x:0, y:0} }, 
-            right:{ active: false, id: null, base: {x:0, y:0}, stick: {x:0, y:0}, vector: {x:0, y:0} } 
-        };
-        let isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 
         // --- Audio System (Synthesizer) ---
         const AudioContext = window.AudioContext || window.webkitAudioContext; 
@@ -473,7 +472,7 @@
                         ghost.targetX = pData.x; ghost.targetY = pData.y; ghost.score = pData.score; ghost.isDead = pData.isDead; ghost.hp = pData.hp; ghost.reviveProgress = pData.reviveProgress || 0;
                         
                         // Sync Ghost Firing
-                        if (pData.isFiring && !pData.isDead) { if (ghost.weaponTimer <= 0) { ghost.shoot(pData.aimX, pData.aimY); ghost.weaponTimer = 10; } }
+                        if (pData.isFiring && !pData.isDead) { if (ghost.weaponTimer <= 0) { ghost.shoot(); ghost.weaponTimer = 10; } }
                         // Connect Voice Chat
                         if (pData.peerId) handleIncomingPeer(pData.peerId);
                         
@@ -513,19 +512,13 @@
 
         function syncLocalPlayerState() {
             if (!isMultiplayer || !currentRoomId || !currentUser || !player) return;
-            let aimX = 0, aimY = -1;
-            if (joysticks.right.active) { aimX = joysticks.right.vector.x; aimY = joysticks.right.vector.y; } 
-            else if (!isTouchDevice) { let dx = player.targetX - player.x, dy = player.targetY - player.y; let mag = Math.hypot(dx, dy) || 1; aimX = dx/mag; aimY = dy/mag; }
-            
             updateDoc(getRoomRef(currentRoomId), { 
                 [`players.${currentUser.uid}.x`]: Math.round(player.x), 
                 [`players.${currentUser.uid}.y`]: Math.round(player.y), 
                 [`players.${currentUser.uid}.score`]: score, 
                 [`players.${currentUser.uid}.hp`]: player.hp, 
                 [`players.${currentUser.uid}.isDead`]: player.isDead, 
-                [`players.${currentUser.uid}.isFiring`]: player.isFiring, 
-                [`players.${currentUser.uid}.aimX`]: aimX, 
-                [`players.${currentUser.uid}.aimY`]: aimY 
+                [`players.${currentUser.uid}.isFiring`]: player.isFiring
             }).catch(()=>{});
         }
 
@@ -583,7 +576,9 @@
                 if (this.invulnFrames > 0 && frameCount % 6 < 3) return;
                 
                 ctx.save(); ctx.translate(this.x, this.y); 
-                let moveTilt = joysticks.left.active ? joysticks.left.vector.x * 0.3 : (this.targetX - this.x) * 0.01; 
+                
+                // Smooth Dynamic Banking based on actual velocity
+                let moveTilt = this.vx * 0.05; 
                 ctx.rotate(Math.max(-0.5, Math.min(0.5, moveTilt)));
                 
                 if (this.shielded) { ctx.beginPath(); ctx.arc(0, 0, this.radius + 10, 0, Math.PI*2); ctx.fillStyle = 'rgba(59, 130, 246, 0.2)'; ctx.fill(); ctx.strokeStyle = '#3b82f6'; ctx.stroke(); }
@@ -601,9 +596,11 @@
             update() {
                 if (this.isDead) return;
                 
-                // Movement
-                if (joysticks.left.active) { this.vx = joysticks.left.vector.x * 10; this.vy = joysticks.left.vector.y * 10; this.x += this.vx; this.y += this.vy; } 
-                else { this.x += (this.targetX - this.x) * this.speed; this.y += (this.targetY - this.y) * this.speed; }
+                // Smooth Velocity Interpolation
+                this.vx = (this.targetX - this.x) * this.speed;
+                this.vy = (this.targetY - this.y) * this.speed;
+                this.x += this.vx; 
+                this.y += this.vy;
                 
                 this.x = Math.max(this.radius, Math.min(canvas.width - this.radius, this.x)); this.y = Math.max(this.radius, Math.min(canvas.height - this.radius, this.y));
                 
@@ -612,10 +609,10 @@
                 
                 // Nebula slow check
                 let inNebula = false; nebulae.forEach(n => { if(Math.hypot(this.x - n.x, this.y - n.y) < n.r) inNebula = true; });
-                if (inNebula) { this.x -= (this.x - this.targetX) * (this.speed * 0.5); }
+                if (inNebula) { this.x -= this.vx * 0.5; this.y -= this.vy * 0.5; }
                 
-                // Shooting
-                this.isFiring = joysticks.right.active || (!isTouchDevice && true);
+                // Always Auto-Fire Upwards
+                this.isFiring = true;
                 if (this.isFiring && frameCount % (this.weapon === 'spread' ? 8 : 10) === 0) this.shoot();
                 
                 this.draw();
@@ -623,18 +620,16 @@
             
             shoot() {
                 if (this.isDead) return; playSound('shoot'); 
-                const speed = 18; let dx = 0, dy = -1;
-                
-                if (joysticks.right.active) { dx = joysticks.right.vector.x; dy = joysticks.right.vector.y; } 
-                else if (!isTouchDevice) { let toX = this.targetX - this.x, toY = this.targetY - this.y; let mag = Math.hypot(toX, toY); if (mag > 10) { dx = toX/mag; dy = toY/mag; } }
+                const speed = 18; 
+                let dx = 0, dy = -1; // Shoot straight up
                 
                 if (this.weapon === 'spread') { 
                     let baseAng = Math.atan2(dy, dx); 
                     for(let offset of [-0.2, 0, 0.2]) { let ang = baseAng + offset; bullets.push(new Bullet(this.x, this.y - this.radius, Math.sin(ang)*speed, Math.cos(ang)*speed, colors.bullet)); } 
                 } else { 
-                    let perpX = -dy * 8, perpY = dx * 8; 
-                    bullets.push(new Bullet(this.x + perpX, this.y + perpY - this.radius, dy*speed, dx*speed, colors.bullet)); 
-                    bullets.push(new Bullet(this.x - perpX, this.y - perpY - this.radius, dy*speed, dx*speed, colors.bullet)); 
+                    let perpX = 8, perpY = 0; 
+                    bullets.push(new Bullet(this.x + perpX, this.y - this.radius, dy*speed, dx*speed, colors.bullet)); 
+                    bullets.push(new Bullet(this.x - perpX, this.y - this.radius, dy*speed, dx*speed, colors.bullet)); 
                 }
             }
             
@@ -683,7 +678,9 @@
                     return;
                 }
                 
-                this.x += (this.targetX - this.x) * 0.15; this.y += (this.targetY - this.y) * 0.15;
+                // Smooth interpolation for ghost
+                this.x += (this.targetX - this.x) * 0.2; 
+                this.y += (this.targetY - this.y) * 0.2;
                 if(this.weaponTimer > 0) this.weaponTimer--;
                 
                 ctx.save(); ctx.translate(this.x, this.y); ctx.globalAlpha = 0.5; ctx.shadowBlur = 10; ctx.shadowColor = this.color;
@@ -691,10 +688,11 @@
                 ctx.globalAlpha = 1; ctx.fillStyle = this.color; ctx.font = 'bold 10px Courier'; ctx.textAlign = 'center'; ctx.fillText(`${this.name} [${this.hp}]`, 0, this.radius + 15); ctx.restore();
             }
             
-            shoot(dx, dy) {
-                const speed = 18; let perpX = -dy * 8, perpY = dx * 8;
-                let b1 = new Bullet(this.x + perpX, this.y + perpY - this.radius, dy*speed, dx*speed, this.color);
-                let b2 = new Bullet(this.x - perpX, this.y - perpY - this.radius, dy*speed, dx*speed, this.color);
+            shoot() {
+                const speed = 18; let dx = 0, dy = -1; // Shoot straight up
+                let perpX = 8, perpY = 0;
+                let b1 = new Bullet(this.x + perpX, this.y - this.radius, dy*speed, dx*speed, this.color);
+                let b2 = new Bullet(this.x - perpX, this.y - this.radius, dy*speed, dx*speed, this.color);
                 b1.isGhost = true; b2.isGhost = true;
                 if (gameMode === 'pvp') { b1.isEnemy = true; b2.isEnemy = true; } // In PvP, ghost bullets hurt local player
                 bullets.push(b1, b2);
@@ -790,7 +788,12 @@
         
         class Particle { 
             constructor(x, y, velocity, color, life) { this.x = x; this.y = y; this.velocity = velocity; this.color = color; this.alpha = 1; this.life = life; this.radius = Math.random() * 3 + 1; } 
-            update() { this.x += this.velocity.x; this.y += this.velocity.y; this.alpha -= this.life; ctx.save(); ctx.globalAlpha = Math.max(0, this.alpha); if (settings.particleLevel === 'high') { ctx.shadowBlur = 10; ctx.shadowColor = this.color; } ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fillStyle = this.color; ctx.fill(); ctx.restore(); } 
+            update() { 
+                // Add friction for smooth slow-down effect
+                this.velocity.x *= 0.95; this.velocity.y *= 0.95;
+                this.x += this.velocity.x; this.y += this.velocity.y; this.alpha -= this.life; 
+                ctx.save(); ctx.globalAlpha = Math.max(0, this.alpha); if (settings.particleLevel === 'high') { ctx.shadowBlur = 10; ctx.shadowColor = this.color; } ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fillStyle = this.color; ctx.fill(); ctx.restore(); 
+            } 
         }
 
         // --- Core Rendering & Mechanics ---
@@ -816,13 +819,6 @@
         function spawnAsteroid() { asteroids.push(new Asteroid(Math.random() * canvas.width, -100)); }
         function updateHealthUI() { const hd = document.getElementById('healthDisplay'); hd.innerHTML = ''; for (let i = 0; i < player.maxHp; i++) { const div = document.createElement('div'); div.className = i < player.hp ? 'health-icon' : 'health-icon lost'; hd.appendChild(div); } }
         
-        function drawJoysticks() { 
-            ctx.save(); ctx.lineWidth = 2; 
-            [joysticks.left, joysticks.right].forEach((joy, idx) => { 
-                if(joy.active) { let color = idx === 0 ? 'rgba(0, 255, 255, 0.5)' : 'rgba(255, 0, 255, 0.5)'; ctx.beginPath(); ctx.arc(joy.base.x, joy.base.y, 50, 0, Math.PI*2); ctx.strokeStyle = color; ctx.stroke(); ctx.beginPath(); ctx.arc(joy.stick.x, joy.stick.y, 25, 0, Math.PI*2); ctx.fillStyle = color; ctx.fill(); } 
-            }); ctx.restore(); 
-        }
-
         // --- Game Management ---
         function startGame() {
             if (!audioCtx) audioCtx = new AudioContext(); if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -877,14 +873,16 @@
             if (gameState !== 'playing' && gameState !== 'gameover') return;
             animationId = requestAnimationFrame(animate); lastTime = time; frameCount++; ctx.save();
             
-            // Spectator Camera
+            // Smooth Spectator Camera
             if (player && player.isDead && isMultiplayer) { 
                 let aliveGhost = Object.values(otherPlayers).find(g => !g.isDead); 
-                if (aliveGhost) { camera.x += (((canvas.width/2) - aliveGhost.x) - camera.x) * 0.1; camera.y += (((canvas.height/2) - aliveGhost.y) - camera.y) * 0.1; } 
-            } else { camera.x += (0 - camera.x) * 0.1; camera.y += (0 - camera.y) * 0.1; }
+                if (aliveGhost) { camera.x += (((canvas.width/2) - aliveGhost.x) - camera.x) * 0.05; camera.y += (((canvas.height/2) - aliveGhost.y) - camera.y) * 0.05; } 
+            } else { camera.x += (0 - camera.x) * 0.05; camera.y += (0 - camera.y) * 0.05; }
             
             ctx.translate(camera.x, camera.y);
-            if (screenShake > 0) { ctx.translate((Math.random() - 0.5) * screenShake, (Math.random() - 0.5) * screenShake); screenShake *= 0.85; if (screenShake < 0.5) screenShake = 0; }
+
+            // Smooth Screen Shake Decay
+            if (screenShake > 0) { ctx.translate((Math.random() - 0.5) * screenShake, (Math.random() - 0.5) * screenShake); screenShake *= 0.9; if (screenShake < 0.5) screenShake = 0; }
             
             drawBackground(1 + (score/20000));
             
@@ -941,24 +939,22 @@
             for (let i = floatingTexts.length - 1; i >= 0; i--) { if (floatingTexts[i].life <= 0) floatingTexts.splice(i, 1); else floatingTexts[i].update(); }
             
             ctx.restore();
-            drawJoysticks();
         }
 
-        // --- Input Listeners ---
-        function handlePointerMove(e) { if (gameState !== 'playing' || !player || player.isDead || isTouchDevice) return; e.preventDefault(); player.targetX = e.clientX - camera.x; player.targetY = e.clientY - camera.y; }
-        
-        function handleTouch(e) { 
-            if (gameState !== 'playing' || !player || player.isDead) return; e.preventDefault(); isTouchDevice = true; let lActive = false, rActive = false; 
-            for (let i = 0; i < e.touches.length; i++) { 
-                let t = e.touches[i]; let joy = t.clientX < canvas.width / 2 ? joysticks.left : joysticks.right; if (t.clientX < canvas.width/2) lActive = true; else rActive = true; 
-                if (!joy.active) { joy.active = true; joy.id = t.identifier; joy.base = {x: t.clientX, y: t.clientY}; joy.stick = {x: t.clientX, y: t.clientY}; joy.vector = {x:0, y:0}; } 
-                else if (joy.id === t.identifier) { let dx = t.clientX - joy.base.x, dy = t.clientY - joy.base.y; let mag = Math.hypot(dx, dy); let maxR = 50; if(mag > maxR) { dx = (dx/mag)*maxR; dy = (dy/mag)*maxR; } joy.stick = {x: joy.base.x + dx, y: joy.base.y + dy}; joy.vector = {x: dx/maxR, y: dy/maxR}; } 
-            } 
-            if(!lActive) joysticks.left.active = false; if(!rActive) joysticks.right.active = false; 
+        // --- Smooth Input Listeners ---
+        function handlePointerMove(e) { 
+            if (gameState !== 'playing' || !player || player.isDead) return; 
+            e.preventDefault(); 
+            let cx = e.clientX, cy = e.clientY; 
+            if (e.touches && e.touches.length > 0) { cx = e.touches[0].clientX; cy = e.touches[0].clientY; isTouchDevice = true; } 
+            
+            // Offset finger slightly above touch position so you can see your ship
+            player.targetX = cx - camera.x; 
+            player.targetY = cy - camera.y - (isTouchDevice ? 60 : 0); 
         }
 
-        canvas.addEventListener('pointermove', handlePointerMove); canvas.addEventListener('pointerdown', handlePointerMove); 
-        canvas.addEventListener('touchstart', handleTouch, {passive: false}); canvas.addEventListener('touchmove', handleTouch, {passive: false}); canvas.addEventListener('touchend', handleTouch, {passive: false}); canvas.addEventListener('touchcancel', handleTouch, {passive: false}); 
+        canvas.addEventListener('pointermove', handlePointerMove); 
+        canvas.addEventListener('pointerdown', handlePointerMove); 
         document.addEventListener('touchmove', (e) => { e.preventDefault(); }, { passive: false });
         
         window.addEventListener('keydown', (e) => { if(e.key === 'Escape' || e.key === 'p') togglePause(); if(e.code === 'Space') triggerUltimate(); });
