@@ -48,7 +48,7 @@
         .health-icon.lost { background-color: transparent; border: 2px solid #333; box-shadow: none; clip-path: none; border-radius: 50%; width: 16px; height: 16px; margin: 4px; }
         
         .hidden { display: none !important; }
-        #toast { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: linear-gradient(90deg, #f0f, #80f); color: white; padding: 12px 24px; border-radius: 12px; font-weight: bold; z-index: 100; opacity: 0; transition: opacity 0.3s; pointer-events: none; box-shadow: 0 0 20px rgba(255,0,255,0.5); text-transform: uppercase; letter-spacing: 2px;}
+        #toast { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: linear-gradient(90deg, #f0f, #80f); color: white; padding: 12px 24px; border-radius: 12px; font-weight: bold; z-index: 100; opacity: 0; transition: opacity 0.3s; pointer-events: none; box-shadow: 0 0 20px rgba(255,0,255,0.5); text-transform: uppercase; letter-spacing: 1px; font-size: 0.9rem;}
     </style>
 </head>
 <body class="text-white select-none">
@@ -178,14 +178,26 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- Config & Globals ---
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'best-game-universe';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        const appId = 'best-game-universe';
         
-        let app, auth, db, currentUser = null;
+        // Custom Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyBHyyUHxcoTfTCSPeO8QI-StUoqvsbRpFw",
+            authDomain: "designsnap-3538d.firebaseapp.com",
+            databaseURL: "https://designsnap-3538d-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "designsnap-3538d",
+            storageBucket: "designsnap-3538d.firebasestorage.app",
+            messagingSenderId: "42045980632",
+            appId: "1:42045980632:web:e16d0751deef50b8137cad",
+            measurementId: "G-DH3Z2K7JYY"
+        };
+        
+        let app, auth, db, analytics, currentUser = null;
         let unsubscribeRoom = null;
         
         let gameState = 'menu'; // menu, mp_menu, lobby, playing, paused, gameover
@@ -240,19 +252,45 @@
 
         // --- Init Firebase ---
         function initFirebase() {
-            if (!firebaseConfig) { console.warn("No Firebase config. Offline mode."); return; }
-            app = initializeApp(firebaseConfig); auth = getAuth(app); db = getFirestore(app);
+            try {
+                app = initializeApp(firebaseConfig); 
+                analytics = getAnalytics(app);
+                auth = getAuth(app); 
+                db = getFirestore(app);
+            } catch(e) {
+                console.warn("Failed to initialize Firebase", e);
+                return;
+            }
+
             const authenticate = async () => {
                 try {
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token);
-                    else await signInAnonymously(auth);
-                } catch (e) { showToast("Network Error."); }
+                    await signInAnonymously(auth);
+                } catch (e) { 
+                    console.error("Firebase Auth Error:", e);
+                    
+                    const btnMp = document.getElementById('btnMultiplayer');
+                    btnMp.innerText = 'Co-Op Unavailable';
+                    
+                    // Specific error handling to guide the user
+                    if (e.code === 'auth/configuration-not-found') {
+                        showToast("Fix: Go to Firebase Console -> Authentication -> Click 'Get Started'");
+                    } else if (e.code === 'auth/operation-not-allowed') {
+                        showToast("Fix: Enable 'Anonymous' in Firebase Auth Sign-in Methods");
+                    } else {
+                        showToast("Network Auth Error. Playing Offline."); 
+                    }
+                }
             };
+            
             authenticate();
+            
             onAuthStateChanged(auth, (user) => {
                 currentUser = user;
                 const mpBtn = document.getElementById('btnMultiplayer');
-                if (user) { mpBtn.disabled = false; mpBtn.innerText = 'Co-Op Network'; }
+                if (user) { 
+                    mpBtn.disabled = false; 
+                    mpBtn.innerText = 'Co-Op Network'; 
+                }
             });
         }
         initFirebase();
@@ -274,7 +312,7 @@
         function showToast(msg) {
             const toast = document.getElementById('toast');
             toast.innerText = msg; toast.style.opacity = 1;
-            setTimeout(() => { toast.style.opacity = 0; }, 3000);
+            setTimeout(() => { toast.style.opacity = 0; }, 5000); // Increased duration to read error
         }
 
         function updateHealthUI() {
