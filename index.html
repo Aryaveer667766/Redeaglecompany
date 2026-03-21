@@ -88,6 +88,7 @@
             <div id="hudTouchHint" class="text-sm md:text-lg text-cyan-200 opacity-70 mt-2 bg-black/30 px-3 py-1 rounded md:hidden">
                 Dual Stick Touch
             </div>
+            <div id="activePowerup" class="text-yellow-300 font-bold animate-pulse text-sm hidden">OVERCHARGE!</div>
         </div>
     </div>
 
@@ -501,7 +502,7 @@
             let html = `<div class="font-bold ${gameMode==='pvp'?'text-red-500':'text-cyan-500'} mb-1 border-b border-cyan-800 pb-1">${gameMode==='pvp'?'PVP MATCH':'SQUAD STATUS'}</div>`;
             for (const uid in roomData.players) {
                 if (!roomData.players[uid]) continue; const isMe = uid === currentUser.uid;
-                const data = isMe ? { name: myName, sClass: myShipClass, score, isDead: player.isDead, hp: player.hp, rev: player.reviveProgress } : roomData.players[uid];
+                const data = isMe ? { name: myName, sClass: myShipClass, score, isDead: player ? player.isDead : false, hp: player ? player.hp : 0, rev: player ? player.reviveProgress : 0 } : roomData.players[uid];
                 const statusColor = data.isDead ? 'text-red-500 line-through opacity-50' : (isMe ? 'text-cyan-300 font-bold' : 'text-green-400');
                 const hpStr = data.isDead ? (data.rev > 0 ? `REV ${Math.floor(data.rev)}%` : 'DEAD') : '♥'.repeat(data.hp);
                 const icon = SHIP_CLASSES[data.sClass]?.icon || '🚀';
@@ -542,7 +543,7 @@
         }
         
         function triggerUltimate() {
-            if (ultCharge < 100 || (player && player.isDead)) return;
+            if (ultCharge < 100 || !player || player.isDead) return;
             ultCharge = 0; document.getElementById('ultBar').style.width = `0%`; 
             document.getElementById('ultBar').classList.remove('ult-ready'); document.getElementById('btnUlt').classList.add('hidden');
             playSound('emp');
@@ -867,7 +868,7 @@
         }
         
         function togglePause() { 
-            if (isMultiplayer || player.isDead || gameState === 'gameover') return; 
+            if (isMultiplayer || !player || player.isDead || gameState === 'gameover') return; 
             if (gameState === 'playing') { gameState = 'paused'; showScreen('pause'); } 
             else if (gameState === 'paused') { gameState = 'playing'; showScreen(null); document.getElementById('hud').classList.remove('hidden'); lastTime = performance.now(); animate(lastTime); } 
         }
