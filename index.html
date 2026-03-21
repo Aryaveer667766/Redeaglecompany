@@ -106,7 +106,6 @@
         </div>
     </div>
 
-    <!-- Menus -->
     <div id="uiLayer" class="ui-layer">
         
         <div id="upgradeScreen" class="ui-panel hidden w-[50rem] max-w-[95%] z-50 !bg-black/95">
@@ -570,6 +569,8 @@
             
             if (player) player.isUpgrading = false;
             showScreen(null); // Return to game
+            lastTime = performance.now();
+            animate(lastTime); // RESTART THE LOOP
         }
 
         // --- Game Classes ---
