@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Best Game in Universe</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
@@ -12,7 +13,6 @@
             overscroll-behavior-y: none; touch-action: none;
         }
         
-        /* CRT Scanline Effect */
         .crt-overlay {
             position: absolute; top: 0; left: 0; bottom: 0; right: 0; z-index: 15;
             background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
@@ -56,38 +56,37 @@
     <div id="crtOverlay" class="crt-overlay"></div>
     <div id="toast">Message</div>
 
-    <!-- HUD -->
     <div id="hud" class="absolute top-0 left-0 w-full p-6 flex justify-between items-start pointer-events-none z-10 hidden">
         <div>
             <div class="text-2xl md:text-4xl font-black tracking-widest neon-text mb-2">
                 SCORE: <span id="scoreDisplay">0</span>
             </div>
-            <!-- Health Bar -->
-            <div id="healthDisplay" class="flex items-center mb-4">
-                <div class="health-icon"></div><div class="health-icon"></div><div class="health-icon"></div>
-            </div>
-            <!-- MP Stats -->
+            <div id="healthDisplay" class="flex items-center mb-4"></div>
             <div id="multiplayerStats" class="text-sm md:text-base space-y-2 bg-black/40 p-2 rounded backdrop-blur-sm border border-cyan-900/50"></div>
         </div>
         <div class="text-right flex flex-col items-end gap-2">
-            <button id="btnPause" class="pointer-events-auto bg-black/50 border border-cyan-500 text-cyan-300 w-12 h-12 rounded-full flex items-center justify-center hover:bg-cyan-900/50 transition-colors">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/></svg>
-            </button>
+            <div class="flex gap-2">
+                <button id="btnToggleMic" class="pointer-events-auto bg-black/50 border border-fuchsia-500 text-fuchsia-300 w-12 h-12 rounded-full flex items-center justify-center hover:bg-fuchsia-900/50 transition-colors hidden" title="Toggle Voice Chat">
+                    <svg id="micIconOff" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="block"><line x1="1" y1="1" x2="23" y2="23"></line><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"></path><path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+                    <svg id="micIconOn" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="hidden"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+                </button>
+                <button id="btnPause" class="pointer-events-auto bg-black/50 border border-cyan-500 text-cyan-300 w-12 h-12 rounded-full flex items-center justify-center hover:bg-cyan-900/50 transition-colors">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/></svg>
+                </button>
+            </div>
             <div id="hudControlsHint" class="text-sm md:text-lg text-cyan-200 opacity-70 mt-2 bg-black/30 px-3 py-1 rounded">
                 Drag to Move & Fire
             </div>
-            <div id="activePowerup" class="text-yellow-300 font-bold animate-pulse text-sm hidden">OVERCHARGE ACTIVE!</div>
+            <div id="activePowerup" class="text-yellow-300 font-bold animate-pulse text-sm hidden">OVERCHARGE!</div>
         </div>
     </div>
 
-    <!-- UI Menus Layer -->
     <div id="uiLayer" class="ui-layer">
         
-        <!-- Main Menu -->
         <div id="mainMenu" class="ui-panel">
             <h3 class="text-cyan-500 tracking-[0.5em] text-sm md:text-base font-bold mb-2">WELCOME TO THE</h3>
             <h1 class="text-5xl md:text-8xl font-black mb-4 neon-text text-center leading-tight">BEST GAME<br><span class="text-fuchsia-400" style="text-shadow: 0 0 20px #f0f;">IN UNIVERSE</span></h1>
-            <p class="text-cyan-200 mb-10 max-w-md text-lg mx-auto opacity-80">Survive the cosmic onslaught. Dodge, collect powerups, and dominate the leaderboards.</p>
+            <p class="text-cyan-200 mb-8 max-w-md text-lg mx-auto opacity-80">Survive the cosmic onslaught.</p>
             <div class="flex flex-col gap-4 w-72 mx-auto">
                 <button id="btnPlaySolo" class="btn btn-cyan">Start Mission</button>
                 <button id="btnMultiplayer" class="btn btn-cyan" disabled>Co-Op (Connecting...)</button>
@@ -95,7 +94,6 @@
             </div>
         </div>
 
-        <!-- Options Menu -->
         <div id="optionsMenu" class="ui-panel hidden w-80">
             <h2 class="text-3xl font-bold mb-8 neon-text">SYSTEM CONFIG</h2>
             <div class="flex flex-col gap-6 mb-8 text-left">
@@ -104,19 +102,26 @@
                     <input type="checkbox" id="toggleCRT" checked class="w-6 h-6 accent-cyan-500">
                 </label>
                 <label class="flex justify-between items-center cursor-pointer">
+                    <span class="text-xl text-cyan-100">Sound Effects</span>
+                    <input type="checkbox" id="toggleSound" checked class="w-6 h-6 accent-cyan-500">
+                </label>
+                <label class="flex justify-between items-center cursor-pointer">
                     <span class="text-xl text-cyan-100">Particle FX</span>
                     <select id="selectParticles" class="bg-black border border-cyan-500 text-cyan-300 p-2 rounded outline-none">
-                        <option value="high">High (Juicy)</option>
-                        <option value="low">Low (Performant)</option>
+                        <option value="high">High</option>
+                        <option value="low">Low</option>
                     </select>
                 </label>
             </div>
             <button id="btnBackFromOptions" class="btn btn-cyan w-full">Apply & Back</button>
         </div>
 
-        <!-- Multiplayer Menu -->
         <div id="mpMenu" class="ui-panel hidden">
-            <h2 class="text-4xl font-black mb-8 neon-text">CO-OP NETWORK</h2>
+            <h2 class="text-4xl font-black mb-4 neon-text">CO-OP NETWORK</h2>
+            <div class="mb-6">
+                <label class="block text-cyan-400 text-sm font-bold mb-2 tracking-widest uppercase">Your Callsign (Name)</label>
+                <input type="text" id="playerNameInput" placeholder="ENTER NAME" class="bg-black/80 border-2 border-cyan-500 text-cyan-300 text-center text-2xl font-black py-2 rounded-xl outline-none uppercase shadow-[0_0_10px_rgba(0,255,255,0.2)] w-64 mx-auto block" maxlength="10">
+            </div>
             <div class="flex flex-col gap-5 w-72 mx-auto">
                 <button id="btnCreateRoom" class="btn btn-cyan">Host Server</button>
                 <div class="flex items-center my-2 opacity-50">
@@ -130,7 +135,6 @@
             </div>
         </div>
 
-        <!-- Lobby Menu -->
         <div id="lobbyMenu" class="ui-panel hidden w-96">
             <h2 class="text-3xl font-bold mb-2 neon-text">STAGING AREA</h2>
             <div class="bg-black/60 py-3 px-6 rounded-lg inline-block border border-cyan-500/50 mb-6">
@@ -150,7 +154,6 @@
             </div>
         </div>
 
-        <!-- Pause Menu -->
         <div id="pauseMenu" class="ui-panel hidden w-80">
             <h2 class="text-4xl font-black mb-8 neon-text-gold">PAUSED</h2>
             <div class="flex flex-col gap-4">
@@ -159,33 +162,25 @@
             </div>
         </div>
 
-        <!-- Game Over Screen -->
         <div id="gameOverScreen" class="ui-panel hidden">
             <h2 id="goTitle" class="text-5xl md:text-7xl font-black mb-2 neon-text-red">SHIP DESTROYED</h2>
-            <p id="goSubtitle" class="text-cyan-300 mb-8 uppercase tracking-[0.3em] text-sm">Mission Failed</p>
-            <div class="text-2xl md:text-4xl text-white mb-10 bg-black/50 p-6 rounded-2xl border border-fuchsia-900">
+            <div class="text-2xl md:text-4xl text-white mb-10 bg-black/50 p-6 rounded-2xl border border-fuchsia-900 mt-4">
                 FINAL SCORE<br><span id="finalScoreDisplay" class="font-black text-6xl text-fuchsia-400 block mt-2" style="text-shadow: 0 0 20px #f0f;">0</span>
             </div>
-            <div id="goLeaderboard" class="bg-black/60 p-5 rounded-xl border border-cyan-900 mb-8 text-left hidden shadow-inner">
-                <!-- MP results populated here -->
-            </div>
+            <div id="goLeaderboard" class="bg-black/60 p-5 rounded-xl border border-cyan-900 mb-8 text-left hidden shadow-inner"></div>
             <button id="btnRestart" class="btn btn-cyan w-full text-xl py-4">Return to Base</button>
         </div>
-
     </div>
 
     <canvas id="gameCanvas"></canvas>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- Config & Globals ---
+        // --- Firebase Config ---
         const appId = 'best-game-universe';
-        
-        // Custom Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyBHyyUHxcoTfTCSPeO8QI-StUoqvsbRpFw",
             authDomain: "designsnap-3538d.firebaseapp.com",
@@ -193,141 +188,182 @@
             projectId: "designsnap-3538d",
             storageBucket: "designsnap-3538d.firebasestorage.app",
             messagingSenderId: "42045980632",
-            appId: "1:42045980632:web:e16d0751deef50b8137cad",
-            measurementId: "G-DH3Z2K7JYY"
+            appId: "1:42045980632:web:e16d0751deef50b8137cad"
         };
         
-        let app, auth, db, analytics, currentUser = null;
+        let app, auth, db, currentUser = null;
         let unsubscribeRoom = null;
         
-        let gameState = 'menu'; // menu, mp_menu, lobby, playing, paused, gameover
+        // Game State
+        let gameState = 'menu';
         let isMultiplayer = false, currentRoomId = null, isHost = false, roomData = null;
-        
-        let animationId, frameCount = 0, lastTime = 0;
-        let score = 0;
-        let syncTimer = null, deathProcessed = false;
-        let screenShake = 0;
+        let animationId, frameCount = 0, lastTime = 0, score = 0, screenShake = 0;
+        let myName = localStorage.getItem('bg_name') || 'PILOT';
+        document.getElementById('playerNameInput').value = myName;
 
         // Settings
-        const settings = {
-            crtEnabled: true,
-            particleLevel: 'high' // high, low
-        };
+        const settings = { crtEnabled: true, particleLevel: 'high', sfxEnabled: true };
 
         // Entities arrays
-        let player;
-        let otherPlayers = {}; 
-        let bullets = [];
-        let enemies = [];
-        let particles = [];
-        let powerups = [];
-        let floatingTexts = [];
-        let stars = [];
-        let nebulae = [];
+        let player, otherPlayers = {}, bullets = [], enemies = [], particles = [], powerups = [], floatingTexts = [], stars = [], nebulae = [];
+        const colors = { player: '#0ff', bullet: '#ff0', ghost: '#0f0', enemyBasic: '#f0f', enemyTracker: '#f30', enemyTank: '#f90', powShield: '#3b82f6', powGun: '#eab308', powHealth: '#22c55e' };
 
-        const colors = { 
-            player: '#0ff', 
-            bullet: '#ff0', 
-            ghost: '#0f0',
-            enemyBasic: '#f0f', 
-            enemyTracker: '#f30', 
-            enemyTank: '#f90',
-            powShield: '#3b82f6',
-            powGun: '#eab308',
-            powHealth: '#22c55e'
-        };
+        // --- Audio System (Synthesizer) ---
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
 
-        // --- DOM Elements ---
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d', { alpha: false }); // Optimize
-        const uiLayer = document.getElementById('uiLayer');
-        const screens = {
-            main: document.getElementById('mainMenu'), mp: document.getElementById('mpMenu'),
-            lobby: document.getElementById('lobbyMenu'), gameOver: document.getElementById('gameOverScreen'),
-            options: document.getElementById('optionsMenu'), pause: document.getElementById('pauseMenu')
-        };
-        const scoreDisplay = document.getElementById('scoreDisplay');
-        const mpStats = document.getElementById('multiplayerStats');
-        const healthDisplay = document.getElementById('healthDisplay');
-
-        // --- Init Firebase ---
-        function initFirebase() {
-            try {
-                app = initializeApp(firebaseConfig); 
-                analytics = getAnalytics(app);
-                auth = getAuth(app); 
-                db = getFirestore(app);
-            } catch(e) {
-                console.warn("Failed to initialize Firebase", e);
-                return;
+        function playSound(type) {
+            if (!settings.sfxEnabled) return;
+            if (!audioCtx) audioCtx = new AudioContext();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            const now = audioCtx.currentTime;
+            
+            if (type === 'shoot') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(800, now);
+                osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
+                gain.gain.setValueAtTime(0.05, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                osc.start(now); osc.stop(now + 0.1);
+            } else if (type === 'explosion') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(100, now);
+                osc.frequency.exponentialRampToValueAtTime(10, now + 0.3);
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+                osc.start(now); osc.stop(now + 0.3);
+            } else if (type === 'powerup') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.setValueAtTime(600, now + 0.1);
+                osc.frequency.setValueAtTime(800, now + 0.2);
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.linearRampToValueAtTime(0, now + 0.4);
+                osc.start(now); osc.stop(now + 0.4);
+            } else if (type === 'hit') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(200, now);
+                osc.frequency.exponentialRampToValueAtTime(50, now + 0.1);
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                osc.start(now); osc.stop(now + 0.1);
             }
-
-            const authenticate = async () => {
-                try {
-                    await signInAnonymously(auth);
-                } catch (e) { 
-                    console.error("Firebase Auth Error:", e);
-                    
-                    const btnMp = document.getElementById('btnMultiplayer');
-                    btnMp.innerText = 'Co-Op Unavailable';
-                    
-                    // Specific error handling to guide the user
-                    if (e.code === 'auth/configuration-not-found') {
-                        showToast("Fix: Go to Firebase Console -> Authentication -> Click 'Get Started'");
-                    } else if (e.code === 'auth/operation-not-allowed') {
-                        showToast("Fix: Enable 'Anonymous' in Firebase Auth Sign-in Methods");
-                    } else {
-                        showToast("Network Auth Error. Playing Offline."); 
-                    }
-                }
-            };
-            
-            authenticate();
-            
-            onAuthStateChanged(auth, (user) => {
-                currentUser = user;
-                const mpBtn = document.getElementById('btnMultiplayer');
-                if (user) { 
-                    mpBtn.disabled = false; 
-                    mpBtn.innerText = 'Co-Op Network'; 
-                }
-            });
         }
-        initFirebase();
-        resizeCanvas();
-        window.addEventListener('resize', resizeCanvas);
 
-        // --- UI Utils ---
+        // --- WebRTC Voice Chat (PeerJS) ---
+        let peer = null;
+        let myStream = null;
+        let activeCall = null;
+        let isMicOn = false;
+        
+        async function toggleVoiceChat() {
+            const btn = document.getElementById('btnToggleMic');
+            const iconOff = document.getElementById('micIconOff');
+            const iconOn = document.getElementById('micIconOn');
+
+            if (isMicOn) {
+                // Turn off
+                if (myStream) myStream.getTracks().forEach(t => t.stop());
+                if (peer) { peer.destroy(); peer = null; }
+                if (activeCall) { activeCall.close(); activeCall = null; }
+                
+                isMicOn = false;
+                iconOff.classList.remove('hidden'); iconOn.classList.add('hidden');
+                btn.classList.replace('text-green-400', 'text-fuchsia-300');
+                btn.classList.replace('border-green-500', 'border-fuchsia-500');
+                updateDoc(getRoomRef(currentRoomId), { [`players.${currentUser.uid}.peerId`]: null }).catch(()=>{});
+                showToast("Voice Chat Disabled");
+            } else {
+                // Turn on
+                try {
+                    myStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                    peer = new Peer(); // Connect to default PeerJS cloud broker
+                    
+                    peer.on('open', (id) => {
+                        // Broadcast my peer ID to the Firestore room
+                        updateDoc(getRoomRef(currentRoomId), { [`players.${currentUser.uid}.peerId`]: id }).catch(()=>{});
+                    });
+
+                    // Answer incoming calls automatically
+                    peer.on('call', (call) => {
+                        call.answer(myStream);
+                        activeCall = call;
+                        call.on('stream', playRemoteAudio);
+                    });
+
+                    isMicOn = true;
+                    iconOff.classList.add('hidden'); iconOn.classList.remove('hidden');
+                    btn.classList.replace('text-fuchsia-300', 'text-green-400');
+                    btn.classList.replace('border-fuchsia-500', 'border-green-500');
+                    showToast("Voice Chat Connected");
+
+                } catch (e) {
+                    showToast("Mic Permission Denied");
+                    console.error(e);
+                }
+            }
+        }
+
+        function playRemoteAudio(remoteStream) {
+            const audio = new Audio();
+            audio.srcObject = remoteStream;
+            audio.play().catch(e => console.error("Audio playback prevented by browser", e));
+        }
+
+        function handleIncomingPeer(remotePeerId) {
+            if (isMicOn && peer && remotePeerId && (!activeCall || activeCall.peer !== remotePeerId)) {
+                // Call the new person who joined the room
+                const call = peer.call(remotePeerId, myStream);
+                activeCall = call;
+                call.on('stream', playRemoteAudio);
+            }
+        }
+
+        // --- DOM & Setup ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d', { alpha: false });
+        const uiLayer = document.getElementById('uiLayer');
+        const screens = { main: document.getElementById('mainMenu'), mp: document.getElementById('mpMenu'), lobby: document.getElementById('lobbyMenu'), gameOver: document.getElementById('gameOverScreen'), options: document.getElementById('optionsMenu'), pause: document.getElementById('pauseMenu') };
+
         function showScreen(screenName) {
             Object.values(screens).forEach(s => s.classList.add('hidden'));
-            if (screenName && screens[screenName]) {
-                screens[screenName].classList.remove('hidden');
-                uiLayer.classList.remove('pointer-events-none');
-            } else {
-                uiLayer.classList.add('pointer-events-none');
-            }
+            if (screenName && screens[screenName]) { screens[screenName].classList.remove('hidden'); uiLayer.classList.remove('pointer-events-none'); } 
+            else uiLayer.classList.add('pointer-events-none');
             gameState = screenName || 'playing';
         }
 
         function showToast(msg) {
-            const toast = document.getElementById('toast');
-            toast.innerText = msg; toast.style.opacity = 1;
-            setTimeout(() => { toast.style.opacity = 0; }, 5000); // Increased duration to read error
+            const toast = document.getElementById('toast'); toast.innerText = msg; toast.style.opacity = 1;
+            setTimeout(() => { toast.style.opacity = 0; }, 3000);
         }
 
-        function updateHealthUI() {
-            if (!player) return;
-            healthDisplay.innerHTML = '';
-            for (let i = 0; i < player.maxHp; i++) {
-                const div = document.createElement('div');
-                div.className = i < player.hp ? 'health-icon' : 'health-icon lost';
-                healthDisplay.appendChild(div);
-            }
+        // --- Firebase Init ---
+        function initFirebase() {
+            try { app = initializeApp(firebaseConfig); auth = getAuth(app); db = getFirestore(app); } 
+            catch(e) { console.warn("Firebase Init Failed"); return; }
+
+            signInAnonymously(auth).catch(e => showToast("Auth Error. Proceed Solo."));
+            onAuthStateChanged(auth, (user) => {
+                currentUser = user;
+                if (user) document.getElementById('btnMultiplayer').disabled = false; document.getElementById('btnMultiplayer').innerText = 'Co-Op Network';
+            });
         }
+        initFirebase(); resizeCanvas(); window.addEventListener('resize', resizeCanvas);
 
         // --- Multiplayer Logic ---
         const getRoomRef = (roomId) => doc(collection(db, 'artifacts', appId, 'public', 'data', 'rooms'), roomId.toUpperCase());
         const genCode = () => Math.random().toString(36).substring(2, 6).toUpperCase();
+
+        document.getElementById('playerNameInput').addEventListener('input', (e) => {
+            myName = e.target.value.trim() || 'PILOT';
+            localStorage.setItem('bg_name', myName);
+        });
 
         async function createRoom() {
             if (!currentUser) return;
@@ -336,15 +372,13 @@
             try {
                 await setDoc(getRoomRef(roomId), {
                     host: currentUser.uid, state: 'lobby',
-                    players: { [currentUser.uid]: { x: 0, y: 0, score: 0, hp: 3, isDead: false } }
+                    players: { [currentUser.uid]: { name: myName, x: 0, y: 0, score: 0, hp: 3, isDead: false } }
                 });
-                isHost = true; currentRoomId = roomId; isMultiplayer = true;
-                setupRoomListener(roomId);
+                isHost = true; currentRoomId = roomId; isMultiplayer = true; setupRoomListener(roomId);
                 document.getElementById('lobbyRoomCode').innerText = roomId;
-                document.getElementById('btnStartGame').classList.remove('hidden');
-                document.getElementById('waitingText').classList.add('hidden');
+                document.getElementById('btnStartGame').classList.remove('hidden'); document.getElementById('waitingText').classList.add('hidden');
                 showScreen('lobby');
-            } catch (e) { showToast("Error creating host"); }
+            } catch (e) { showToast("Check Firestore Rules!"); }
             document.getElementById('btnCreateRoom').disabled = false;
         }
 
@@ -354,45 +388,31 @@
             try {
                 const snap = await getDoc(getRoomRef(roomId));
                 if (snap.exists() && snap.data().state === 'lobby') {
-                    await updateDoc(getRoomRef(roomId), { [`players.${currentUser.uid}`]: { x: 0, y: 0, score: 0, hp: 3, isDead: false } });
-                    isHost = false; currentRoomId = roomId.toUpperCase(); isMultiplayer = true;
-                    setupRoomListener(currentRoomId);
+                    await updateDoc(getRoomRef(roomId), { [`players.${currentUser.uid}`]: { name: myName, x: 0, y: 0, score: 0, hp: 3, isDead: false } });
+                    isHost = false; currentRoomId = roomId.toUpperCase(); isMultiplayer = true; setupRoomListener(currentRoomId);
                     document.getElementById('lobbyRoomCode').innerText = currentRoomId;
-                    document.getElementById('btnStartGame').classList.add('hidden');
-                    document.getElementById('waitingText').classList.remove('hidden');
+                    document.getElementById('btnStartGame').classList.add('hidden'); document.getElementById('waitingText').classList.remove('hidden');
                     showScreen('lobby');
-                } else showToast("Room invalid or full");
-            } catch (e) { showToast("Connection failed"); }
+                } else showToast("Room invalid/full");
+            } catch (e) { showToast("Check Firestore Rules!"); }
             document.getElementById('btnJoinRoom').disabled = false;
-        }
-
-        async function leaveRoom() {
-            if (unsubscribeRoom) { unsubscribeRoom(); unsubscribeRoom = null; }
-            if (currentRoomId && currentUser) {
-                try {
-                    if (isHost) await deleteDoc(getRoomRef(currentRoomId));
-                    else await updateDoc(getRoomRef(currentRoomId), { [`players.${currentUser.uid}`]: null });
-                } catch(e) {}
-            }
-            currentRoomId = null; isMultiplayer = false; isHost = false; roomData = null;
-            showScreen('mp');
         }
 
         function setupRoomListener(roomId) {
             if (unsubscribeRoom) unsubscribeRoom();
             unsubscribeRoom = onSnapshot(getRoomRef(roomId), (snap) => {
-                if (!snap.exists()) { showToast("Room closed."); leaveRoom(); return; }
+                if (!snap.exists()) { showScreen('mp'); return; }
                 const data = snap.data(); roomData = data;
                 
                 if (gameState === 'lobby') {
                     const list = document.getElementById('playerList'); list.innerHTML = '';
-                    let pCount = 1;
                     for (const uid in data.players) {
                         if (!data.players[uid]) continue;
+                        const pData = data.players[uid];
                         const li = document.createElement('li');
                         li.className = uid === currentUser.uid ? 'text-cyan-300' : 'text-white';
-                        li.innerHTML = `Pilot ${pCount} ${uid === currentUser.uid ? '(You)' : ''} ${uid === data.host ? '<span class="text-fuchsia-400 text-xs ml-2">[HOST]</span>' : ''}`;
-                        list.appendChild(li); pCount++;
+                        li.innerHTML = `${pData.name} ${uid === currentUser.uid ? '(You)' : ''} ${uid === data.host ? '<span class="text-fuchsia-400 text-xs ml-2">[HOST]</span>' : ''}`;
+                        list.appendChild(li);
                     }
                     if (data.state === 'playing') startGame();
                 }
@@ -403,12 +423,16 @@
                         if (!data.players[uid] || uid === currentUser.uid) continue;
                         const pData = data.players[uid];
                         if (!pData.isDead) allDead = false;
-                        if (!otherPlayers[uid] && !pData.isDead) otherPlayers[uid] = new GhostPlayer(pData.x || canvas.width/2, pData.y || canvas.height/2);
+                        
+                        if (!otherPlayers[uid] && !pData.isDead) otherPlayers[uid] = new GhostPlayer(pData.x||canvas.width/2, pData.y||canvas.height/2, pData.name);
                         if (otherPlayers[uid]) {
                             otherPlayers[uid].targetX = pData.x; otherPlayers[uid].targetY = pData.y;
                             otherPlayers[uid].score = pData.score; otherPlayers[uid].isDead = pData.isDead;
                             otherPlayers[uid].hp = pData.hp;
                         }
+
+                        // Voice Chat connection trigger
+                        if (pData.peerId) handleIncomingPeer(pData.peerId);
                     }
                     if (player && !player.isDead) allDead = false;
                     updateMultiplayerHUD();
@@ -419,17 +443,17 @@
 
         function updateMultiplayerHUD() {
             if (!isMultiplayer || !roomData) return;
+            const ms = document.getElementById('multiplayerStats');
             let html = '<div class="font-bold text-cyan-500 mb-1 border-b border-cyan-800 pb-1">SQUAD STATUS</div>';
             for (const uid in roomData.players) {
                 if (!roomData.players[uid]) continue;
                 const isMe = uid === currentUser.uid;
-                const data = isMe ? { score, isDead: player.isDead, hp: player.hp } : roomData.players[uid];
+                const data = isMe ? { name: myName, score, isDead: player.isDead, hp: player.hp } : roomData.players[uid];
                 const statusColor = data.isDead ? 'text-red-500 line-through opacity-50' : (isMe ? 'text-cyan-300 font-bold' : 'text-green-400');
-                const nameStr = isMe ? 'YOU' : 'ALLY';
                 const hpStr = data.isDead ? 'DEAD' : '♥'.repeat(data.hp);
-                html += `<div class="flex justify-between w-32 ${statusColor}"><span>${nameStr}</span><span>${hpStr}</span></div>`;
+                html += `<div class="flex justify-between w-40 ${statusColor}"><span class="truncate pr-2">${data.name}</span><span>${hpStr}</span></div>`;
             }
-            mpStats.innerHTML = html;
+            ms.innerHTML = html;
         }
 
         function syncLocalPlayerState() {
@@ -444,549 +468,123 @@
         }
 
         // --- Game Classes ---
+        // Player, Ghost, Bullets, Enemies are identical to before but with SFX added in logic.
         class Player {
             constructor() {
-                this.radius = 16;
-                this.x = canvas.width / 2; this.y = canvas.height - 120;
+                this.radius = 16; this.x = canvas.width / 2; this.y = canvas.height - 120;
                 this.targetX = this.x; this.targetY = this.y;
-                this.color = colors.player; this.speed = 0.25;
-                this.maxHp = 3; this.hp = this.maxHp;
-                this.isDead = false;
-                this.invulnFrames = 0;
-                this.weapon = 'std'; // std, spread
-                this.weaponTimer = 0;
-                this.shielded = false;
+                this.color = colors.player; this.speed = 0.25; this.maxHp = 3; this.hp = this.maxHp;
+                this.isDead = false; this.invulnFrames = 0; this.weapon = 'std'; this.weaponTimer = 0; this.shielded = false;
             }
-
             draw() {
-                if (this.isDead) return;
-                
-                // Flicker if invulnerable
-                if (this.invulnFrames > 0 && frameCount % 6 < 3) return;
-
-                ctx.save();
-                ctx.translate(this.x, this.y);
-                
-                // Shield visual
-                if (this.shielded) {
-                    ctx.beginPath(); ctx.arc(0, 0, this.radius + 10, 0, Math.PI*2);
-                    ctx.fillStyle = 'rgba(59, 130, 246, 0.2)'; ctx.fill();
-                    ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 2; ctx.stroke();
-                }
-
-                ctx.shadowBlur = 20; ctx.shadowColor = this.color;
-                
-                // Sleek Jet Shape
-                ctx.beginPath();
-                ctx.moveTo(0, -this.radius * 1.8);
-                ctx.lineTo(this.radius, this.radius);
-                ctx.lineTo(this.radius*0.4, this.radius*0.6);
-                ctx.lineTo(0, this.radius * 0.8);
-                ctx.lineTo(-this.radius*0.4, this.radius*0.6);
-                ctx.lineTo(-this.radius, this.radius);
-                ctx.closePath();
-                
-                ctx.fillStyle = '#050510'; ctx.fill();
-                ctx.lineWidth = 3; ctx.strokeStyle = this.color; ctx.stroke();
-
-                // Thrusters
-                const thrustLvl = Math.random() * 15 + 5;
-                ctx.beginPath(); ctx.moveTo(-this.radius*0.5, this.radius*0.8); ctx.lineTo(0, this.radius + thrustLvl); ctx.lineTo(this.radius*0.5, this.radius*0.8);
-                ctx.fillStyle = this.weapon === 'spread' ? '#eab308' : '#0ff'; ctx.fill();
-                ctx.restore();
+                if (this.isDead || (this.invulnFrames > 0 && frameCount % 6 < 3)) return;
+                ctx.save(); ctx.translate(this.x, this.y);
+                if (this.shielded) { ctx.beginPath(); ctx.arc(0, 0, this.radius + 10, 0, Math.PI*2); ctx.fillStyle = 'rgba(59, 130, 246, 0.2)'; ctx.fill(); ctx.strokeStyle = '#3b82f6'; ctx.stroke(); }
+                ctx.shadowBlur = 20; ctx.shadowColor = this.color; ctx.beginPath(); ctx.moveTo(0, -this.radius * 1.8); ctx.lineTo(this.radius, this.radius); ctx.lineTo(this.radius*0.4, this.radius*0.6); ctx.lineTo(0, this.radius * 0.8); ctx.lineTo(-this.radius*0.4, this.radius*0.6); ctx.lineTo(-this.radius, this.radius); ctx.closePath(); ctx.fillStyle = '#050510'; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = this.color; ctx.stroke();
+                const thrustLvl = Math.random() * 15 + 5; ctx.beginPath(); ctx.moveTo(-this.radius*0.5, this.radius*0.8); ctx.lineTo(0, this.radius + thrustLvl); ctx.lineTo(this.radius*0.5, this.radius*0.8); ctx.fillStyle = this.weapon === 'spread' ? '#eab308' : '#0ff'; ctx.fill(); ctx.restore();
             }
-
             update() {
                 if (this.isDead) return;
-                this.x += (this.targetX - this.x) * this.speed;
-                this.y += (this.targetY - this.y) * this.speed;
-                this.x = Math.max(this.radius, Math.min(canvas.width - this.radius, this.x));
-                this.y = Math.max(this.radius, Math.min(canvas.height - this.radius, this.y));
-                
+                this.x += (this.targetX - this.x) * this.speed; this.y += (this.targetY - this.y) * this.speed;
+                this.x = Math.max(this.radius, Math.min(canvas.width - this.radius, this.x)); this.y = Math.max(this.radius, Math.min(canvas.height - this.radius, this.y));
                 if (this.invulnFrames > 0) this.invulnFrames--;
-                if (this.weaponTimer > 0) {
-                    this.weaponTimer--;
-                    if (this.weaponTimer <= 0) {
-                        this.weapon = 'std';
-                        document.getElementById('activePowerup').classList.add('hidden');
-                    }
-                }
+                if (this.weaponTimer > 0) { this.weaponTimer--; if (this.weaponTimer <= 0) { this.weapon = 'std'; document.getElementById('activePowerup').classList.add('hidden'); } }
                 this.draw();
             }
-            
             shoot() {
                 if (this.isDead) return;
+                playSound('shoot');
                 const speed = -18;
                 if (this.weapon === 'spread') {
-                    bullets.push(new Bullet(this.x, this.y - this.radius, speed, 0));
-                    bullets.push(new Bullet(this.x, this.y - this.radius, speed, -3));
-                    bullets.push(new Bullet(this.x, this.y - this.radius, speed, 3));
+                    bullets.push(new Bullet(this.x, this.y - this.radius, speed, 0)); bullets.push(new Bullet(this.x, this.y - this.radius, speed, -3)); bullets.push(new Bullet(this.x, this.y - this.radius, speed, 3));
                 } else {
-                    bullets.push(new Bullet(this.x - 8, this.y - this.radius, speed, 0));
-                    bullets.push(new Bullet(this.x + 8, this.y - this.radius, speed, 0));
+                    bullets.push(new Bullet(this.x - 8, this.y - this.radius, speed, 0)); bullets.push(new Bullet(this.x + 8, this.y - this.radius, speed, 0));
                 }
             }
-
             takeDamage() {
                 if (this.isDead || this.invulnFrames > 0) return;
-                screenShake = 15;
-                if (this.shielded) {
-                    this.shielded = false;
-                    createExplosion(this.x, this.y, colors.powShield, 20);
-                    showFloatingText(this.x, this.y, "SHIELD BROKEN", colors.powShield);
-                    this.invulnFrames = 60; // 1 sec invuln
-                    return;
-                }
-                
-                this.hp--;
-                updateHealthUI();
-                createExplosion(this.x, this.y, '#fff', 15);
-                
+                screenShake = 15; playSound('hit');
+                if (this.shielded) { this.shielded = false; createExplosion(this.x, this.y, colors.powShield, 20); showFloatingText(this.x, this.y, "SHIELD BROKEN", colors.powShield); this.invulnFrames = 60; return; }
+                this.hp--; updateHealthUI(); createExplosion(this.x, this.y, '#fff', 15);
                 if (this.hp <= 0) {
-                    this.isDead = true;
-                    screenShake = 30;
-                    createExplosion(this.x, this.y, this.color, 60);
-                    createExplosion(this.x, this.y, '#f00', 40);
-                    if (isMultiplayer) {
-                        syncLocalPlayerState(); showToast("Ship Destroyed! Spectating...");
-                    } else endSoloGame();
-                } else {
-                    this.invulnFrames = 90; // 1.5s invuln
-                    showFloatingText(this.x, this.y, "WARNING!", "#f00");
-                }
+                    this.isDead = true; screenShake = 30; playSound('explosion'); createExplosion(this.x, this.y, this.color, 60); createExplosion(this.x, this.y, '#f00', 40);
+                    if (isMultiplayer) { syncLocalPlayerState(); showToast("Ship Destroyed!"); } else endSoloGame();
+                } else { this.invulnFrames = 90; showFloatingText(this.x, this.y, "WARNING!", "#f00"); }
             }
         }
 
         class GhostPlayer {
-            constructor(x, y) {
-                this.x = x; this.y = y; this.targetX = x; this.targetY = y;
+            constructor(x, y, name) {
+                this.x = x; this.y = y; this.targetX = x; this.targetY = y; this.name = name || 'ALLY';
                 this.radius = 16; this.color = colors.ghost; this.isDead = false; this.hp = 3;
             }
             update() {
                 if (this.isDead) return;
                 this.x += (this.targetX - this.x) * 0.15; this.y += (this.targetY - this.y) * 0.15;
-                ctx.save(); ctx.translate(this.x, this.y); ctx.globalAlpha = 0.4;
-                ctx.shadowBlur = 10; ctx.shadowColor = this.color;
-                ctx.beginPath(); ctx.moveTo(0, -this.radius * 1.8); ctx.lineTo(this.radius, this.radius);
-                ctx.lineTo(0, this.radius * 0.8); ctx.lineTo(-this.radius, this.radius); ctx.closePath();
-                ctx.strokeStyle = this.color; ctx.lineWidth = 2; ctx.stroke();
-                ctx.globalAlpha = 1; ctx.fillStyle = this.color; ctx.font = 'bold 10px Courier'; ctx.textAlign = 'center';
-                ctx.fillText(`ALLY [${this.hp}]`, 0, this.radius + 15);
-                ctx.restore();
+                ctx.save(); ctx.translate(this.x, this.y); ctx.globalAlpha = 0.4; ctx.shadowBlur = 10; ctx.shadowColor = this.color;
+                ctx.beginPath(); ctx.moveTo(0, -this.radius * 1.8); ctx.lineTo(this.radius, this.radius); ctx.lineTo(0, this.radius * 0.8); ctx.lineTo(-this.radius, this.radius); ctx.closePath(); ctx.strokeStyle = this.color; ctx.lineWidth = 2; ctx.stroke();
+                ctx.globalAlpha = 1; ctx.fillStyle = this.color; ctx.font = 'bold 10px Courier'; ctx.textAlign = 'center'; ctx.fillText(`${this.name} [${this.hp}]`, 0, this.radius + 15); ctx.restore();
             }
         }
+        
+        class Bullet { constructor(x, y, vy, vx) { this.x = x; this.y = y; this.radius = 4; this.vy = vy; this.vx = vx; this.color = colors.bullet; } update() { this.y += this.vy; this.x += this.vx; ctx.save(); ctx.shadowBlur = 15; ctx.shadowColor = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill(); ctx.beginPath(); ctx.moveTo(this.x, this.y); ctx.lineTo(this.x - this.vx, this.y - this.vy * 1.5); ctx.strokeStyle = this.color; ctx.lineWidth = 3; ctx.stroke(); ctx.restore(); } }
+        class Enemy { constructor(x, y, type, diffMult) { this.x = x; this.y = y; this.type = type; if (type === 2) { this.radius = Math.random() * 10 + 30; this.hp = Math.floor(10 * diffMult); this.vy = (Math.random() * 1 + 0.5) * diffMult; this.color = colors.enemyTank; this.scoreVal = 500; } else if (type === 1) { this.radius = Math.random() * 5 + 15; this.hp = Math.floor(2 * diffMult); this.vy = (Math.random() * 2 + 2) * diffMult; this.color = colors.enemyTracker; this.scoreVal = 250; } else { this.radius = Math.random() * 10 + 15; this.hp = Math.floor(3 * diffMult); this.vy = (Math.random() * 2 + 2) * diffMult; this.color = colors.enemyBasic; this.scoreVal = 100; } this.maxHp = this.hp; this.angle = 0; this.spinSpeed = (Math.random() - 0.5) * 0.1; this.hitTime = 0; } update() { if (this.type === 1 && player && !player.isDead) { const dx = player.x - this.x; this.x += dx * 0.01; } this.y += this.vy; this.angle += this.spinSpeed; if (this.hitTime > 0) this.hitTime--; ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle); ctx.shadowBlur = 15; ctx.shadowColor = this.color; ctx.beginPath(); let sides = this.type === 2 ? 8 : (this.type === 1 ? 3 : 6); for (let i = 0; i < sides; i++) { const r = this.radius * (i % 2 === 0 ? 1 : (this.type === 2 ? 0.8 : 0.5)); const a = (i * 2 * Math.PI) / sides; if (i === 0) ctx.moveTo(r * Math.cos(a), r * Math.sin(a)); else ctx.lineTo(r * Math.cos(a), r * Math.sin(a)); } ctx.closePath(); ctx.fillStyle = this.hitTime > 0 ? '#fff' : '#050510'; ctx.fill(); ctx.lineWidth = this.type === 2 ? 4 : 2; ctx.strokeStyle = this.color; ctx.stroke(); if (this.type === 2 && this.hp < this.maxHp) { ctx.rotate(-this.angle); ctx.fillStyle = 'rgba(255,0,0,0.5)'; ctx.fillRect(-20, -this.radius - 15, 40, 5); ctx.fillStyle = '#0f0'; ctx.fillRect(-20, -this.radius - 15, 40 * (this.hp/this.maxHp), 5); } ctx.restore(); } }
+        class PowerUp { constructor(x, y, type) { this.x = x; this.y = y; this.type = type; this.radius = 12; this.vy = 2; this.angle = 0; this.color = type === 0 ? colors.powShield : (type === 1 ? colors.powGun : colors.powHealth); this.text = type === 0 ? "S" : (type === 1 ? "W" : "+"); } update() { this.y += this.vy; this.angle += 0.05; ctx.save(); ctx.translate(this.x, this.y); ctx.shadowBlur = 20; ctx.shadowColor = this.color; ctx.beginPath(); ctx.arc(0, 0, this.radius + Math.sin(frameCount*0.1)*3, 0, Math.PI*2); ctx.fillStyle = `rgba(${this.color === colors.powShield ? '59,130,246' : (this.color === colors.powGun ? '234,179,8' : '34,197,94')}, 0.3)`; ctx.fill(); ctx.rotate(this.angle); ctx.beginPath(); ctx.rect(-8, -8, 16, 16); ctx.fillStyle = '#000'; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = this.color; ctx.stroke(); ctx.rotate(-this.angle); ctx.fillStyle = '#fff'; ctx.font = 'bold 12px Courier'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(this.text, 0, 0); ctx.restore(); } collect() { playSound('powerup'); if (this.type === 0) { player.shielded = true; showFloatingText(this.x, this.y, "SHIELD ACTIVATED", this.color); } else if (this.type === 1) { player.weapon = 'spread'; player.weaponTimer = 300; document.getElementById('activePowerup').classList.remove('hidden'); showFloatingText(this.x, this.y, "OVERCHARGE", this.color); } else { if (player.hp < player.maxHp) { player.hp++; updateHealthUI(); } showFloatingText(this.x, this.y, "HEALTH +1", this.color); } } }
+        class FloatingText { constructor(x, y, text, color) { this.x = x; this.y = y; this.text = text; this.color = color; this.life = 60; this.maxLife = 60; this.vy = -1.5; } update() { this.y += this.vy; this.life--; ctx.save(); ctx.globalAlpha = Math.max(0, this.life / this.maxLife); ctx.shadowBlur = 10; ctx.shadowColor = this.color; ctx.fillStyle = this.color; ctx.font = 'bold 18px Courier'; ctx.textAlign = 'center'; ctx.fillText(this.text, this.x, this.y); ctx.restore(); } }
+        class Particle { constructor(x, y, velocity, color, life) { this.x = x; this.y = y; this.velocity = velocity; this.color = color; this.alpha = 1; this.life = life; this.radius = Math.random() * 3 + 1; } update() { this.x += this.velocity.x; this.y += this.velocity.y; this.alpha -= this.life; ctx.save(); ctx.globalAlpha = Math.max(0, this.alpha); if (settings.particleLevel === 'high') { ctx.shadowBlur = 10; ctx.shadowColor = this.color; } ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fillStyle = this.color; ctx.fill(); ctx.restore(); } }
 
-        class Bullet {
-            constructor(x, y, vy, vx) {
-                this.x = x; this.y = y; this.radius = 4; this.vy = vy; this.vx = vx; this.color = colors.bullet;
-            }
-            update() {
-                this.y += this.vy; this.x += this.vx;
-                ctx.save(); ctx.shadowBlur = 15; ctx.shadowColor = this.color;
-                ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                ctx.fillStyle = '#fff'; ctx.fill();
-                ctx.beginPath(); ctx.moveTo(this.x, this.y); ctx.lineTo(this.x - this.vx, this.y - this.vy * 1.5);
-                ctx.strokeStyle = this.color; ctx.lineWidth = 3; ctx.stroke(); ctx.restore();
-            }
-        }
-
-        class Enemy {
-            constructor(x, y, type, diffMult) {
-                this.x = x; this.y = y; this.type = type; // 0=basic, 1=tracker, 2=tank
-                
-                if (type === 2) { // Tank
-                    this.radius = Math.random() * 10 + 30;
-                    this.hp = Math.floor(10 * diffMult);
-                    this.vy = (Math.random() * 1 + 0.5) * diffMult;
-                    this.color = colors.enemyTank;
-                    this.scoreVal = 500;
-                } else if (type === 1) { // Tracker
-                    this.radius = Math.random() * 5 + 15;
-                    this.hp = Math.floor(2 * diffMult);
-                    this.vy = (Math.random() * 2 + 2) * diffMult;
-                    this.color = colors.enemyTracker;
-                    this.scoreVal = 250;
-                } else { // Basic
-                    this.radius = Math.random() * 10 + 15;
-                    this.hp = Math.floor(3 * diffMult);
-                    this.vy = (Math.random() * 2 + 2) * diffMult;
-                    this.color = colors.enemyBasic;
-                    this.scoreVal = 100;
-                }
-                this.maxHp = this.hp; this.angle = 0; this.spinSpeed = (Math.random() - 0.5) * 0.1;
-                this.hitTime = 0; // Flash effect
-            }
-            update() {
-                if (this.type === 1 && player && !player.isDead) { // Homing logic
-                    const dx = player.x - this.x;
-                    this.x += dx * 0.01; // Slow curve
-                }
-                this.y += this.vy; this.angle += this.spinSpeed;
-                if (this.hitTime > 0) this.hitTime--;
-
-                ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle);
-                ctx.shadowBlur = 15; ctx.shadowColor = this.color;
-                ctx.beginPath();
-                
-                let sides = this.type === 2 ? 8 : (this.type === 1 ? 3 : 6);
-                for (let i = 0; i < sides; i++) {
-                    const r = this.radius * (i % 2 === 0 ? 1 : (this.type === 2 ? 0.8 : 0.5));
-                    const a = (i * 2 * Math.PI) / sides;
-                    if (i === 0) ctx.moveTo(r * Math.cos(a), r * Math.sin(a));
-                    else ctx.lineTo(r * Math.cos(a), r * Math.sin(a));
-                }
-                ctx.closePath();
-                ctx.fillStyle = this.hitTime > 0 ? '#fff' : '#050510'; ctx.fill();
-                ctx.lineWidth = this.type === 2 ? 4 : 2; ctx.strokeStyle = this.color; ctx.stroke();
-                
-                // HP indicator for tanks
-                if (this.type === 2 && this.hp < this.maxHp) {
-                    ctx.rotate(-this.angle); // un-rotate
-                    ctx.fillStyle = 'rgba(255,0,0,0.5)';
-                    ctx.fillRect(-20, -this.radius - 15, 40, 5);
-                    ctx.fillStyle = '#0f0';
-                    ctx.fillRect(-20, -this.radius - 15, 40 * (this.hp/this.maxHp), 5);
-                }
-                ctx.restore();
-            }
-        }
-
-        class PowerUp {
-            constructor(x, y, type) {
-                this.x = x; this.y = y; this.type = type; // 0=shield, 1=gun, 2=health
-                this.radius = 12; this.vy = 2; this.angle = 0;
-                this.color = type === 0 ? colors.powShield : (type === 1 ? colors.powGun : colors.powHealth);
-                this.text = type === 0 ? "S" : (type === 1 ? "W" : "+");
-            }
-            update() {
-                this.y += this.vy; this.angle += 0.05;
-                ctx.save(); ctx.translate(this.x, this.y);
-                ctx.shadowBlur = 20; ctx.shadowColor = this.color;
-                
-                // Pulsing outer ring
-                ctx.beginPath(); ctx.arc(0, 0, this.radius + Math.sin(frameCount*0.1)*3, 0, Math.PI*2);
-                ctx.fillStyle = `rgba(${this.color === colors.powShield ? '59,130,246' : (this.color === colors.powGun ? '234,179,8' : '34,197,94')}, 0.3)`; ctx.fill();
-                
-                // Inner core
-                ctx.rotate(this.angle);
-                ctx.beginPath(); ctx.rect(-8, -8, 16, 16);
-                ctx.fillStyle = '#000'; ctx.fill();
-                ctx.lineWidth = 2; ctx.strokeStyle = this.color; ctx.stroke();
-                
-                ctx.rotate(-this.angle);
-                ctx.fillStyle = '#fff'; ctx.font = 'bold 12px Courier'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                ctx.fillText(this.text, 0, 0);
-                ctx.restore();
-            }
-            collect() {
-                if (this.type === 0) {
-                    player.shielded = true; showFloatingText(this.x, this.y, "SHIELD ACTIVATED", this.color);
-                } else if (this.type === 1) {
-                    player.weapon = 'spread'; player.weaponTimer = 300; // 5 seconds at 60fps
-                    document.getElementById('activePowerup').classList.remove('hidden');
-                    showFloatingText(this.x, this.y, "OVERCHARGE", this.color);
-                } else {
-                    if (player.hp < player.maxHp) { player.hp++; updateHealthUI(); }
-                    showFloatingText(this.x, this.y, "HEALTH +1", this.color);
-                }
-            }
-        }
-
-        class FloatingText {
-            constructor(x, y, text, color) {
-                this.x = x; this.y = y; this.text = text; this.color = color;
-                this.life = 60; this.maxLife = 60; this.vy = -1.5;
-            }
-            update() {
-                this.y += this.vy; this.life--;
-                ctx.save();
-                ctx.globalAlpha = Math.max(0, this.life / this.maxLife);
-                ctx.shadowBlur = 10; ctx.shadowColor = this.color;
-                ctx.fillStyle = this.color; ctx.font = 'bold 18px Courier'; ctx.textAlign = 'center';
-                ctx.fillText(this.text, this.x, this.y);
-                ctx.restore();
-            }
-        }
-
-        class Particle {
-            constructor(x, y, velocity, color, life) {
-                this.x = x; this.y = y; this.velocity = velocity; this.color = color;
-                this.alpha = 1; this.life = life; this.radius = Math.random() * 3 + 1;
-            }
-            update() {
-                this.x += this.velocity.x; this.y += this.velocity.y; this.alpha -= this.life;
-                ctx.save(); ctx.globalAlpha = Math.max(0, this.alpha);
-                if (settings.particleLevel === 'high') { ctx.shadowBlur = 10; ctx.shadowColor = this.color; }
-                ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                ctx.fillStyle = this.color; ctx.fill(); ctx.restore();
-            }
-        }
-
-        // --- Core Functions ---
-        function resizeCanvas() {
-            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-            if (player) {
-                if (player.y > canvas.height) player.y = canvas.height - 120;
-                if (player.x > canvas.width) player.x = canvas.width / 2;
-            }
-            initBackground();
-        }
-
-        function initBackground() {
-            stars = []; nebulae = [];
-            for(let i = 0; i < (settings.particleLevel==='high'?150:80); i++) {
-                stars.push({
-                    x: Math.random() * canvas.width, y: Math.random() * canvas.height,
-                    s: Math.random() * 2 + 0.5, speed: Math.random() * 1 + 0.2
-                });
-            }
-            if (settings.particleLevel==='high') {
-                for(let i=0; i<3; i++) {
-                    nebulae.push({
-                        x: Math.random() * canvas.width, y: Math.random() * canvas.height,
-                        r: Math.random() * 200 + 100, c: Math.random()>0.5 ? 'rgba(255,0,255,0.03)' : 'rgba(0,255,255,0.03)', speed: Math.random()*0.5 + 0.1
-                    });
-                }
-            }
-        }
-
-        function drawBackground(speedMult) {
-            ctx.fillStyle = '#030308'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            nebulae.forEach(n => {
-                n.y += n.speed * speedMult; if (n.y - n.r > canvas.height) n.y = -n.r;
-                ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI*2);
-                ctx.fillStyle = n.c; ctx.fill();
-            });
-
-            ctx.fillStyle = '#fff';
-            stars.forEach(star => {
-                star.y += star.speed * speedMult;
-                if (star.y > canvas.height) { star.y = 0; star.x = Math.random() * canvas.width; }
-                ctx.globalAlpha = Math.random() * 0.5 + 0.3;
-                ctx.beginPath(); ctx.arc(star.x, star.y, star.s, 0, Math.PI * 2); ctx.fill();
-            });
-            ctx.globalAlpha = 1;
-        }
-
-        function createExplosion(x, y, color, count = 15) {
-            if (settings.particleLevel === 'low') count = Math.floor(count / 3);
-            for (let i = 0; i < count; i++) {
-                const angle = Math.random() * Math.PI * 2; const speed = Math.random() * 8 + 2;
-                particles.push(new Particle(x, y, { x: Math.cos(angle)*speed, y: Math.sin(angle)*speed }, color, Math.random()*0.02 + 0.02));
-            }
-        }
-
-        function showFloatingText(x, y, text, color) {
-            floatingTexts.push(new FloatingText(x, y, text, color));
-        }
-
-        function spawnEnemy() {
-            const diffMult = 1 + (score / 10000);
-            const x = Math.random() * (canvas.width - 60) + 30;
-            
-            // Randomize type based on progress
-            let rand = Math.random();
-            let type = 0; 
-            if (score > 2000 && rand > 0.7) type = 1; // 30% tracker
-            if (score > 5000 && rand > 0.9) type = 2; // 10% tank
-
-            enemies.push(new Enemy(x, -50, type, diffMult));
-        }
+        function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; initBackground(); }
+        function initBackground() { stars = []; nebulae = []; for(let i = 0; i < (settings.particleLevel==='high'?150:80); i++) stars.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, s: Math.random() * 2 + 0.5, speed: Math.random() * 1 + 0.2 }); if (settings.particleLevel==='high') for(let i=0; i<3; i++) nebulae.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, r: Math.random() * 200 + 100, c: Math.random()>0.5 ? 'rgba(255,0,255,0.03)' : 'rgba(0,255,255,0.03)', speed: Math.random()*0.5 + 0.1 }); }
+        function drawBackground(speedMult) { ctx.fillStyle = '#030308'; ctx.fillRect(0, 0, canvas.width, canvas.height); nebulae.forEach(n => { n.y += n.speed * speedMult; if (n.y - n.r > canvas.height) n.y = -n.r; ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI*2); ctx.fillStyle = n.c; ctx.fill(); }); ctx.fillStyle = '#fff'; stars.forEach(star => { star.y += star.speed * speedMult; if (star.y > canvas.height) { star.y = 0; star.x = Math.random() * canvas.width; } ctx.globalAlpha = Math.random() * 0.5 + 0.3; ctx.beginPath(); ctx.arc(star.x, star.y, star.s, 0, Math.PI * 2); ctx.fill(); }); ctx.globalAlpha = 1; }
+        function createExplosion(x, y, color, count = 15) { if (settings.particleLevel === 'low') count = Math.floor(count / 3); for (let i = 0; i < count; i++) { const angle = Math.random() * Math.PI * 2; const speed = Math.random() * 8 + 2; particles.push(new Particle(x, y, { x: Math.cos(angle)*speed, y: Math.sin(angle)*speed }, color, Math.random()*0.02 + 0.02)); } }
+        function showFloatingText(x, y, text, color) { floatingTexts.push(new FloatingText(x, y, text, color)); }
+        function spawnEnemy() { const diffMult = 1 + (score / 10000); const x = Math.random() * (canvas.width - 60) + 30; let rand = Math.random(), type = 0; if (score > 2000 && rand > 0.7) type = 1; if (score > 5000 && rand > 0.9) type = 2; enemies.push(new Enemy(x, -50, type, diffMult)); }
+        function updateHealthUI() { const hd = document.getElementById('healthDisplay'); hd.innerHTML = ''; for (let i = 0; i < player.maxHp; i++) { const div = document.createElement('div'); div.className = i < player.hp ? 'health-icon' : 'health-icon lost'; hd.appendChild(div); } }
 
         function startGame() {
-            showScreen(null); 
-            document.getElementById('hud').classList.remove('hidden');
-            document.getElementById('activePowerup').classList.add('hidden');
+            // Unsuspend audio context on first user interaction (startGame)
+            if (!audioCtx) audioCtx = new AudioContext();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            showScreen(null); document.getElementById('hud').classList.remove('hidden'); document.getElementById('activePowerup').classList.add('hidden');
             document.getElementById('btnPause').classList.toggle('hidden', isMultiplayer);
-            
-            player = new Player(); updateHealthUI();
-            otherPlayers = {}; bullets = []; enemies = []; particles = []; powerups = []; floatingTexts = [];
-            score = 0; frameCount = 0; deathProcessed = false; screenShake = 0;
-            scoreDisplay.innerText = score;
-            
-            if (isMultiplayer) {
-                mpStats.classList.remove('hidden'); updateMultiplayerHUD();
-                if (syncTimer) clearInterval(syncTimer);
-                syncTimer = setInterval(syncLocalPlayerState, 150); 
-            } else {
-                mpStats.classList.add('hidden');
-            }
+            document.getElementById('btnToggleMic').classList.toggle('hidden', !isMultiplayer);
 
-            if (animationId) cancelAnimationFrame(animationId);
-            lastTime = performance.now();
-            animate(lastTime);
+            player = new Player(); updateHealthUI(); otherPlayers = {}; bullets = []; enemies = []; particles = []; powerups = []; floatingTexts = [];
+            score = 0; frameCount = 0; screenShake = 0; document.getElementById('scoreDisplay').innerText = score;
+            if (isMultiplayer) { document.getElementById('multiplayerStats').classList.remove('hidden'); updateMultiplayerHUD(); if(syncTimer) clearInterval(syncTimer); syncTimer = setInterval(syncLocalPlayerState, 150); } 
+            else document.getElementById('multiplayerStats').classList.add('hidden');
+            if (animationId) cancelAnimationFrame(animationId); lastTime = performance.now(); animate(lastTime);
         }
 
-        function endSoloGame() {
-            gameState = 'gameover';
-            document.getElementById('goTitle').innerText = "SHIP DESTROYED";
-            document.getElementById('goSubtitle').innerText = "Mission Failed";
-            document.getElementById('goLeaderboard').classList.add('hidden');
-            setTimeout(() => {
-                document.getElementById('hud').classList.add('hidden');
-                document.getElementById('finalScoreDisplay').innerText = score;
-                showScreen('gameOver');
-            }, 1500);
-        }
+        function endSoloGame() { gameState = 'gameover'; document.getElementById('goTitle').innerText = "SHIP DESTROYED"; document.getElementById('goLeaderboard').classList.add('hidden'); setTimeout(() => { document.getElementById('hud').classList.add('hidden'); document.getElementById('finalScoreDisplay').innerText = score; showScreen('gameOver'); }, 1500); }
+        function endMultiplayerGame() { gameState = 'gameover'; if (syncTimer) clearInterval(syncTimer); if (isHost && currentRoomId) updateDoc(getRoomRef(currentRoomId), { state: 'gameover' }).catch(()=>{}); setTimeout(() => { document.getElementById('hud').classList.add('hidden'); document.getElementById('goTitle').innerText = "SQUAD WIPED"; document.getElementById('finalScoreDisplay').innerText = score; const lb = document.getElementById('goLeaderboard'); lb.classList.remove('hidden'); let lbHtml = '<h3 class="text-cyan-500 font-bold mb-3 uppercase tracking-widest text-sm border-b border-cyan-900 pb-2">Final Intel</h3>'; const scores = [{ uid: currentUser.uid, name: myName, score: score }]; if (roomData && roomData.players) { for (const uid in roomData.players) { if (uid !== currentUser.uid && roomData.players[uid]) scores.push({ uid, name: roomData.players[uid].name, score: roomData.players[uid].score }); } } scores.sort((a, b) => b.score - a.score); scores.forEach((s, i) => { lbHtml += `<div class="flex justify-between font-bold text-lg ${s.uid === currentUser.uid ? 'text-cyan-300' : 'text-white'}"><span class="truncate pr-4">#${i+1} ${s.name}</span><span>${s.score}</span></div>`; }); lb.innerHTML = lbHtml; showScreen('gameOver'); }, 2000); }
+        function togglePause() { if (isMultiplayer || player.isDead || gameState === 'gameover') return; if (gameState === 'playing') { gameState = 'paused'; showScreen('pause'); } else if (gameState === 'paused') { gameState = 'playing'; showScreen(null); document.getElementById('hud').classList.remove('hidden'); lastTime = performance.now(); animate(lastTime); } }
 
-        function endMultiplayerGame() {
-            if (deathProcessed) return;
-            deathProcessed = true; gameState = 'gameover';
-            
-            if (syncTimer) clearInterval(syncTimer);
-            if (isHost && currentRoomId) updateDoc(getRoomRef(currentRoomId), { state: 'gameover' }).catch(()=>{});
-
-            setTimeout(() => {
-                document.getElementById('hud').classList.add('hidden');
-                document.getElementById('goTitle').innerText = "SQUAD WIPED";
-                document.getElementById('goSubtitle').innerText = "Network Terminated";
-                document.getElementById('finalScoreDisplay').innerText = score;
-                
-                const lb = document.getElementById('goLeaderboard'); lb.classList.remove('hidden');
-                let lbHtml = '<h3 class="text-cyan-500 font-bold mb-3 uppercase tracking-widest text-sm border-b border-cyan-900 pb-2">Final Intel</h3>';
-                const scores = [{ uid: currentUser.uid, name: 'You', score: score }];
-                if (roomData && roomData.players) {
-                    for (const uid in roomData.players) {
-                        if (uid !== currentUser.uid && roomData.players[uid]) scores.push({ uid, name: 'Ally', score: roomData.players[uid].score });
-                    }
-                }
-                scores.sort((a, b) => b.score - a.score);
-                scores.forEach((s, i) => {
-                    lbHtml += `<div class="flex justify-between font-bold text-lg ${s.uid === currentUser.uid ? 'text-cyan-300' : 'text-white'}"><span>#${i+1} ${s.name}</span><span>${s.score}</span></div>`;
-                });
-                lb.innerHTML = lbHtml;
-                
-                showScreen('gameOver'); leaveRoom();
-            }, 2000);
-        }
-
-        function togglePause() {
-            if (isMultiplayer || player.isDead || gameState === 'gameover') return;
-            if (gameState === 'playing') {
-                gameState = 'paused'; showScreen('pause');
-            } else if (gameState === 'paused') {
-                gameState = 'playing'; showScreen(null);
-                document.getElementById('hud').classList.remove('hidden');
-                lastTime = performance.now(); animate(lastTime);
-            }
-        }
-
-        // --- Main Loop ---
         function animate(time) {
             if (gameState !== 'playing' && gameState !== 'gameover') return;
-            animationId = requestAnimationFrame(animate);
-            
-            // Fixed timestep logic roughly
-            const dt = time - lastTime; lastTime = time;
-            frameCount++;
-
-            ctx.save();
-            
-            // Screen Shake
-            if (screenShake > 0) {
-                const dx = (Math.random() - 0.5) * screenShake;
-                const dy = (Math.random() - 0.5) * screenShake;
-                ctx.translate(dx, dy);
-                screenShake *= 0.85;
-                if (screenShake < 0.5) screenShake = 0;
-            }
-
-            drawBackground(1 + (score/20000)); // Speeds up slightly
-
-            if (gameState === 'playing') {
-                if (player && !player.isDead && frameCount % (player.weapon === 'spread' ? 7 : 10) === 0) player.shoot();
-                const spawnRate = Math.max(20, 90 - Math.floor(score / 300)); 
-                if (frameCount % spawnRate === 0) spawnEnemy();
-            }
-
-            // Update entities (back to front)
+            animationId = requestAnimationFrame(animate); lastTime = time; frameCount++; ctx.save();
+            if (screenShake > 0) { ctx.translate((Math.random() - 0.5) * screenShake, (Math.random() - 0.5) * screenShake); screenShake *= 0.85; if (screenShake < 0.5) screenShake = 0; }
+            drawBackground(1 + (score/20000));
+            if (gameState === 'playing') { if (player && !player.isDead && frameCount % (player.weapon === 'spread' ? 7 : 10) === 0) player.shoot(); const spawnRate = Math.max(20, 90 - Math.floor(score / 300)); if (frameCount % spawnRate === 0) spawnEnemy(); }
             for (const uid in otherPlayers) otherPlayers[uid].update();
-            
-            powerups.forEach((p, i) => {
-                p.update();
-                if (p.y > canvas.height) powerups.splice(i, 1);
-                else if (player && !player.isDead && Math.hypot(p.x - player.x, p.y - player.y) < p.radius + player.radius) {
-                    p.collect(); powerups.splice(i, 1);
-                }
-            });
-
-            for (let i = particles.length - 1; i >= 0; i--) {
-                if (particles[i].alpha <= 0) particles.splice(i, 1); else particles[i].update();
-            }
-
-            for (let i = bullets.length - 1; i >= 0; i--) {
-                const b = bullets[i];
-                if (b.y + b.radius < 0 || b.x < 0 || b.x > canvas.width) bullets.splice(i, 1); else b.update();
-            }
-
+            powerups.forEach((p, i) => { p.update(); if (p.y > canvas.height) powerups.splice(i, 1); else if (player && !player.isDead && Math.hypot(p.x - player.x, p.y - player.y) < p.radius + player.radius) { p.collect(); powerups.splice(i, 1); } });
+            for (let i = particles.length - 1; i >= 0; i--) { if (particles[i].alpha <= 0) particles.splice(i, 1); else particles[i].update(); }
+            for (let i = bullets.length - 1; i >= 0; i--) { const b = bullets[i]; if (b.y + b.radius < 0 || b.x < 0 || b.x > canvas.width) bullets.splice(i, 1); else b.update(); }
             for (let i = enemies.length - 1; i >= 0; i--) {
-                const enemy = enemies[i]; enemy.update();
-                if (enemy.y - enemy.radius > canvas.height) { enemies.splice(i, 1); continue; }
-
-                if (player && !player.isDead) {
-                    if (Math.hypot(player.x - enemy.x, player.y - enemy.y) < enemy.radius + player.radius - 5) { // generous hitbox
-                        player.takeDamage();
-                        if (enemy.type !== 2) { // Non tanks die on crash
-                            createExplosion(enemy.x, enemy.y, colors.enemyBasic, 20);
-                            enemies.splice(i, 1); continue;
-                        }
-                    }
-                }
-
-                let hit = false;
-                for (let j = bullets.length - 1; j >= 0; j--) {
-                    const b = bullets[j];
-                    if (Math.hypot(b.x - enemy.x, b.y - enemy.y) < enemy.radius + b.radius) {
-                        enemy.hp -= 1; enemy.hitTime = 3;
-                        createExplosion(b.x, b.y, colors.bullet, 4);
-                        bullets.splice(j, 1);
-
-                        if (enemy.hp <= 0) {
-                            createExplosion(enemy.x, enemy.y, enemy.color, enemy.type === 2 ? 40 : 15);
-                            score += enemy.scoreVal;
-                            if (player && !player.isDead) scoreDisplay.innerText = score;
-                            showFloatingText(enemy.x, enemy.y, `+${enemy.scoreVal}`, '#fff');
-                            
-                            // Powerup drop chance (10% standard, 50% tank)
-                            if (Math.random() < (enemy.type === 2 ? 0.5 : 0.08)) {
-                                powerups.push(new PowerUp(enemy.x, enemy.y, Math.floor(Math.random()*3)));
-                            }
-                            
-                            enemies.splice(i, 1); hit = true;
-                        }
-                        break;
-                    }
-                }
-                if (hit) continue;
+                const enemy = enemies[i]; enemy.update(); if (enemy.y - enemy.radius > canvas.height) { enemies.splice(i, 1); continue; }
+                if (player && !player.isDead && Math.hypot(player.x - enemy.x, player.y - enemy.y) < enemy.radius + player.radius - 5) { player.takeDamage(); if (enemy.type !== 2) { createExplosion(enemy.x, enemy.y, colors.enemyBasic, 20); enemies.splice(i, 1); continue; } }
+                let hit = false; for (let j = bullets.length - 1; j >= 0; j--) { const b = bullets[j]; if (Math.hypot(b.x - enemy.x, b.y - enemy.y) < enemy.radius + b.radius) { enemy.hp -= 1; enemy.hitTime = 3; createExplosion(b.x, b.y, colors.bullet, 4); bullets.splice(j, 1); if (enemy.hp <= 0) { playSound('explosion'); createExplosion(enemy.x, enemy.y, enemy.color, enemy.type === 2 ? 40 : 15); score += enemy.scoreVal; if (player && !player.isDead) document.getElementById('scoreDisplay').innerText = score; showFloatingText(enemy.x, enemy.y, `+${enemy.scoreVal}`, '#fff'); if (Math.random() < (enemy.type === 2 ? 0.5 : 0.08)) powerups.push(new PowerUp(enemy.x, enemy.y, Math.floor(Math.random()*3))); enemies.splice(i, 1); hit = true; } break; } } if (hit) continue;
             }
-
             if (player) player.update();
-
-            for (let i = floatingTexts.length - 1; i >= 0; i--) {
-                if (floatingTexts[i].life <= 0) floatingTexts.splice(i, 1); else floatingTexts[i].update();
-            }
-
+            for (let i = floatingTexts.length - 1; i >= 0; i--) { if (floatingTexts[i].life <= 0) floatingTexts.splice(i, 1); else floatingTexts[i].update(); }
             ctx.restore();
         }
 
         // --- Event Listeners ---
-        function handleInput(e) {
-            if (gameState !== 'playing' || !player || player.isDead) return;
-            e.preventDefault();
-            let cx = e.clientX, cy = e.clientY;
-            if (e.touches && e.touches.length > 0) { cx = e.touches[0].clientX; cy = e.touches[0].clientY; }
-            player.targetX = cx; player.targetY = cy - (e.touches ? 50 : 0); // Offset higher for touch
-        }
-
-        canvas.addEventListener('pointermove', handleInput);
-        canvas.addEventListener('pointerdown', handleInput);
-        document.addEventListener('touchmove', (e) => { e.preventDefault(); }, { passive: false });
-        
-        // Keyboard Pause
+        function handleInput(e) { if (gameState !== 'playing' || !player || player.isDead) return; e.preventDefault(); let cx = e.clientX, cy = e.clientY; if (e.touches && e.touches.length > 0) { cx = e.touches[0].clientX; cy = e.touches[0].clientY; } player.targetX = cx; player.targetY = cy - (e.touches ? 50 : 0); }
+        canvas.addEventListener('pointermove', handleInput); canvas.addEventListener('pointerdown', handleInput); document.addEventListener('touchmove', (e) => { e.preventDefault(); }, { passive: false });
         window.addEventListener('keydown', (e) => { if(e.key === 'Escape' || e.key === 'p') togglePause(); });
-
-        // Buttons
         document.getElementById('btnPlaySolo').addEventListener('click', () => { isMultiplayer = false; startGame(); });
         document.getElementById('btnMultiplayer').addEventListener('click', () => showScreen('mp'));
         document.getElementById('btnOptions').addEventListener('click', () => showScreen('options'));
@@ -996,37 +594,17 @@
         document.getElementById('btnResume').addEventListener('click', togglePause);
         document.getElementById('btnQuitToMenu').addEventListener('click', () => { showScreen('main'); gameState = 'menu'; });
         document.getElementById('btnRestart').addEventListener('click', () => showScreen('main'));
-
-        // Settings Toggles
-        document.getElementById('toggleCRT').addEventListener('change', (e) => {
-            settings.crtEnabled = e.target.checked;
-            document.getElementById('crtOverlay').style.display = settings.crtEnabled ? 'block' : 'none';
-        });
-        document.getElementById('selectParticles').addEventListener('change', (e) => {
-            settings.particleLevel = e.target.value; initBackground();
-        });
-
-        // Network Buttons
+        document.getElementById('toggleCRT').addEventListener('change', (e) => { settings.crtEnabled = e.target.checked; document.getElementById('crtOverlay').style.display = settings.crtEnabled ? 'block' : 'none'; });
+        document.getElementById('toggleSound').addEventListener('change', (e) => { settings.sfxEnabled = e.target.checked; });
+        document.getElementById('selectParticles').addEventListener('change', (e) => { settings.particleLevel = e.target.value; initBackground(); });
         document.getElementById('btnCreateRoom').addEventListener('click', createRoom);
-        document.getElementById('btnJoinRoom').addEventListener('click', () => {
-            const code = document.getElementById('roomCodeInput').value.trim().toUpperCase();
-            if (code.length === 4) joinRoom(code); else showToast("Enter 4-letter code");
-        });
-        document.getElementById('btnLeaveRoom').addEventListener('click', leaveRoom);
-        document.getElementById('btnStartGame').addEventListener('click', () => {
-            if (isHost && currentRoomId) updateDoc(getRoomRef(currentRoomId), { state: 'playing' }).catch(()=>{});
-        });
+        document.getElementById('btnJoinRoom').addEventListener('click', () => { const code = document.getElementById('roomCodeInput').value.trim().toUpperCase(); if (code.length === 4) joinRoom(code); else showToast("Enter 4-letter code"); });
+        document.getElementById('btnLeaveRoom').addEventListener('click', async () => { if (isMicOn) await toggleVoiceChat(); leaveRoom(); });
+        document.getElementById('btnStartGame').addEventListener('click', () => { if (isHost && currentRoomId) updateDoc(getRoomRef(currentRoomId), { state: 'playing' }).catch(()=>{}); });
+        document.getElementById('btnToggleMic').addEventListener('click', toggleVoiceChat);
 
-        // Background loop for menus
-        function menuLoop() {
-            if (gameState !== 'playing' && gameState !== 'paused' && gameState !== 'gameover') {
-                drawBackground(0.5);
-            }
-            requestAnimationFrame(menuLoop);
-        }
-        initBackground();
-        menuLoop();
-
+        function menuLoop() { if (gameState !== 'playing' && gameState !== 'paused' && gameState !== 'gameover') drawBackground(0.5); requestAnimationFrame(menuLoop); }
+        initBackground(); menuLoop();
     </script>
 </body>
 </html>
