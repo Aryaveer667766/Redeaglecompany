@@ -620,8 +620,7 @@
             } catch (e) { console.error("Revive failed", e); }
         }
 
-        // We listen to changes on our own document to apply the revive locally
-        onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'rooms'), (snap) => {}); // Placeholder comment. Firestore handles local updates natively in setupRoomListener. 
+        
         // ACTUALLY, let's inject a local hook to catch if someone revived us.
         setInterval(() => {
             if (gameState === 'playing' && player && player.isDead && roomData && roomData.players[currentUser.uid] && roomData.players[currentUser.uid].isDead === false) {
