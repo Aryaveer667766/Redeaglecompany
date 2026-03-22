@@ -1669,8 +1669,7 @@
 
         canvas.addEventListener('pointermove', handlePointerMove); canvas.addEventListener('pointerdown', handlePointerMove); 
         canvas.addEventListener('touchstart', handleDoubleTap);
-        document.addEventListener('touchmove', (e) => { e.preventDefault(); }, { passive: false });
-        
+        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); }, { passive: false });
         window.addEventListener('keydown', (e) => { 
             if(e.key === 'Escape' || e.key === 'p') togglePause(); 
             if(e.code === 'Space') {
