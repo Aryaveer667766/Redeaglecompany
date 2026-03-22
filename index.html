@@ -144,9 +144,22 @@
             <h3 class="text-cyan-500 tracking-[0.5em] text-sm md:text-base font-bold mb-2">WELCOME TO THE</h3>
             <h1 class="text-5xl md:text-7xl font-black mb-6 neon-text neon-flicker text-center leading-tight">BEST GAME<br><span class="text-fuchsia-400" style="text-shadow: 0 0 20px #f0f;">IN UNIVERSE</span></h1>
             
-            <div class="bg-black/50 p-5 rounded-lg border border-cyan-800 mb-8 w-full max-w-sm mx-auto shadow-inner">
-                <label class="block text-cyan-400 text-xs font-bold mb-2 uppercase tracking-[0.15em]">Enter Your Callsign</label>
-                <input type="text" id="playerNameInput" placeholder="NAME REQUIRED" class="bg-black/80 border border-cyan-500/50 focus:border-cyan-400 text-cyan-300 text-center text-2xl font-black py-3 rounded outline-none uppercase w-full shadow-[0_0_15px_rgba(0,255,255,0.1)] transition-all" maxlength="10">
+            <div class="bg-black/50 p-5 rounded-lg border border-cyan-800 mb-8 w-full max-w-sm mx-auto shadow-inner text-left">
+                <label class="block text-cyan-400 text-xs font-bold mb-2 uppercase tracking-[0.15em] text-center">Enter Your Callsign</label>
+                <input type="text" id="playerNameInput" placeholder="NAME REQUIRED" class="bg-black/80 border border-cyan-500/50 focus:border-cyan-400 text-cyan-300 text-center text-2xl font-black py-3 rounded outline-none uppercase w-full shadow-[0_0_15px_rgba(0,255,255,0.1)] transition-all mb-4" maxlength="10">
+                
+                <label class="block text-cyan-400 text-xs font-bold mb-2 uppercase tracking-[0.15em] text-center">Custom Ship Sprite (Optional)</label>
+                <div class="flex items-center justify-center gap-3">
+                    <button id="btnUploadSprite" class="bg-black/80 border border-cyan-500/50 hover:border-cyan-400 text-cyan-300 px-4 py-2 rounded text-xs font-bold uppercase transition-all">Upload PNG</button>
+                    <input type="file" id="spriteUploadInput" accept="image/png, image/jpeg" class="hidden">
+                    <div class="w-12 h-12 border border-cyan-500/50 rounded flex items-center justify-center overflow-hidden bg-black/80 relative group">
+                        <img id="spritePreview" src="" class="hidden w-full h-full object-contain">
+                        <span id="spritePlaceholder" class="text-[10px] text-cyan-700">NONE</span>
+                        <div id="btnClearSprite" class="hidden absolute inset-0 bg-red-500/80 flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span class="text-white text-[10px] font-bold">X</span>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="flex flex-col gap-4 w-full max-w-sm mx-auto">
@@ -391,7 +404,9 @@
         
         let myName = localStorage.getItem('bg_name') || '';
         let myShipClass = localStorage.getItem('bg_class') || 'balanced';
+        let mySprite = localStorage.getItem('bg_sprite') || null;
         let isTouchDevice = false, lastTouchTime = 0;
+        const spriteCache = {};
         
         document.getElementById('playerNameInput').value = myName;
         document.getElementById('shipClassSelect').value = myShipClass;
@@ -445,6 +460,55 @@
                 gain.gain.setValueAtTime(0.3, now); gain.gain.linearRampToValueAtTime(0, now + 2.0); osc.start(now); osc.stop(now + 2.0);
             }
         }
+
+        // --- Custom Sprite Upload Logic ---
+        const spriteUploadInput = document.getElementById('spriteUploadInput');
+        const spritePreview = document.getElementById('spritePreview');
+        const spritePlaceholder = document.getElementById('spritePlaceholder');
+        const btnClearSprite = document.getElementById('btnClearSprite');
+
+        if (mySprite) {
+            spritePreview.src = mySprite;
+            spritePreview.classList.remove('hidden');
+            spritePlaceholder.classList.add('hidden');
+            btnClearSprite.classList.remove('hidden');
+        }
+
+        document.getElementById('btnUploadSprite').addEventListener('click', () => spriteUploadInput.click());
+        
+        spriteUploadInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = 64; // Max width to prevent massive database payloads
+                    tempCanvas.height = 64; 
+                    const tCtx = tempCanvas.getContext('2d');
+                    tCtx.drawImage(img, 0, 0, 64, 64);
+                    mySprite = tempCanvas.toDataURL('image/png'); // Compress to Base64
+                    localStorage.setItem('bg_sprite', mySprite);
+                    
+                    spritePreview.src = mySprite;
+                    spritePreview.classList.remove('hidden');
+                    spritePlaceholder.classList.add('hidden');
+                    btnClearSprite.classList.remove('hidden');
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        btnClearSprite.addEventListener('click', () => {
+            mySprite = null;
+            localStorage.removeItem('bg_sprite');
+            spritePreview.src = '';
+            spritePreview.classList.add('hidden');
+            spritePlaceholder.classList.remove('hidden');
+            btnClearSprite.classList.add('hidden');
+        });
 
         // --- WebRTC Voice Chat ---
         let peer = null, myStream = null, activeCall = null, isMicOn = false;
@@ -509,7 +573,7 @@
             if (!myName) { showToast("CALLSIGN REQUIRED"); return; }
             if (!currentUser) return; gameMode = mode; document.getElementById(mode==='pvp'?'btnCreatePvP':'btnCreateRoom').disabled = true; const roomId = genCode();
             try {
-                await setDoc(getRoomRef(roomId), { host: currentUser.uid, state: 'lobby', mode: mode, chat: [], players: { [currentUser.uid]: { name: myName, sClass: myShipClass, x: 0, y: 0, score: 0, hp: SHIP_CLASSES[myShipClass].hp, isDead: false, reviveProgress: 0, revivesLeft: 3, droneActive: false } } });
+                await setDoc(getRoomRef(roomId), { host: currentUser.uid, state: 'lobby', mode: mode, chat: [], players: { [currentUser.uid]: { name: myName, sClass: myShipClass, sprite: mySprite, x: 0, y: 0, score: 0, hp: SHIP_CLASSES[myShipClass].hp, isDead: false, reviveProgress: 0, revivesLeft: 3, droneActive: false } } });
                 isHost = true; currentRoomId = roomId; isMultiplayer = true; setupRoomListener(roomId);
                 document.getElementById('lobbyRoomCode').innerText = roomId; 
                 document.getElementById('lobbyModeText').innerText = mode === 'pvp' ? 'PVP DEATHMATCH' : 'CO-OP SURVIVAL'; 
@@ -526,7 +590,7 @@
                 const snap = await getDoc(getRoomRef(roomId));
                 if (snap.exists() && snap.data().state === 'lobby') {
                     gameMode = snap.data().mode || 'coop';
-                    await updateDoc(getRoomRef(roomId), { [`players.${currentUser.uid}`]: { name: myName, sClass: myShipClass, x: 0, y: 0, score: 0, hp: SHIP_CLASSES[myShipClass].hp, isDead: false, reviveProgress: 0, revivesLeft: 3, droneActive: false } });
+                    await updateDoc(getRoomRef(roomId), { [`players.${currentUser.uid}`]: { name: myName, sClass: myShipClass, sprite: mySprite, x: 0, y: 0, score: 0, hp: SHIP_CLASSES[myShipClass].hp, isDead: false, reviveProgress: 0, revivesLeft: 3, droneActive: false } });
                     isHost = false; currentRoomId = roomId.toUpperCase(); isMultiplayer = true; setupRoomListener(currentRoomId);
                     document.getElementById('lobbyRoomCode').innerText = currentRoomId; 
                     document.getElementById('lobbyModeText').innerText = gameMode === 'pvp' ? 'PVP DEATHMATCH' : 'CO-OP SURVIVAL'; 
@@ -558,6 +622,13 @@
                     const list = document.getElementById('playerList'); list.innerHTML = '';
                     for (const uid in data.players) {
                         if (!data.players[uid]) continue; const pData = data.players[uid]; const li = document.createElement('li'); li.className = uid === currentUser.uid ? 'text-cyan-300' : 'text-white';
+                        
+                        // Cache sprites eagerly if they exist
+                        if (pData.sprite && !spriteCache[uid]) {
+                            spriteCache[uid] = new Image();
+                            spriteCache[uid].src = pData.sprite;
+                        }
+
                         li.innerHTML = `${SHIP_CLASSES[pData.sClass]?.icon||'🚀'} ${pData.name} ${uid === currentUser.uid ? '(You)' : ''} ${uid === data.host ? '<span class="text-fuchsia-400 text-xs ml-2">[HOST]</span>' : ''}`; list.appendChild(li);
                     }
                     if (data.state === 'playing') startGame();
@@ -578,6 +649,12 @@
                         ghost.revivesLeft = pData.revivesLeft !== undefined ? pData.revivesLeft : 3;
                         ghost.droneActive = pData.droneActive || false;
                         
+                        // Handle late-joining sprites cache
+                        if (pData.sprite && !spriteCache[uid]) {
+                            spriteCache[uid] = new Image();
+                            spriteCache[uid].src = pData.sprite;
+                        }
+
                         if (pData.peerId) handleIncomingPeer(pData.peerId);
                     }
                     
@@ -620,11 +697,9 @@
             } catch (e) { console.error("Revive failed", e); }
         }
 
-        
-        // ACTUALLY, let's inject a local hook to catch if someone revived us.
+        // LOCAL HOOK TO CATCH INCOMING REVIVES
         setInterval(() => {
             if (gameState === 'playing' && player && player.isDead && roomData && roomData.players[currentUser.uid] && roomData.players[currentUser.uid].isDead === false) {
-                // Someone clicked revive!
                 player.isDead = false; 
                 player.hp = roomData.players[currentUser.uid].hp || SHIP_CLASSES[myShipClass].hp; 
                 player.invulnFrames = 120; 
@@ -788,13 +863,20 @@
 
                 if (this.dashTimer > 0) { ctx.shadowBlur = 40; ctx.shadowColor = '#a855f7'; } else { ctx.shadowBlur = 20; ctx.shadowColor = this.color; }
                 
-                ctx.beginPath(); ctx.moveTo(0, -this.radius * 1.8); ctx.lineTo(this.radius, this.radius); ctx.lineTo(this.radius*0.4, this.radius*0.6); ctx.lineTo(0, this.radius * 0.8); ctx.lineTo(-this.radius*0.4, this.radius*0.6); ctx.lineTo(-this.radius, this.radius); ctx.closePath(); 
-                ctx.fillStyle = this.dashTimer > 0 ? '#a855f7' : '#050510'; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = this.dashTimer > 0 ? '#fff' : this.color; ctx.stroke();
-                
-                const thrustLvl = Math.random() * 15 + (this.dashTimer>0?25:5); 
-                ctx.beginPath(); ctx.moveTo(-this.radius*0.5, this.radius*0.8); ctx.lineTo(0, this.radius + thrustLvl); ctx.lineTo(this.radius*0.5, this.radius*0.8); 
-                ctx.fillStyle = this.dashTimer > 0 ? '#fff' : (this.weapon === 'spread' ? '#eab308' : '#0ff'); ctx.fill(); 
-                
+                // DRAW CUSTOM SPRITE OR VECTOR SHIP
+                if (mySprite) {
+                    if (!spriteCache['me']) { spriteCache['me'] = new Image(); spriteCache['me'].src = mySprite; }
+                    if (spriteCache['me'].complete) {
+                        ctx.drawImage(spriteCache['me'], -this.radius*1.5, -this.radius*1.5, this.radius*3, this.radius*3);
+                    }
+                } else {
+                    ctx.beginPath(); ctx.moveTo(0, -this.radius * 1.8); ctx.lineTo(this.radius, this.radius); ctx.lineTo(this.radius*0.4, this.radius*0.6); ctx.lineTo(0, this.radius * 0.8); ctx.lineTo(-this.radius*0.4, this.radius*0.6); ctx.lineTo(-this.radius, this.radius); ctx.closePath(); 
+                    ctx.fillStyle = this.dashTimer > 0 ? '#a855f7' : '#050510'; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = this.dashTimer > 0 ? '#fff' : this.color; ctx.stroke();
+                    
+                    const thrustLvl = Math.random() * 15 + (this.dashTimer>0?25:5); 
+                    ctx.beginPath(); ctx.moveTo(-this.radius*0.5, this.radius*0.8); ctx.lineTo(0, this.radius + thrustLvl); ctx.lineTo(this.radius*0.5, this.radius*0.8); 
+                    ctx.fillStyle = this.dashTimer > 0 ? '#fff' : (this.weapon === 'spread' ? '#eab308' : '#0ff'); ctx.fill(); 
+                }
                 ctx.restore();
 
                 if (this.droneActive) {
@@ -937,7 +1019,15 @@
                 
                 this.x += (this.targetX - this.x) * 0.2; this.y += (this.targetY - this.y) * 0.2;
                 ctx.save(); ctx.translate(this.x, this.y); ctx.globalAlpha = 0.5; ctx.shadowBlur = 10; ctx.shadowColor = this.color;
-                ctx.beginPath(); ctx.moveTo(0, -this.radius * 1.8); ctx.lineTo(this.radius, this.radius); ctx.lineTo(0, this.radius * 0.8); ctx.lineTo(-this.radius, this.radius); ctx.closePath(); ctx.strokeStyle = this.color; ctx.lineWidth = 2; ctx.stroke();
+                
+                // DRAW TEAMMATE SPRITE OR VECTOR SHIP
+                let pData = roomData?.players[this.uid];
+                if (pData && pData.sprite && spriteCache[this.uid] && spriteCache[this.uid].complete) {
+                    ctx.drawImage(spriteCache[this.uid], -this.radius*1.5, -this.radius*1.5, this.radius*3, this.radius*3);
+                } else {
+                    ctx.beginPath(); ctx.moveTo(0, -this.radius * 1.8); ctx.lineTo(this.radius, this.radius); ctx.lineTo(0, this.radius * 0.8); ctx.lineTo(-this.radius, this.radius); ctx.closePath(); ctx.strokeStyle = this.color; ctx.lineWidth = 2; ctx.stroke();
+                }
+
                 ctx.globalAlpha = 1; ctx.fillStyle = this.color; ctx.font = 'bold 10px Courier'; ctx.textAlign = 'center'; ctx.fillText(`${this.name} [${this.hp}]`, 0, this.radius + 15); ctx.restore();
 
                 // Faux-firing so spectators can see action
