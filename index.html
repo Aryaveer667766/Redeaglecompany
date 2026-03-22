@@ -138,6 +138,14 @@
                 <button id="btnLeaderboard" class="btn btn-cyan !bg-fuchsia-900/50 !border-fuchsia-500 !text-fuchsia-300 shadow-[0_0_15px_rgba(255,0,255,0.3)] hover:!bg-fuchsia-800">Global Ranks</button>
                 <button id="btnOptions" class="text-cyan-500 hover:text-cyan-300 mt-2 uppercase font-bold tracking-wider text-sm">Game Options</button>
             </div>
+
+            <div class="mt-8 border-t border-cyan-900/80 pt-5 max-w-xs mx-auto">
+                <p class="text-[11px] text-cyan-500 font-bold tracking-[0.2em] uppercase mb-3">Support the Creators</p>
+                <div class="bg-black/60 border border-fuchsia-500/40 rounded-lg p-3 flex items-center justify-between cursor-pointer hover:bg-fuchsia-900/40 hover:border-fuchsia-400 transition-all shadow-[0_0_15px_rgba(255,0,255,0.1)] group" onclick="navigator.clipboard.writeText('givemethebucks@ybl'); document.getElementById('toast').innerText = 'UPI ID COPIED!'; document.getElementById('toast').style.opacity = 1; setTimeout(() => document.getElementById('toast').style.opacity = 0, 3000);" title="Click to copy UPI ID">
+                    <span class="text-fuchsia-300 font-mono text-sm tracking-wider group-hover:text-white transition-colors">givemethebucks@ybl</span>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-fuchsia-500 group-hover:text-white transition-colors"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                </div>
+            </div>
         </div>
 
         <div id="optionsMenu" class="ui-panel hidden w-80">
@@ -885,9 +893,10 @@
             constructor(scaleMult = 1) { 
                 this.x = canvas.width / 2; this.y = -150; this.radius = 80; this.maxHp = 350 * scaleMult; this.hp = this.maxHp; this.color = colors.boss; this.vy = 1; this.vx = 1.5; this.hitTime = 0; this.phase = 'enter'; this.shootTimer = 0; 
                 playSound('boss_alert'); showFloatingText(canvas.width/2, canvas.height/3, "WARNING: DREADNOUGHT", colors.boss); 
-                document.getElementById('bossHpContainer').classList.remove('hidden'); document.getElementById('bossNameDisplay').innerText = "DREADNOUGHT";
-                document.getElementById('bossNameDisplay').classList.replace('text-emerald-400', 'text-red-500');
-                document.getElementById('bossHpBar').classList.replace('from-emerald-600', 'from-red-600'); document.getElementById('bossHpBar').classList.replace('to-emerald-400', 'to-red-400');
+                document.getElementById('bossHpContainer').classList.remove('hidden'); 
+                document.getElementById('bossNameDisplay').innerText = "DREADNOUGHT";
+                document.getElementById('bossNameDisplay').className = "text-red-500 text-sm md:text-base font-black mb-1 tracking-[0.3em] text-center";
+                document.getElementById('bossHpBar').className = "bg-gradient-to-r from-red-600 to-red-400 h-full w-full transition-all duration-200";
             } 
             update() { 
                 if(this.hitTime > 0) this.hitTime--; 
@@ -919,34 +928,31 @@
                 this.color = '#10b981'; this.hp = 450*scaleMult; this.maxHp = 450*scaleMult;
                 this.angle = Math.PI/2; this.speed = 3.5; this.shootTimer = 0;
                 playSound('boss_alert'); showFloatingText(canvas.width/2, canvas.height/3, "WARNING: OPHIDIAN", this.color);
-                document.getElementById('bossHpContainer').classList.remove('hidden'); document.getElementById('bossNameDisplay').innerText = "THE OPHIDIAN";
-                document.getElementById('bossNameDisplay').classList.replace('text-red-500', 'text-emerald-400');
-                document.getElementById('bossHpBar').classList.replace('from-red-600', 'from-emerald-600'); document.getElementById('bossHpBar').classList.replace('to-red-400', 'to-emerald-400');
+                document.getElementById('bossHpContainer').classList.remove('hidden'); 
+                document.getElementById('bossNameDisplay').innerText = "THE OPHIDIAN";
+                document.getElementById('bossNameDisplay').className = "text-emerald-400 text-sm md:text-base font-black mb-1 tracking-[0.3em] text-center";
+                document.getElementById('bossHpBar').className = "bg-gradient-to-r from-emerald-600 to-emerald-400 h-full w-full transition-all duration-200";
             }
             update() {
                 this.head.x += Math.cos(this.angle) * this.speed; this.head.y += Math.sin(this.angle) * this.speed;
-                // Meander logic
                 let target = player && !player.isDead ? player : {x: canvas.width/2, y: canvas.height/2};
                 let toX = target.x - this.head.x, toY = target.y - this.head.y;
                 let targetAng = Math.atan2(toY, toX);
                 
-                // Smooth turn + sine wave slither
                 let diff = targetAng - this.angle;
                 while (diff > Math.PI) diff -= Math.PI*2; while (diff < -Math.PI) diff += Math.PI*2;
-                this.angle += diff * 0.02;
-                this.angle += Math.sin(frameCount * 0.05) * 0.05; // Slither
+                this.angle += diff * 0.02; this.angle += Math.sin(frameCount * 0.05) * 0.05; 
 
                 this.history.unshift({x: this.head.x, y: this.head.y, ang: this.angle});
                 if(this.history.length > 300) this.history.pop();
                 
                 for(let i=1; i<this.segments.length; i++) {
-                    let pos = this.history[i * 12]; // spacing
+                    let pos = this.history[i * 12];
                     if(pos) { this.segments[i].x = pos.x; this.segments[i].y = pos.y; this.segments[i].ang = pos.ang; }
                     if(this.segments[i].hitTime > 0) this.segments[i].hitTime--;
                 }
                 if(this.head.hitTime > 0) this.head.hitTime--;
 
-                // Shooting
                 this.shootTimer++;
                 if (this.shootTimer > 80) {
                     this.shootTimer = 0; playSound('hit');
@@ -956,7 +962,6 @@
                     bullets.push(b1, b2);
                 }
 
-                // Draw (back to front)
                 for(let i = this.segments.length-1; i>=0; i--) {
                     let seg = this.segments[i];
                     if (seg.hp <= 0) continue;
@@ -964,12 +969,134 @@
                     ctx.beginPath(); ctx.arc(0, 0, seg.radius, 0, Math.PI*2);
                     ctx.fillStyle = seg.hitTime > 0 ? '#fff' : '#051005'; ctx.fill();
                     ctx.lineWidth = i===0 ? 4 : 2; ctx.strokeStyle = seg.color; ctx.stroke();
-                    if(i===0) { ctx.beginPath(); ctx.arc(10, -10, 5, 0, Math.PI*2); ctx.arc(10, 10, 5, 0, Math.PI*2); ctx.fillStyle='#f00'; ctx.fill(); } // eyes
+                    if(i===0) { ctx.beginPath(); ctx.arc(10, -10, 5, 0, Math.PI*2); ctx.arc(10, 10, 5, 0, Math.PI*2); ctx.fillStyle='#f00'; ctx.fill(); } 
                     ctx.restore();
                 }
 
-                this.hp = this.head.hp; // For game logic, killing head kills snake
+                this.hp = this.head.hp; 
                 document.getElementById('bossHpBar').style.width = `${(this.hp / this.maxHp)*100}%`; 
+            }
+        }
+
+        class Prism {
+            constructor(scaleMult = 1) {
+                this.x = canvas.width / 2; this.y = -100; this.radius = 60;
+                this.maxHp = 400 * scaleMult; this.hp = this.maxHp;
+                this.color = '#eab308'; // Gold/Yellow
+                this.hitTime = 0; this.timer = 0; this.state = 'enter';
+                playSound('boss_alert'); showFloatingText(canvas.width/2, canvas.height/3, "WARNING: THE PRISM", this.color);
+                document.getElementById('bossHpContainer').classList.remove('hidden');
+                document.getElementById('bossNameDisplay').innerText = "THE PRISM";
+                document.getElementById('bossNameDisplay').className = "text-yellow-500 text-sm md:text-base font-black mb-1 tracking-[0.3em] text-center";
+                document.getElementById('bossHpBar').className = "bg-gradient-to-r from-yellow-600 to-yellow-400 h-full w-full transition-all duration-200";
+            }
+            update() {
+                if(this.hitTime > 0) this.hitTime--;
+                this.timer++;
+                
+                if (this.state === 'enter') {
+                    this.y += 2; if (this.y > 150) this.state = 'idle';
+                } else if (this.state === 'idle') {
+                    if (this.timer % 120 === 0) {
+                        // Teleport Mechanic
+                        createExplosion(this.x, this.y, this.color, 30);
+                        this.x = Math.random() * (canvas.width - 120) + 60;
+                        this.y = Math.random() * (canvas.height/2 - 60) + 60;
+                        createExplosion(this.x, this.y, '#fff', 30);
+                        playSound('dash');
+                        this.shootBurst();
+                    }
+                }
+                document.getElementById('bossHpBar').style.width = `${(this.hp / this.maxHp)*100}%`;
+
+                ctx.save(); ctx.translate(this.x, this.y);
+                ctx.rotate(frameCount * 0.05);
+                ctx.shadowBlur = 30; ctx.shadowColor = this.color; ctx.beginPath();
+                for(let i=0; i<3; i++) {
+                    let a = (i * Math.PI * 2) / 3;
+                    if(i===0) ctx.moveTo(this.radius*Math.cos(a), this.radius*Math.sin(a));
+                    else ctx.lineTo(this.radius*Math.cos(a), this.radius*Math.sin(a));
+                }
+                ctx.closePath();
+                ctx.fillStyle = this.hitTime > 0 ? '#fff' : '#1a1a00'; ctx.fill();
+                ctx.lineWidth = 5; ctx.strokeStyle = this.color; ctx.stroke();
+
+                ctx.rotate(-frameCount * 0.1);
+                ctx.beginPath();
+                for(let i=0; i<3; i++) {
+                    let a = (i * Math.PI * 2) / 3 + Math.PI;
+                    if(i===0) ctx.moveTo(this.radius*0.6*Math.cos(a), this.radius*0.6*Math.sin(a));
+                    else ctx.lineTo(this.radius*0.6*Math.cos(a), this.radius*0.6*Math.sin(a));
+                }
+                ctx.closePath();
+                ctx.fillStyle = this.hp < this.maxHp*0.3 ? '#f00' : this.color; ctx.fill();
+                ctx.restore();
+            }
+            shootBurst() {
+                playSound('hit');
+                let target = player && !player.isDead ? player : {x: canvas.width/2, y: canvas.height/2};
+                let toX = target.x - this.x, toY = target.y - this.y;
+                let ang = Math.atan2(toY, toX);
+                for(let i=-2; i<=2; i++) {
+                    let b = new Bullet(this.x, this.y, Math.sin(ang + i*0.2)*6, Math.cos(ang + i*0.2)*6, this.color);
+                    b.radius = 6; b.isEnemy = true; b.isBossAttack = true; bullets.push(b);
+                }
+            }
+        }
+
+        class Behemoth {
+            constructor(scaleMult = 1) {
+                this.x = canvas.width / 2; this.y = -100; this.radius = 100;
+                this.maxHp = 600 * scaleMult; this.hp = this.maxHp;
+                this.color = '#a855f7'; // Purple
+                this.hitTime = 0; this.timer = 0; this.state = 'enter';
+                playSound('boss_alert'); showFloatingText(canvas.width/2, canvas.height/3, "WARNING: BEHEMOTH", this.color);
+                document.getElementById('bossHpContainer').classList.remove('hidden');
+                document.getElementById('bossNameDisplay').innerText = "BEHEMOTH";
+                document.getElementById('bossNameDisplay').className = "text-purple-500 text-sm md:text-base font-black mb-1 tracking-[0.3em] text-center";
+                document.getElementById('bossHpBar').className = "bg-gradient-to-r from-purple-600 to-purple-400 h-full w-full transition-all duration-200";
+            }
+            update() {
+                if(this.hitTime > 0) this.hitTime--;
+                this.timer++;
+                
+                if (this.state === 'enter') {
+                    this.y += 0.5; if (this.y > 80) this.state = 'attack';
+                } else if (this.state === 'attack') {
+                    this.x += Math.sin(frameCount * 0.02) * 2; // slight sway
+                    if (this.timer % 90 === 0) this.shootMissiles();
+                    if (this.timer % 150 === 0) this.shootLasers();
+                }
+                document.getElementById('bossHpBar').style.width = `${(this.hp / this.maxHp)*100}%`;
+
+                ctx.save(); ctx.translate(this.x, this.y);
+                ctx.shadowBlur = 30; ctx.shadowColor = this.color;
+                ctx.beginPath();
+                ctx.rect(-this.radius, -this.radius*0.5, this.radius*2, this.radius);
+                ctx.fillStyle = this.hitTime > 0 ? '#fff' : '#110011'; ctx.fill();
+                ctx.lineWidth = 5; ctx.strokeStyle = this.color; ctx.stroke();
+                
+                // Drawing the Tank Guns
+                ctx.fillStyle = this.color;
+                ctx.fillRect(-this.radius*0.8 - 10, this.radius*0.5, 20, 30);
+                ctx.fillRect(this.radius*0.8 - 10, this.radius*0.5, 20, 30);
+                ctx.fillRect(-20, this.radius*0.5, 40, 20); // Center core
+                ctx.restore();
+            }
+            shootMissiles() {
+                playSound('explosion');
+                for(let offset of [-1, 1]) {
+                    let b = new Bullet(this.x + (this.radius*0.8*offset), this.y + this.radius*0.5, 4, (Math.random()-0.5)*2, '#f0f');
+                    b.radius = 8; b.isEnemy = true; b.isBossAttack = true; b.homing = true; bullets.push(b);
+                }
+            }
+            shootLasers() {
+                playSound('railgun');
+                for(let i=0; i<8; i++) {
+                    let vx = (Math.random() - 0.5) * 8;
+                    let b = new Bullet(this.x, this.y + this.radius*0.5, 8, vx, this.color);
+                    b.radius = 5; b.isEnemy = true; b.isBossAttack = true; bullets.push(b);
+                }
             }
         }
         
@@ -1033,7 +1160,7 @@
             if(player && !player.isDead) dot(player.x, player.y, '#0ff', 3);
             for(let uid in otherPlayers) { if(!otherPlayers[uid].isDead) dot(otherPlayers[uid].x, otherPlayers[uid].y, gameMode==='pvp'?'#f00':'#0f0', 3); }
             enemies.forEach(e => dot(e.x, e.y, '#f0f', 2));
-            if(bossEntity) dot(bossEntity.x || bossEntity.head.x, bossEntity.y || bossEntity.head.y, '#f00', 4);
+            if(bossEntity) dot(bossEntity.x || bossEntity.head?.x, bossEntity.y || bossEntity.head?.y, '#f00', 4);
             blackHoles.forEach(b => dot(b.x, b.y, '#a855f7', 4));
             powerups.forEach(p => dot(p.x, p.y, '#fbbf24', 2));
         }
@@ -1104,11 +1231,19 @@
                 if (score >= nextBossScore && !bossMode && gameMode !== 'pvp') { 
                     bossMode = true; 
                     let scale = nextBossScore / 5000;
-                    if (nextBossScore % 10000 === 0) {
-                        bossEntity = new Ophidian(scale); 
+                    
+                    // Dice roll for 1 of 4 bosses
+                    let roll = Math.floor(Math.random() * 4);
+                    if (roll === 0) {
+                        bossEntity = new Boss(scale); // Dreadnought
+                    } else if (roll === 1) {
+                        bossEntity = new Ophidian(scale);
+                    } else if (roll === 2) {
+                        bossEntity = new Prism(scale);
                     } else {
-                        bossEntity = new Boss(scale);
+                        bossEntity = new Behemoth(scale);
                     }
+                    
                     nextBossScore += 5000;
                 }
                 
@@ -1152,7 +1287,7 @@
             if (bossEntity) {
                 bossEntity.update();
                 if (bossEntity.hp <= 0) { 
-                    playSound('explosion'); createExplosion(bossEntity.x || bossEntity.head.x, bossEntity.y || bossEntity.head.y, bossEntity.color, 150); handleKill(10000); showFloatingText(bossEntity.x || bossEntity.head.x, bossEntity.y || bossEntity.head.y, "+10000 BOSS DEFEATED", '#fff'); bossEntity = null; bossMode = false; document.getElementById('bossHpContainer').classList.add('hidden'); 
+                    playSound('explosion'); createExplosion(bossEntity.x || bossEntity.head?.x, bossEntity.y || bossEntity.head?.y, bossEntity.color, 150); handleKill(10000); showFloatingText(bossEntity.x || bossEntity.head?.x, bossEntity.y || bossEntity.head?.y, "+10000 BOSS DEFEATED", '#fff'); bossEntity = null; bossMode = false; document.getElementById('bossHpContainer').classList.add('hidden'); 
                 } 
                 else if (player && !player.isDead && !player.isUpgrading) {
                     if (bossEntity.segments) { // Ophidian
